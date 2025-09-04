@@ -1,0 +1,60 @@
+title: PixLoom
+description: a base ai image service for image apps
+keywords:
+  - blocklet
+  - react
+group: dapp
+did: z2qaJJC9zbsHpCjZW2XTT7StPFY3MvTumVoXY
+main: api/dist/index.js
+author:
+  name: Nate
+  email: nate@arcblock.io
+repository:
+  type: git
+  url: git+https://github.com/blocklet/create-blocklet.git
+specVersion: 1.2.8
+version: 0.0.1
+logo: logo.png
+files:
+  - dist
+  - logo.png
+  - screenshots
+  - api/hooks/pre-start.js
+  - api/dist/store/migrations/*.js
+interfaces:
+  - type: web
+    name: publicUrl
+    path: /
+    prefix: '*'
+    port: BLOCKLET_PORT
+    protocol: http
+    proxyBehavior: service
+community: ''
+documentation: ''
+homepage: ''
+license: ''
+payment:
+  price: []
+  share: []
+timeout:
+  start: 60
+requirements:
+  server: '>=1.16.28'
+  os: '*'
+  cpu: '*'
+scripts:
+  preStart: node api/hooks/pre-start.js
+  dev: npm run start
+environments:
+  - name: GITHUB_TOKEN
+    description: github token for issue fetch
+    required: true
+    default: ''
+    secure: true
+    shared: false
+capabilities:
+  navigation: true
+screenshots: []
+components: []
+name: z2qaJJC9zbsHpCjZW2XTT7StPFY3MvTumVoXY
+egress: true
