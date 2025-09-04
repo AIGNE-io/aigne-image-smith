@@ -22,7 +22,7 @@
             "x-designable-id": "p0r0s1qs00u",
             "x-index": 0,
             "properties": {
-              "flow_board_database_url": {
+              "pix_loom_database_url": {
                 "type": "string",
                 "title": "URL",
                 "x-decorator": "FormItem",
@@ -30,23 +30,23 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "flow_board_database_url",
+                "name": "pix_loom_database_url",
                 "description": "\nUse {password} instead of real password",
                 "x-designable-id": "irgxznm5krc",
                 "x-index": 0
               },
-              "flow_board_database_password": {
+              "pix_loom_database_password": {
                 "title": "Password",
                 "x-decorator": "FormItem",
                 "x-component": "Password",
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "flow_board_database_password",
+                "name": "pix_loom_database_password",
                 "x-designable-id": "jn8q25xidiv",
                 "x-index": 1
               },
-              "flow_board_database_logging": {
+              "pix_loom_database_logging": {
                 "type": "boolean",
                 "title": "Logging",
                 "x-decorator": "FormItem",
@@ -54,11 +54,11 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "flow_board_database_logging",
+                "name": "pix_loom_database_logging",
                 "x-designable-id": "xxii8v27l7z",
                 "x-index": 2
               },
-              "flow_board_database_pool_min": {
+              "pix_loom_database_pool_min": {
                 "type": "string",
                 "title": "Min(pool)",
                 "x-decorator": "FormItem",
@@ -66,11 +66,11 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "flow_board_database_pool_min",
+                "name": "pix_loom_database_pool_min",
                 "x-designable-id": "hk13ynz1enw",
                 "x-index": 3
               },
-              "flow_board_database_pool_max": {
+              "pix_loom_database_pool_max": {
                 "type": "string",
                 "title": "Max(pool)",
                 "x-decorator": "FormItem",
@@ -78,122 +78,15 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "flow_board_database_pool_max",
+                "name": "pix_loom_database_pool_max",
                 "x-designable-id": "x9s9vfsmw4o",
                 "x-index": 4
               }
             }
-          },
-          "4ciky631d7x": {
-            "type": "void",
-            "x-component": "FormTab.TabPane",
-            "x-component-props": {
-              "tab": "PointRules"
-            },
-            "x-designable-id": "4ciky631d7x",
-            "x-index": 1,
-            "properties": {
-              "task_finished_point_rule": {
-                "type": "string",
-                "title": "Task Finished Rule",
-                "x-decorator": "FormItem",
-                "x-component": "Input",
-                "x-validator": [],
-                "x-component-props": {},
-                "x-decorator-props": {},
-                "name": "task_finished_point_rule",
-                "x-designable-id": "jrecerjg3ij",
-                "x-index": 0
-              }
-            }
-          },
-          "zq4y66pocx9": {
-            "type": "void",
-            "x-component": "FormTab.TabPane",
-            "x-component-props": {
-              "tab": "AI"
-            },
-            "x-designable-id": "zq4y66pocx9",
-            "x-index": 2,
-            "properties": {
-              "summary_ai": {
-                "type": "string",
-                "title": "Summary AI",
-                "x-decorator": "FormItem",
-                "x-component": "Input",
-                "x-validator": [],
-                "x-component-props": {},
-                "x-decorator-props": {},
-                "name": "summary_ai",
-                "description": "Summary AI Agent Id from AIGNE",
-                "x-designable-id": "9a9rik7z0bg",
-                "x-index": 0
-              },
-              "dp_ai": {
-                "type": "string",
-                "title": "Delivery Plan Daily Progress AI",
-                "x-decorator": "FormItem",
-                "x-component": "Input",
-                "x-validator": [],
-                "x-component-props": {},
-                "x-decorator-props": {},
-                "description": "Summary AI Agent for key delivery plan daily progress",
-                "name": "dp_ai",
-                "x-designable-id": "czeakb6luyb",
-                "x-index": 1
-              }
-            }
-          },
-          "2f9zr5mx4yh": {
-            "type": "void",
-            "x-component": "FormTab.TabPane",
-            "x-component-props": {
-              "tab": "Weekly"
-            },
-            "x-designable-id": "2f9zr5mx4yh",
-            "x-index": 3,
-            "properties": {
-              "weekly_tag_id": {
-                "type": "string",
-                "title": "Tag Id",
-                "x-decorator": "FormItem",
-                "x-component": "Input",
-                "x-validator": [],
-                "x-component-props": {},
-                "x-decorator-props": {},
-                "name": "weekly_tag_id",
-                "description": "Weekly Tag Id for Objectives",
-                "x-designable-id": "w4n2ljpd968",
-                "x-index": 0
-              }
-            }
-          },
-          "h2w2mm6ns40": {
-            "type": "void",
-            "x-component": "FormTab.TabPane",
-            "x-component-props": {
-              "tab": "AccessKey"
-            },
-            "name": "",
-            "x-designable-id": "h2w2mm6ns40",
-            "properties": {
-              "community_access_key": {
-                "title": "Community Access Key",
-                "x-decorator": "FormItem",
-                "x-component": "Password",
-                "x-validator": [],
-                "x-component-props": {},
-                "x-decorator-props": {},
-                "name": "community_access_key",
-                "x-designable-id": "ymtx50apckr",
-                "x-index": 0
-              }
-            },
-            "x-index": 4
           }
         }
       }
     },
-    "x-designable-id": "9miqcurmq8j"
+    "x-designable-id": "zi0d2s953uo"
   }
 }
