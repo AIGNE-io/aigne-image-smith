@@ -45,7 +45,7 @@ if (isProduction) {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use(<ErrorRequestHandler>((err, _req, res, _next) => {
-    logger.error(err.stack);
+    logger.error(err.stack || err.message);
     res.status(400).send('Something broke!');
   }));
 }
