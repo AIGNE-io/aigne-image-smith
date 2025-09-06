@@ -1,8 +1,10 @@
 import { Router } from 'express';
 
-import common from './common';
+import ai from './ai';
+import payment from './payment';
 
 const router = Router();
-router.use('/common', common);
+router.use('/payment', payment);
+router.use('/ai', ai);
 
 export default router;

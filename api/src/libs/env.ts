@@ -28,10 +28,15 @@ function parseDatabaseConfiguration(value: object) {
   return result.value;
 }
 
-export default {
+const envConfig = {
   ...env,
   chainHost: process.env.CHAIN_HOST || '',
+  paymentEndpoint: process.env.BLOCKLET_PAYMENT_ENDPOINT || '',
+  paymentToken: process.env.BLOCKLET_PAYMENT_TOKEN || '',
 };
+
+export { envConfig as env };
+export default envConfig;
 
 function parseConfigFromPreferences() {
   const { preferences } = Config.env;
