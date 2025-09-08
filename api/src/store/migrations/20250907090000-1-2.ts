@@ -25,10 +25,10 @@ export const up: Migration = async ({ context: queryInterface }) => {
       allowNull: false,
       comment: 'URL of the generated/processed image',
     },
-    operationType: {
-      type: DataTypes.ENUM('colorization', 'restoration', 'enhancement', 'style_transfer'),
+    clientId: {
+      type: DataTypes.STRING,
       allowNull: false,
-      comment: 'Type of AI operation performed',
+      comment: 'DID of the client blocklet making the request',
     },
     status: {
       type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed'),
@@ -70,8 +70,8 @@ export const up: Migration = async ({ context: queryInterface }) => {
     name: 'idx_image_generations_status',
   });
 
-  await queryInterface.addIndex('image_generations', ['operationType'], {
-    name: 'idx_image_generations_operation_type',
+  await queryInterface.addIndex('image_generations', ['clientId'], {
+    name: 'idx_image_generations_client_id',
   });
 
   await queryInterface.addIndex('image_generations', ['createdAt'], {
@@ -83,7 +83,7 @@ export const down: Migration = async ({ context: queryInterface }) => {
   // Drop indexes first
   await queryInterface.removeIndex('image_generations', 'idx_image_generations_user_did');
   await queryInterface.removeIndex('image_generations', 'idx_image_generations_status');
-  await queryInterface.removeIndex('image_generations', 'idx_image_generations_operation_type');
+  await queryInterface.removeIndex('image_generations', 'idx_image_generations_client_id');
   await queryInterface.removeIndex('image_generations', 'idx_image_generations_created_at');
 
   // Drop table

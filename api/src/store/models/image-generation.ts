@@ -11,7 +11,7 @@ interface ImageGenerationInput {
   userDid: string;
   originalImageUrl?: string;
   generatedImageUrl: string;
-  operationType: 'colorization' | 'restoration' | 'enhancement' | 'style_transfer';
+  clientId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   creditsConsumed: number;
   processingTimeMs?: number;
@@ -23,7 +23,7 @@ export const ImageGenerationSchema = Joi.object<ImageGenerationInput>({
   userDid: Joi.string().required(),
   originalImageUrl: Joi.string().uri().optional(),
   generatedImageUrl: Joi.string().uri().required(),
-  operationType: Joi.string().valid('colorization', 'restoration', 'enhancement', 'style_transfer').required(),
+  clientId: Joi.string().required(),
   status: Joi.string().valid('pending', 'processing', 'completed', 'failed').default('pending'),
   creditsConsumed: Joi.number().integer().min(0).required(),
   processingTimeMs: Joi.number().integer().min(0).optional(),
@@ -31,7 +31,10 @@ export const ImageGenerationSchema = Joi.object<ImageGenerationInput>({
   metadata: Joi.object().optional(),
 });
 
-export default class ImageGeneration extends Model<InferAttributes<ImageGeneration>, InferCreationAttributes<ImageGeneration>> {
+export default class ImageGeneration extends Model<
+  InferAttributes<ImageGeneration>,
+  InferCreationAttributes<ImageGeneration>
+> {
   declare id: CreationOptional<string>;
 
   declare userDid: string;
@@ -40,7 +43,7 @@ export default class ImageGeneration extends Model<InferAttributes<ImageGenerati
 
   declare generatedImageUrl: string;
 
-  declare operationType: 'colorization' | 'restoration' | 'enhancement' | 'style_transfer';
+  declare clientId: string;
 
   declare status: 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -85,13 +88,13 @@ export default class ImageGeneration extends Model<InferAttributes<ImageGenerati
    */
   static async getUserStats(userDid: string) {
     const totalGenerations = await this.count({ where: { userDid } });
-    const completedGenerations = await this.count({ 
-      where: { 
+    const completedGenerations = await this.count({
+      where: {
         userDid,
-        status: 'completed'
-      } 
+        status: 'completed',
+      },
     });
-    const totalCreditsSpent = await this.sum('creditsConsumed', { where: { userDid } }) || 0;
+    const totalCreditsSpent = (await this.sum('creditsConsumed', { where: { userDid } })) || 0;
 
     return {
       totalGenerations,
@@ -104,11 +107,14 @@ export default class ImageGeneration extends Model<InferAttributes<ImageGenerati
   /**
    * Update generation status
    */
-  async updateStatus(status: 'pending' | 'processing' | 'completed' | 'failed', options: {
-    processingTimeMs?: number;
-    errorMessage?: string;
-    metadata?: Record<string, any>;
-  } = {}) {
+  async updateStatus(
+    status: 'pending' | 'processing' | 'completed' | 'failed',
+    options: {
+      processingTimeMs?: number;
+      errorMessage?: string;
+      metadata?: Record<string, any>;
+    } = {},
+  ) {
     return this.update({
       status,
       processingTimeMs: options.processingTimeMs,
@@ -141,10 +147,10 @@ ImageGeneration.init(
       allowNull: false,
       comment: 'URL of the generated/processed image',
     },
-    operationType: {
-      type: DataTypes.ENUM('colorization', 'restoration', 'enhancement', 'style_transfer'),
+    clientId: {
+      type: DataTypes.STRING,
       allowNull: false,
-      comment: 'Type of AI operation performed',
+      comment: 'DID of the client blocklet making the request',
     },
     status: {
       type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed'),
@@ -196,8 +202,8 @@ ImageGeneration.init(
         name: 'idx_image_generations_status',
       },
       {
-        fields: ['operationType'],
-        name: 'idx_image_generations_operation_type',
+        fields: ['clientId'],
+        name: 'idx_image_generations_client_id',
       },
       {
         fields: ['createdAt'],

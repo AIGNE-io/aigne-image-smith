@@ -15,7 +15,3 @@ export const sequelize = new Sequelize(config.database.url, {
 sequelize.query('pragma journal_mode = WAL;');
 sequelize.query('pragma synchronous = normal;');
 sequelize.query('pragma journal_size_limit = 67108864;');
-
-// Import models to register them with Sequelize
-import './test-model';
-import './image-generation';
