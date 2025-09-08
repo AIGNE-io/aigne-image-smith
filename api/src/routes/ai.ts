@@ -3,6 +3,7 @@ import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { Router } from 'express';
 import Joi from 'joi';
+import { Op } from 'sequelize';
 
 import logger from '../libs/logger';
 import { ensureCustomer, getUserCreditBalance } from '../libs/payment';
@@ -39,7 +40,7 @@ const getHistorySchema = Joi.object({
  * Generate AI processed image using AIGNE Hub
  * POST /api/ai/generate
  */
-router.post('/generate', auth(), user(), async (req, res) => {
+router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
   const startTime = Date.now();
 
   try {
@@ -127,7 +128,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
     } catch (creditError) {
       // If credit consumption fails, mark generation as failed
       await generation.updateStatus('failed', {
-        errorMessage: '积分消费失败: ' + (creditError instanceof Error ? creditError.message : '未知错误'),
+        errorMessage: `积分消费失败: ${creditError instanceof Error ? creditError.message : '未知错误'}`,
       });
 
       return res.status(400).json({
@@ -192,7 +193,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
           // Look for image URLs in the response
           const imageUrlMatch = result.content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i);
           if (imageUrlMatch) {
-            generatedImageUrl = imageUrlMatch[0];
+            [generatedImageUrl] = imageUrlMatch;
           } else {
             // If no URL found, treat the content as the result
             generatedImageUrl = result.content;
@@ -225,7 +226,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
       // Update generation record with failure
       await generation.updateStatus('failed', {
         processingTimeMs: Date.now() - processingStartTime,
-        errorMessage: 'AI 处理失败: ' + (aiError instanceof Error ? aiError.message : '未知错误'),
+        errorMessage: `AI 处理失败: ${aiError instanceof Error ? aiError.message : '未知错误'}`,
       });
 
       return res.status(400).json({
@@ -245,7 +246,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
     const newBalanceInfo = await getUserCreditBalance(userDid);
     const newBalance = parseFloat(newBalanceInfo.balance);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         generationId: generation.id,
@@ -283,7 +284,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
       logger.error('更新生成状态失败:', updateError);
     }
 
-    res.status(400).json({
+    return res.status(400).json({
       error: 'AI 生成失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -294,7 +295,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
  * Get AI generation status
  * GET /api/ai/generation/:id
  */
-router.get('/generation/:id', auth(), user(), async (req, res) => {
+router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
@@ -313,7 +314,7 @@ router.get('/generation/:id', auth(), user(), async (req, res) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         id: generation.id,
@@ -331,7 +332,7 @@ router.get('/generation/:id', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成状态失败:', error);
-    res.status(400).json({
+    return res.status(400).json({
       error: '获取生成状态失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -342,7 +343,7 @@ router.get('/generation/:id', auth(), user(), async (req, res) => {
  * Get user's AI generation history
  * GET /api/ai/history
  */
-router.get('/history', auth(), user(), async (req, res) => {
+router.get('/history', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
@@ -377,7 +378,7 @@ router.get('/history', auth(), user(), async (req, res) => {
     // Get user statistics
     const stats = await ImageGeneration.getUserStats(userDid);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         generations: generations.map((gen) => ({
@@ -401,7 +402,7 @@ router.get('/history', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成历史失败:', error);
-    res.status(400).json({
+    return res.status(400).json({
       error: '获取生成历史失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -412,7 +413,7 @@ router.get('/history', auth(), user(), async (req, res) => {
  * Delete a generation record
  * DELETE /api/ai/generation/:id
  */
-router.delete('/generation/:id', auth(), user(), async (req, res) => {
+router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
@@ -433,7 +434,7 @@ router.delete('/generation/:id', auth(), user(), async (req, res) => {
 
     await generation.destroy();
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         message: '生成记录删除成功',
@@ -442,7 +443,7 @@ router.delete('/generation/:id', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('删除生成记录失败:', error);
-    res.status(400).json({
+    return res.status(400).json({
       error: '删除生成记录失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -453,7 +454,7 @@ router.delete('/generation/:id', auth(), user(), async (req, res) => {
  * Get AI generation statistics
  * GET /api/ai/stats
  */
-router.get('/stats', auth(), user(), async (req, res) => {
+router.get('/stats', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
@@ -470,12 +471,12 @@ router.get('/stats', auth(), user(), async (req, res) => {
       where: {
         userDid,
         createdAt: {
-          [require('sequelize').Op.gte]: thirtyDaysAgo,
+          [Op.gte]: thirtyDaysAgo,
         },
       },
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         ...stats,
@@ -485,7 +486,7 @@ router.get('/stats', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成统计失败:', error);
-    res.status(400).json({
+    return res.status(400).json({
       error: '获取生成统计失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
