@@ -6,7 +6,7 @@ import { BN } from '@ocap/util';
 
 import logger from './logger';
 
-// @ts-ignore - 使用类型断言绕过 TypeScript 检查
+// @ts-ignore - Use type assertion to bypass TypeScript checks
 export const payment = (paymentModule as any).default || paymentModule;
 
 // TypeScript interfaces
@@ -39,7 +39,7 @@ export interface MeterEvent {
 }
 
 /**
- * 确保 webhook 端点存在
+ * Ensure webhook endpoints exist
  */
 export const ensureWebhooks = async () => {
   const { list: endpoints } = await payment.webhookEndpoints.list();
@@ -71,7 +71,7 @@ export const ensureMeter = async () => {
   } catch (error) {
     const meter = await payment.meters.create({
       name: 'image_processing',
-      description: 'AI图像处理服务计量器',
+      description: 'AI image processing service meter',
       event_name: 'image_processing',
       aggregation_method: 'sum',
       unit: 'Credits',
@@ -99,8 +99,8 @@ export const ensureCreditPrice = async () => {
         return null;
       }
       await payment.products.create({
-        name: 'AI图像处理积分',
-        description: 'AI图像处理服务积分，支持黑白照片上色、老照片修复等功能',
+        name: 'AI Image Processing Credits',
+        description: 'AI image processing service credits, supports colorization, restoration and enhancement',
         type: 'credit',
         prices: [
           {
@@ -167,7 +167,7 @@ export const ensureCreditCheckoutSession = async (quantity: number = 1) => {
 };
 
 /**
- * 创建当前用户信息
+ * Create current user information
  */
 export const ensureCustomer = async (userDid: string) => {
   try {
@@ -186,11 +186,11 @@ export const ensureCustomer = async (userDid: string) => {
 // ===== Credit Management Functions =====
 
 /**
- * 辅助功能：查询用户 credit 余额
+ * Helper function: Query user credit balance
  */
 export const getUserCreditBalance = async (userDid: string): Promise<CreditBalance> => {
   try {
-    // 确保客户存在
+    // Ensure customer exists
     const customer = await ensureCustomer(userDid);
 
     const meter = await ensureMeter();
@@ -210,12 +210,12 @@ export const getUserCreditBalance = async (userDid: string): Promise<CreditBalan
     });
 
     const paymentCurrency = meter?.paymentCurrency;
-    // 当前Credit 余额
+    // Current credit balance
     let balance = new BN(creditBalance?.[meter.currency_id]?.remainingAmount || 0);
-    // 未结算 Credit
+    // Pending credits
     const pending = new BN(pendingCredit?.[meter.currency_id] || 0);
     if (pending.gt(balance)) {
-      balance = new BN(0); // 余额不能为负数
+      balance = new BN(0); // Balance cannot be negative
     } else {
       balance = balance.sub(pending);
     }
@@ -242,7 +242,7 @@ export const getUserCreditBalance = async (userDid: string): Promise<CreditBalan
 };
 
 /**
- * 核心功能 1：领取试听额度 - 创建 creditGrant
+ * Core function 1: Grant welcome credits - create creditGrant
  */
 export const grantWelcomeCredits = async (userDid: string, amount: number = 5): Promise<CreditGrant> => {
   try {
@@ -250,12 +250,12 @@ export const grantWelcomeCredits = async (userDid: string, amount: number = 5): 
       throw new Error('customerId is required');
     }
 
-    // 确保客户存在
+    // Ensure customer exists
     const customer = await ensureCustomer(userDid);
 
     const meter = await ensureMeter();
 
-    // 创建信用额度
+    // Create credit grant
     const creditGrant = await payment.creditGrants.create({
       customer_id: customer.id,
       amount: amount.toString(),
@@ -291,7 +291,7 @@ export const grantWelcomeCredits = async (userDid: string, amount: number = 5): 
 };
 
 /**
- * 核心功能 2：图像处理，上报消耗量
+ * Core function 2: Image processing, report consumption
  */
 export const consumeCredits = async (
   userDid: string,
@@ -301,23 +301,23 @@ export const consumeCredits = async (
 ): Promise<MeterEvent> => {
   try {
     if (!userDid || !amount || !sessionId) {
-      throw new Error('customerId, amount, sessionId 都是必填字段');
+      throw new Error('customerId, amount, sessionId are all required fields');
     }
 
-    // 确保客户存在
+    // Ensure customer exists
     await ensureCustomer(userDid);
 
-    // 检查积分余额
+    // Check credit balance
     const balance = await getUserCreditBalance(userDid);
     const currentBalance = parseFloat(balance.balance);
     
     if (currentBalance < amount) {
-      throw new Error(`积分不足。需要：${amount}，可用：${currentBalance}`);
+      throw new Error(`Insufficient credits. Required: ${amount}, Available: ${currentBalance}`);
     }
 
-    // 上报图像处理消耗量
+    // Report image processing consumption
     const meterEvent = await payment.meterEvents.create({
-      event_name: 'image_processing', // 保持与 meter 名称一致
+      event_name: 'image_processing', // Keep consistent with meter name
       timestamp: Math.floor(Date.now() / 1000),
       payload: {
         customer_id: userDid,
@@ -346,7 +346,7 @@ export const consumeCredits = async (
 };
 
 /**
- * 检查用户是否有资格获得欢迎积分
+ * Check if user is eligible for welcome credits
  */
 export const isEligibleForWelcomeCredits = async (userDid: string): Promise<boolean> => {
   try {
@@ -359,25 +359,25 @@ export const isEligibleForWelcomeCredits = async (userDid: string): Promise<bool
 };
 
 /**
- * 获取用户积分交易历史
+ * Get user credit transaction history
  */
 export const getCreditHistory = async (userDid: string, limit: number = 50): Promise<any[]> => {
   try {
     const customer = await ensureCustomer(userDid);
 
-    // 获取积分授权记录（正交易）
+    // Get credit grant records (positive transactions)
     const grants = await payment.creditGrants.list({
       customer_id: customer.id,
       limit,
     });
 
-    // 获取计量事件记录（消费交易）
+    // Get meter event records (consumption transactions)
     const events = await payment.meterEvents.list({
       customer_id: customer.id,
       limit,
     });
 
-    // 合并和格式化交易记录
+    // Merge and format transaction records
     const transactions = [
       ...(grants.data?.map((grant: any) => ({
         id: grant.id,
@@ -392,15 +392,15 @@ export const getCreditHistory = async (userDid: string, limit: number = 50): Pro
         type: 'debit',
         amount: -parseFloat(event.payload?.value || '0'),
         timestamp: event.timestamp * 1000,
-        description: '图像处理服务',
+        description: 'Image processing service',
         metadata: event.metadata,
       })) || []),
     ];
 
-    // 按时间戳排序（最新的在前）
+    // Sort by timestamp (newest first)
     return transactions.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
   } catch (error) {
-    logger.error('获取积分历史失败', { userDid, error });
+    logger.error('Failed to get credit history', { userDid, error });
     return [];
   }
 };
