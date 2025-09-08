@@ -1,11 +1,9 @@
+import payment from '@blocklet/payment-js';
 import '@blocklet/sdk/lib/error-handler';
-import dotenv from 'dotenv-flow';
 
 import { ensureSqliteBinaryFile } from '../libs/ensure-sqlite';
 import logger from '../libs/logger';
-import { ensureCreditPrice, ensureMeter, ensureWebhooks, payment } from '../libs/payment';
-
-dotenv.config();
+import { ensureCreditPrice, ensureMeter } from '../libs/payment';
 
 const { name } = require('../../../package.json');
 
@@ -20,9 +18,8 @@ payment.environments.setTestMode(String(process.env.PAYMENT_TEST_MODE) === 'true
     await migrate();
 
     // 初始化支付系统
-    // await ensureWebhooks();
-    // await ensureMeter();
-    // await ensureCreditPrice();
+    await ensureMeter();
+    await ensureCreditPrice();
 
     logger.info(`${name} pre-start successfully`);
     process.exit(0);

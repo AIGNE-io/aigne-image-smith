@@ -32,7 +32,7 @@ export const ImageGenerationSchema = Joi.object<ImageGenerationInput>({
 });
 
 export default class ImageGeneration extends Model<InferAttributes<ImageGeneration>, InferCreationAttributes<ImageGeneration>> {
-  declare id: string;
+  declare id: CreationOptional<string>;
 
   declare userDid: string;
 

@@ -1,9 +1,10 @@
+import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { BN } from '@ocap/util';
 import { Router } from 'express';
 
 import logger from '../libs/logger';
-import { ensureCreditCheckoutSession, ensureCustomer, ensureMeter, payment } from '../libs/payment';
+import { ensureCreditCheckoutSession, ensureCustomer, ensureMeter } from '../libs/payment';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
     const creditGrant = await payment.creditGrants.create({
       customer_id: customer.id,
       amount: '5',
-      currency_id: meter.currency_id,
+      currency_id: meter.currency_id!,
       applicability_config: {
         scope: {
           price_type: 'metered',
@@ -69,7 +70,6 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
   }
 });
 
-
 /**
  * 查询用户积分余额
  */
@@ -105,9 +105,9 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
 
     const paymentCurrency = meter?.paymentCurrency;
     // 当前Credit 余额
-    let balance = new BN(creditBalance?.[meter.currency_id]?.remainingAmount || 0);
+    let balance = new BN(creditBalance?.[meter.currency_id!]?.remainingAmount || 0);
     // 未结算 Credit
-    const pending = new BN(pendingCredit?.[meter.currency_id] || 0);
+    const pending = new BN(pendingCredit?.[meter.currency_id!] || 0);
     if (pending.gt(balance)) {
       balance = new BN(0); // 余额不能为负数
     } else {

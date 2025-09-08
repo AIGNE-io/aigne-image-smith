@@ -1,5 +1,5 @@
 import createLogger from '@blocklet/logger';
 
-const logger = createLogger('FlowBoard');
+const logger = createLogger('Pix Loom');
 
 export default logger;

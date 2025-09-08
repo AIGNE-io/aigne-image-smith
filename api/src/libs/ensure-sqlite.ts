@@ -15,7 +15,7 @@ export async function ensureSqliteBinaryFile() {
     logger.info(`${name} sqlite3 already installed`);
     return;
   } catch {
-    /* empty */
+    logger.error(`${name} sqlite3 already install failed`);
   }
   logger.info(`${name} try install sqlite3`);
 

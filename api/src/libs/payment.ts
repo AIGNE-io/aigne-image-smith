@@ -1,28 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// @ts-nocheck
-import paymentModule from '@blocklet/payment-js';
+import payment, { TCreditGrantExpanded } from '@blocklet/payment-js';
 import { component } from '@blocklet/sdk';
 import { BN } from '@ocap/util';
 
 import logger from './logger';
-
-export const payment = paymentModule.default || paymentModule;
 
 // TypeScript interfaces
 export interface CreditBalance {
   balance: string;
   paymentCurrency?: any;
   isNewUser: boolean;
-}
-
-export interface CreditGrant {
-  id: string;
-  customer_id: string;
-  amount: string;
-  currency_id: string;
-  category: string;
-  name: string;
-  metadata?: Record<string, any>;
 }
 
 export interface MeterEvent {
@@ -36,32 +23,6 @@ export interface MeterEvent {
   identifier: string;
   metadata?: Record<string, any>;
 }
-
-/**
- * Ensure webhook endpoints exist
- */
-export const ensureWebhooks = async () => {
-  const { list: endpoints } = await payment.webhookEndpoints.list();
-  const data = {
-    url: component.getUrl('/api/payment/webhook'),
-    enabled_events: [
-      'customer.credit.insufficient',
-      'customer.subscription.updated',
-      'checkout.session.completed',
-      'customer.subscription.renewed',
-    ],
-  };
-
-  if (endpoints.length > 0) {
-    const webhook = await payment.webhookEndpoints.update(endpoints[0]?.id, data);
-    logger.info('webhooks updated', webhook);
-    return webhook;
-  }
-
-  const webhook = await payment.webhookEndpoints.create(data);
-  logger.info('webhooks created', webhook);
-  return webhook;
-};
 
 export const ensureMeter = async () => {
   try {
@@ -87,7 +48,7 @@ export const ensureCreditPrice = async () => {
     return price;
   } catch {
     try {
-      const { list: paymentCurrencies } = await payment.paymentCurrencies.list();
+      const paymentCurrencies = await payment.paymentCurrencies.list({});
       if (paymentCurrencies.length === 0) {
         logger.error('No payment currencies found');
         return null;
@@ -105,7 +66,7 @@ export const ensureCreditPrice = async () => {
           {
             type: 'one_time',
             unit_amount: '0.10',
-            currency_id: paymentCurrencies[0].id,
+            currency_id: paymentCurrencies[0]!.id,
             // @ts-ignore
             currency_options: paymentCurrencies.map((currency: any) => ({
               currency_id: currency.id,
@@ -170,6 +131,7 @@ export const ensureCreditCheckoutSession = async (quantity: number = 1) => {
  */
 export const ensureCustomer = async (userDid: string) => {
   try {
+    // @ts-ignore
     const customer = await payment.customers.retrieve(userDid, {
       create: true,
     });
@@ -210,9 +172,9 @@ export const getUserCreditBalance = async (userDid: string): Promise<CreditBalan
 
     const paymentCurrency = meter?.paymentCurrency;
     // Current credit balance
-    let balance = new BN(creditBalance?.[meter.currency_id]?.remainingAmount || 0);
+    let balance = new BN(creditBalance?.[meter.currency_id!]?.remainingAmount || 0);
     // Pending credits
-    const pending = new BN(pendingCredit?.[meter.currency_id] || 0);
+    const pending = new BN(pendingCredit?.[meter.currency_id!] || 0);
     if (pending.gt(balance)) {
       balance = new BN(0); // Balance cannot be negative
     } else {
@@ -243,7 +205,7 @@ export const getUserCreditBalance = async (userDid: string): Promise<CreditBalan
 /**
  * Core function 1: Grant welcome credits - create creditGrant
  */
-export const grantWelcomeCredits = async (userDid: string, amount: number = 5): Promise<CreditGrant> => {
+export const grantWelcomeCredits = async (userDid: string, amount: number = 5): Promise<TCreditGrantExpanded> => {
   try {
     if (!userDid) {
       throw new Error('customerId is required');
@@ -258,7 +220,7 @@ export const grantWelcomeCredits = async (userDid: string, amount: number = 5): 
     const creditGrant = await payment.creditGrants.create({
       customer_id: customer.id,
       amount: amount.toString(),
-      currency_id: meter.currency_id,
+      currency_id: meter.currency_id!,
       applicability_config: {
         scope: {
           price_type: 'metered',
@@ -354,52 +316,5 @@ export const isEligibleForWelcomeCredits = async (userDid: string): Promise<bool
   } catch (error) {
     logger.error('check welcome credits eligibility failed', { userDid, error });
     return false;
-  }
-};
-
-/**
- * Get user credit transaction history
- */
-export const getCreditHistory = async (userDid: string, limit: number = 50): Promise<any[]> => {
-  try {
-    const customer = await ensureCustomer(userDid);
-
-    // Get credit grant records (positive transactions)
-    const grants = await payment.creditGrants.list({
-      customer_id: customer.id,
-      limit,
-    });
-
-    // Get meter event records (consumption transactions)
-    const events = await payment.meterEvents.list({
-      customer_id: customer.id,
-      limit,
-    });
-
-    // Merge and format transaction records
-    const transactions = [
-      ...(grants.data?.map((grant: any) => ({
-        id: grant.id,
-        type: 'credit',
-        amount: parseFloat(grant.amount),
-        timestamp: new Date(grant.created_at).getTime(),
-        description: grant.name,
-        metadata: grant.metadata,
-      })) || []),
-      ...(events.data?.map((event: any) => ({
-        id: event.id,
-        type: 'debit',
-        amount: -parseFloat(event.payload?.value || '0'),
-        timestamp: event.timestamp * 1000,
-        description: 'Image processing service',
-        metadata: event.metadata,
-      })) || []),
-    ];
-
-    // Sort by timestamp (newest first)
-    return transactions.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
-  } catch (error) {
-    logger.error('Failed to get credit history', { userDid, error });
-    return [];
   }
 };

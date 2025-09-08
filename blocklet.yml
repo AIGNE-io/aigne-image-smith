@@ -45,13 +45,7 @@ requirements:
 scripts:
   preStart: node api/hooks/pre-start.js
   dev: npm run start
-environments:
-  - name: GITHUB_TOKEN
-    description: github token for issue fetch
-    required: true
-    default: ''
-    secure: true
-    shared: false
+environments: []
 capabilities:
   navigation: true
 screenshots: []

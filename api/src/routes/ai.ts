@@ -1,10 +1,11 @@
+import { AIGNEHubChatModel } from '@aigne/aigne-hub';
+import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { Router } from 'express';
 import Joi from 'joi';
-import { AIGNEHubChatModel } from '@aigne/aigne-hub';
 
 import logger from '../libs/logger';
-import { getUserCreditBalance, ensureCustomer, payment } from '../libs/payment';
+import { ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import ImageGeneration from '../store/models/image-generation';
 
 const router = Router();
@@ -19,16 +20,19 @@ const model = new AIGNEHubChatModel({
 const generateImageSchema = Joi.object({
   prompt: Joi.string().min(1).max(1000).required(),
   originalImageUrl: Joi.string().uri().optional(),
-  operationType: Joi.string().valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation').required(),
+  operationType: Joi.string()
+    .valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation')
+    .required(),
   metadata: Joi.object().optional(),
 });
 
 const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
   offset: Joi.number().integer().min(0).default(0),
-  operationType: Joi.string().valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation').optional(),
+  operationType: Joi.string()
+    .valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation')
+    .optional(),
 });
-
 
 /**
  * Generate AI processed image using AIGNE Hub
@@ -36,7 +40,7 @@ const getHistorySchema = Joi.object({
  */
 router.post('/generate', auth(), user(), async (req, res) => {
   const startTime = Date.now();
-  
+
   try {
     const userDid = req.user?.did;
     if (!userDid) {
@@ -91,7 +95,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
     let meterEvent: any = null;
     try {
       const sessionId = `gen_${generation.id}_${Date.now()}`;
-      
+
       // 确保客户存在
       await ensureCustomer(userDid);
 
@@ -118,13 +122,12 @@ router.post('/generate', auth(), user(), async (req, res) => {
         sessionId,
         eventId: meterEvent.id,
       });
-
     } catch (creditError) {
       // If credit consumption fails, mark generation as failed
       await generation.updateStatus('failed', {
         errorMessage: '积分消费失败: ' + (creditError instanceof Error ? creditError.message : '未知错误'),
       });
-      
+
       return res.status(400).json({
         error: '积分消费失败',
         message: creditError instanceof Error ? creditError.message : '未知错误',
@@ -150,15 +153,13 @@ router.post('/generate', auth(), user(), async (req, res) => {
       const fullPrompt = operationPrompts[operationType] || prompt;
 
       // Prepare message content
-      const messageContent: any[] = [
-        { type: 'text', text: fullPrompt }
-      ];
+      const messageContent: any[] = [{ type: 'text', text: fullPrompt }];
 
       // Add original image if provided
       if (originalImageUrl) {
         messageContent.push({
           type: 'url',
-          url: originalImageUrl
+          url: originalImageUrl,
         });
       }
 
@@ -171,10 +172,12 @@ router.post('/generate', auth(), user(), async (req, res) => {
       });
 
       const result = await model.invoke({
-        messages: [{
-          role: 'user',
-          content: messageContent
-        }]
+        messages: [
+          {
+            role: 'user',
+            content: messageContent,
+          },
+        ],
       });
 
       processingTime = Date.now() - processingStartTime;
@@ -210,7 +213,6 @@ router.post('/generate', auth(), user(), async (req, res) => {
         processingTime,
         resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
-
     } catch (aiError) {
       logger.error('AI 处理失败', {
         generationId: generation.id,
@@ -258,7 +260,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
   } catch (error) {
     const processingTime = Date.now() - startTime;
     logger.error('AI 生成失败:', error);
-    
+
     // Try to update generation record if it exists
     try {
       const userDid = req.user?.did;
@@ -267,7 +269,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
           where: { userDid },
           order: [['createdAt', 'DESC']],
         });
-        
+
         if (failedGeneration && failedGeneration.status !== 'completed') {
           await failedGeneration.updateStatus('failed', {
             processingTimeMs: processingTime,
@@ -376,7 +378,7 @@ router.get('/history', auth(), user(), async (req, res) => {
     res.json({
       success: true,
       data: {
-        generations: generations.map(gen => ({
+        generations: generations.map((gen) => ({
           id: gen.id,
           originalImageUrl: gen.originalImageUrl,
           generatedImageUrl: gen.generatedImageUrl,
