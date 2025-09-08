@@ -6,7 +6,7 @@ import { BN } from '@ocap/util';
 
 import logger from './logger';
 
-export const payment = paymentModule;
+export const payment = paymentModule.default || paymentModule;
 
 // TypeScript interfaces
 export interface CreditBalance {
