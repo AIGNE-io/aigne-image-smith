@@ -6,8 +6,7 @@ import { BN } from '@ocap/util';
 
 import logger from './logger';
 
-// @ts-ignore - Use type assertion to bypass TypeScript checks
-export const payment = (paymentModule as any).default || paymentModule;
+export const payment = paymentModule;
 
 // TypeScript interfaces
 export interface CreditBalance {
@@ -297,7 +296,7 @@ export const consumeCredits = async (
   userDid: string,
   amount: number,
   sessionId: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, any> = {},
 ): Promise<MeterEvent> => {
   try {
     if (!userDid || !amount || !sessionId) {
@@ -310,7 +309,7 @@ export const consumeCredits = async (
     // Check credit balance
     const balance = await getUserCreditBalance(userDid);
     const currentBalance = parseFloat(balance.balance);
-    
+
     if (currentBalance < amount) {
       throw new Error(`Insufficient credits. Required: ${amount}, Available: ${currentBalance}`);
     }
