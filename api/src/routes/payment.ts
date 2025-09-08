@@ -13,19 +13,23 @@ const router = Router();
  */
 router.post('/credits/grants', auth(), user(), async (req, res) => {
   try {
-    const userDid = req.user?.did;
-    if (!userDid) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-        message: '用户未认证',
-      });
-    }
+    const userDid = req.user?.did!!;
 
     // 确保客户存在
     const customer = await ensureCustomer(userDid);
 
     const meter = await ensureMeter();
+
+    const { count } = await payment.creditGrants.list({
+      customer_id: customer.id,
+    });
+
+    if (count > 0) {
+      return res.status(400).json({
+        success: false,
+        message: '已经领取过积分',
+      });
+    }
 
     // 创建信用额度
     const creditGrant = await payment.creditGrants.create({
@@ -75,14 +79,7 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
  */
 router.get('/credits/balance', auth(), user(), async (req, res) => {
   try {
-    const userDid = req.user?.did;
-    if (!userDid) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-        message: '用户未认证',
-      });
-    }
+    const userDid = req.user?.did!!;
 
     // 确保客户存在
     const customer = await ensureCustomer(userDid);
@@ -118,7 +115,7 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
       customer_id: customer.id,
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         balance: balance.toString(),
@@ -132,7 +129,7 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
       customerId: req.user?.did,
       error: error.message,
     });
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: error.message,
       message: '信用余额查询失败',
@@ -154,14 +151,14 @@ router.post('/credits/checkout', auth(), user(), async (req, res) => {
     }
 
     const checkoutSession = await ensureCreditCheckoutSession(quantity);
-    res.json({
+    return res.json({
       success: true,
       data: checkoutSession,
       message: 'checkout session created',
     });
   } catch (error) {
     logger.error('checkout session creation failed', { error });
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       error: error.message,
       message: 'checkout session creation failed',
@@ -186,7 +183,7 @@ const handleWebhook = (req: any, res: any) => {
     }
 
     switch (type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         // 处理结账会话完成
         const session = body.data.object;
         logger.info('结账会话完成', {
@@ -195,7 +192,7 @@ const handleWebhook = (req: any, res: any) => {
           amount: session.amount_total,
         });
         break;
-
+      }
       case 'customer.subscription.updated':
         logger.info('用户订阅更新', { body });
         break;
@@ -208,10 +205,10 @@ const handleWebhook = (req: any, res: any) => {
         logger.info('未处理的 webhook 事件类型', { type });
     }
 
-    res.status(200).json({ message: 'success' });
+    return res.status(200).json({ message: 'success' });
   } catch (error) {
     logger.error('handle webhook error', { error, body: JSON.stringify(req.body, null, 2) });
-    res.status(400).json({ message: `handle webhook error: ${error.message}` });
+    return res.status(400).json({ message: `handle webhook error: ${error.message}` });
   }
 };
 
