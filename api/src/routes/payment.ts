@@ -62,7 +62,7 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
       customerId: req.user?.did,
       error,
     });
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
       error: error.message,
       message: '领取欢迎积分失败',
@@ -132,7 +132,7 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
       customerId: req.user?.did,
       error: error.message,
     });
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: error.message,
       message: '信用余额查询失败',
@@ -161,7 +161,7 @@ router.post('/credits/checkout', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('checkout session creation failed', { error });
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: error.message,
       message: 'checkout session creation failed',
@@ -211,7 +211,7 @@ const handleWebhook = (req: any, res: any) => {
     res.status(200).json({ message: 'success' });
   } catch (error) {
     logger.error('handle webhook error', { error, body: JSON.stringify(req.body, null, 2) });
-    res.status(500).json({ message: `handle webhook error: ${error.message}` });
+    res.status(400).json({ message: `handle webhook error: ${error.message}` });
   }
 };
 

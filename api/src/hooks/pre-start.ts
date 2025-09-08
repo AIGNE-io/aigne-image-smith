@@ -24,7 +24,6 @@ payment.environments.setTestMode(String(process.env.PAYMENT_TEST_MODE) === 'true
     logger.info(`${name} pre-start successfully`);
     process.exit(0);
   } catch (err) {
-    logger.error('*****');
     logger.error(`${name} pre-start error: ${err}`);
     process.exit(1);
   }

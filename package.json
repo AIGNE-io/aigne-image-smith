@@ -55,6 +55,7 @@
     "@blocklet/embed": "^0.2.5",
     "@blocklet/js-sdk": "^1.16.48",
     "@blocklet/logger": "^1.16.48",
+    "@blocklet/payment-js": "^1.20.4",
     "@blocklet/sdk": "^1.16.48",
     "@blocklet/ui-react": "^3.1.28",
     "@blocklet/uploader": "^0.2.7",

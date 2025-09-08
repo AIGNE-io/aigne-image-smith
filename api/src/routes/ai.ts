@@ -20,9 +20,10 @@ const model = new AIGNEHubChatModel({
 const generateImageSchema = Joi.object({
   prompt: Joi.string().min(1).max(1000).required(),
   originalImageUrl: Joi.string().uri().optional(),
+  clientId: Joi.string().required(),
   operationType: Joi.string()
     .valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation')
-    .required(),
+    .optional(),
   metadata: Joi.object().optional(),
 });
 
@@ -56,7 +57,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
       });
     }
 
-    const { prompt, originalImageUrl, operationType, metadata } = value;
+    const { prompt, originalImageUrl, clientId, operationType = 'generation', metadata } = value;
 
     // Check credit balance first
     const balanceInfo = await getUserCreditBalance(userDid);
@@ -76,7 +77,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
       userDid,
       originalImageUrl,
       generatedImageUrl: '', // Will be updated when processing completes
-      operationType,
+      clientId,
       status: 'pending',
       creditsConsumed: requiredCredits,
       metadata: {
@@ -84,6 +85,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
         userAgent: req.get('User-Agent'),
         startTime: new Date().toISOString(),
         prompt,
+        operationType,
         ...metadata,
       },
     });
@@ -226,7 +228,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
         errorMessage: 'AI 处理失败: ' + (aiError instanceof Error ? aiError.message : '未知错误'),
       });
 
-      return res.status(500).json({
+      return res.status(400).json({
         error: 'AI 处理失败',
         message: aiError instanceof Error ? aiError.message : '未知错误',
         generationId: generation.id,
@@ -281,7 +283,7 @@ router.post('/generate', auth(), user(), async (req, res) => {
       logger.error('更新生成状态失败:', updateError);
     }
 
-    res.status(500).json({
+    res.status(400).json({
       error: 'AI 生成失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -317,7 +319,7 @@ router.get('/generation/:id', auth(), user(), async (req, res) => {
         id: generation.id,
         originalImageUrl: generation.originalImageUrl,
         generatedImageUrl: generation.generatedImageUrl,
-        operationType: generation.operationType,
+        operationType: generation.metadata?.operationType || 'generation',
         status: generation.status,
         creditsConsumed: generation.creditsConsumed,
         processingTimeMs: generation.processingTimeMs,
@@ -329,7 +331,7 @@ router.get('/generation/:id', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成状态失败:', error);
-    res.status(500).json({
+    res.status(400).json({
       error: '获取生成状态失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -382,7 +384,7 @@ router.get('/history', auth(), user(), async (req, res) => {
           id: gen.id,
           originalImageUrl: gen.originalImageUrl,
           generatedImageUrl: gen.generatedImageUrl,
-          operationType: gen.operationType,
+          operationType: gen.metadata?.operationType || 'generation',
           status: gen.status,
           creditsConsumed: gen.creditsConsumed,
           processingTimeMs: gen.processingTimeMs,
@@ -399,7 +401,7 @@ router.get('/history', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成历史失败:', error);
-    res.status(500).json({
+    res.status(400).json({
       error: '获取生成历史失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -440,7 +442,7 @@ router.delete('/generation/:id', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('删除生成记录失败:', error);
-    res.status(500).json({
+    res.status(400).json({
       error: '删除生成记录失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
@@ -483,7 +485,7 @@ router.get('/stats', auth(), user(), async (req, res) => {
     });
   } catch (error) {
     logger.error('获取生成统计失败:', error);
-    res.status(500).json({
+    res.status(400).json({
       error: '获取生成统计失败',
       message: error instanceof Error ? error.message : '未知错误',
     });
