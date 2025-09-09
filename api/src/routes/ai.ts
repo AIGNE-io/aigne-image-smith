@@ -1,12 +1,16 @@
 import { AIGNEHubChatModel } from '@aigne/aigne-hub';
+import { LocalContent } from '@aigne/core/lib/cjs/agents/chat-model';
 import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
+import { uploadToMediaKit } from '@blocklet/uploader-server';
+import axios from 'axios';
 import { Router } from 'express';
 import Joi from 'joi';
 import { Op } from 'sequelize';
 
 import logger from '../libs/logger';
 import { ensureCustomer, getUserCreditBalance } from '../libs/payment';
+import { getImageUrl } from '../libs/utils';
 import ImageGeneration from '../store/models/image-generation';
 
 const router = Router();
@@ -14,26 +18,23 @@ const router = Router();
 // Initialize AI model
 const model = new AIGNEHubChatModel({
   model: 'google/gemini-2.5-flash-image-preview',
-  apiKey: process.env.AIGNE_API_KEY || '', // Add your API key to environment
+  modelOptions: {
+    modalities: ['text', 'image'],
+  },
 });
 
 // Validation schemas
 const generateImageSchema = Joi.object({
   prompt: Joi.string().min(1).max(1000).required(),
-  originalImageUrl: Joi.string().uri().optional(),
+  originalImg: Joi.string().optional(),
   clientId: Joi.string().required(),
-  operationType: Joi.string()
-    .valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation')
-    .optional(),
   metadata: Joi.object().optional(),
 });
 
 const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
   offset: Joi.number().integer().min(0).default(0),
-  operationType: Joi.string()
-    .valid('colorization', 'restoration', 'enhancement', 'style_transfer', 'generation')
-    .optional(),
+  clientId: Joi.string().required(),
 });
 
 /**
@@ -44,11 +45,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
   const startTime = Date.now();
 
   try {
-    const userDid = req.user?.did;
-    if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
-    }
-
+    const userDid = req.user?.did!!;
     // Validate request body
     const { error, value } = generateImageSchema.validate(req.body);
     if (error) {
@@ -58,7 +55,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
-    const { prompt, originalImageUrl, clientId, operationType = 'generation', metadata } = value;
+    const { prompt, originalImg, clientId, metadata } = value;
 
     // Check credit balance first
     const balanceInfo = await getUserCreditBalance(userDid);
@@ -76,17 +73,15 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Create initial record in database
     const generation = await ImageGeneration.validateAndCreate({
       userDid,
-      originalImageUrl,
-      generatedImageUrl: '', // Will be updated when processing completes
+      originalImg,
+      generatedImg: '', // Will be updated when processing completes
       clientId,
       status: 'pending',
       creditsConsumed: requiredCredits,
       metadata: {
         requestIp: req.ip,
-        userAgent: req.get('User-Agent'),
         startTime: new Date().toISOString(),
         prompt,
-        operationType,
         ...metadata,
       },
     });
@@ -96,9 +91,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     // Consume credits during processing - 直接集成消耗上报逻辑
     let meterEvent: any = null;
+    const sessionId = `gen_${generation.id}_${Date.now()}`;
     try {
-      const sessionId = `gen_${generation.id}_${Date.now()}`;
-
       // 确保客户存在
       await ensureCustomer(userDid);
 
@@ -112,10 +106,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         },
         identifier: `${userDid}_${sessionId}_${Date.now()}`,
         metadata: {
-          operation_type: operationType,
           generation_id: generation.id,
-          original_image_url: originalImageUrl,
-          prompt,
+          original_image_url: originalImg,
         },
       });
 
@@ -139,39 +131,41 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     }
 
     // Prepare AI processing
-    let generatedImageUrl = '';
+    let generatedImg = '';
     let processingTime = 0;
+    let fileName = '';
     const processingStartTime = Date.now();
 
     try {
-      // Build prompt based on operation type
-      const operationPrompts: Record<string, string> = {
-        colorization: `请为这张黑白照片上色: ${prompt}`,
-        restoration: `请修复这张老照片: ${prompt}`,
-        enhancement: `请增强这张图片的质量: ${prompt}`,
-        style_transfer: `请对这张图片进行风格转换: ${prompt}`,
-        generation: `请生成一张图片: ${prompt}`,
-      };
-
-      const fullPrompt = operationPrompts[operationType] || prompt;
+      const fullPrompt = prompt;
 
       // Prepare message content
       const messageContent: any[] = [{ type: 'text', text: fullPrompt }];
 
       // Add original image if provided
-      if (originalImageUrl) {
+      if (originalImg) {
+        const imgUrl = getImageUrl(originalImg);
+        const getMimeType = async (imgUrl: string) => {
+          try {
+            const { data } = await axios.get(`${imgUrl}.json`);
+            return data.metadata.type;
+          } catch (error) {
+            return 'image/jpeg';
+          }
+        };
+        const mimeType = await getMimeType(imgUrl);
         messageContent.push({
           type: 'url',
-          url: originalImageUrl,
+          url: imgUrl,
+          mimeType,
         });
       }
 
       // Call AIGNE Hub API
       logger.info('开始调用 AIGNE Hub API', {
         generationId: generation.id,
-        operationType,
         prompt: fullPrompt,
-        hasOriginalImage: !!originalImageUrl,
+        hasOriginalImage: getImageUrl(originalImg),
       });
 
       const result = await model.invoke({
@@ -183,31 +177,51 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         ],
       });
 
-      processingTime = Date.now() - processingStartTime;
-
-      // Extract generated image URL from result
-      if (result && result.content) {
-        // Parse the result to extract image URL
-        // Note: Adjust this parsing logic based on actual AIGNE response format
-        if (typeof result.content === 'string') {
-          // Look for image URLs in the response
-          const imageUrlMatch = result.content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i);
-          if (imageUrlMatch) {
-            [generatedImageUrl] = imageUrlMatch;
-          } else {
-            // If no URL found, treat the content as the result
-            generatedImageUrl = result.content;
-          }
-        } else if (typeof result.content === 'object' && result.content !== null) {
-          // Handle structured response
-          generatedImageUrl = JSON.stringify(result.content);
-        } else {
-          // Fallback to string conversion
-          generatedImageUrl = String(result.content);
-        }
+      if (!result.files || result.files.length === 0) {
+        return res.status(400).json({
+          error: '图片生成失败',
+          message: '图片生成失败',
+          generationId: generation.id,
+        });
       }
 
-      if (!generatedImageUrl) {
+      const { path: filePath, mimeType } = result.files[0]! as LocalContent;
+
+      const getFileExtension = (mimeType: string | undefined): string => {
+        if (!mimeType) return '.jpeg';
+        const mimeToExtension: Record<string, string> = {
+          'image/jpeg': '.jpeg',
+          'image/jpg': '.jpg',
+          'image/png': '.png',
+          'image/gif': '.gif',
+          'image/webp': '.webp',
+          'image/bmp': '.bmp',
+          'image/tiff': '.tiff',
+          'image/svg+xml': '.svg',
+        };
+        return mimeToExtension[mimeType] || '.jpeg';
+      };
+
+      const fileExtension = getFileExtension(mimeType);
+      fileName = `${userDid}_${sessionId}_${Date.now()}${fileExtension}`;
+      generatedImg = await (async () => {
+        try {
+          const res = (
+            await uploadToMediaKit({
+              filePath,
+              fileName,
+            })
+          )?.data;
+          return (res as any).filename;
+        } catch (error) {
+          logger.error(`Failed to upload asset ${filePath}:`, error);
+          return '';
+        }
+      })();
+
+      processingTime = Date.now() - processingStartTime;
+
+      if (!generatedImg) {
         throw new Error('AI 模型未返回有效的图片结果');
       }
 
@@ -217,6 +231,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
     } catch (aiError) {
+      console.error(aiError);
       logger.error('AI 处理失败', {
         generationId: generation.id,
         error: aiError instanceof Error ? aiError.message : '未知错误',
@@ -238,7 +253,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     // Update generation record with results
     await generation.update({
-      generatedImageUrl,
+      generatedImg,
       status: 'completed',
       processingTimeMs: processingTime,
     });
@@ -250,14 +265,14 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       success: true,
       data: {
         generationId: generation.id,
-        originalImageUrl,
-        generatedImageUrl,
-        operationType,
+        originalImg,
+        generatedImg,
         processingTimeMs: processingTime,
         creditsConsumed: requiredCredits,
+        fileName,
         newBalance,
         status: 'completed',
-        message: `${operationType} 处理完成`,
+        message: '处理完成',
       },
     });
   } catch (error) {
@@ -318,9 +333,8 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
       success: true,
       data: {
         id: generation.id,
-        originalImageUrl: generation.originalImageUrl,
-        generatedImageUrl: generation.generatedImageUrl,
-        operationType: generation.metadata?.operationType || 'generation',
+        originalImageUrl: generation.originalImg,
+        generatedImageUrl: generation.generatedImg,
         status: generation.status,
         creditsConsumed: generation.creditsConsumed,
         processingTimeMs: generation.processingTimeMs,
@@ -345,10 +359,7 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
  */
 router.get('/history', auth(), user(), async (req, res): Promise<any> => {
   try {
-    const userDid = req.user?.did;
-    if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
-    }
+    const userDid = req.user?.did!!;
 
     // Validate query parameters
     const { error, value } = getHistorySchema.validate(req.query);
@@ -359,12 +370,12 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
-    const { limit, offset, operationType } = value;
+    const { limit, offset, clientId } = value;
 
     // Build where clause
     const whereClause: any = { userDid };
-    if (operationType) {
-      whereClause.operationType = operationType;
+    if (clientId) {
+      whereClause.clientId = clientId;
     }
 
     // Get generations with pagination
@@ -383,9 +394,8 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
       data: {
         generations: generations.map((gen) => ({
           id: gen.id,
-          originalImageUrl: gen.originalImageUrl,
-          generatedImageUrl: gen.generatedImageUrl,
-          operationType: gen.metadata?.operationType || 'generation',
+          originalImg: gen.originalImg,
+          generatedImg: gen.generatedImg,
           status: gen.status,
           creditsConsumed: gen.creditsConsumed,
           processingTimeMs: gen.processingTimeMs,

@@ -15,12 +15,12 @@ export const up: Migration = async ({ context: queryInterface }) => {
       allowNull: false,
       comment: 'DID of the user who requested the generation',
     },
-    originalImageUrl: {
+    originalImg: {
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'URL of the original image (for restoration/colorization)',
     },
-    generatedImageUrl: {
+    generatedImg: {
       type: DataTypes.TEXT,
       allowNull: false,
       comment: 'URL of the generated/processed image',

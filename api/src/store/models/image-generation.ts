@@ -9,8 +9,8 @@ const nextId = () => idGenerator.nextId().toString();
 
 interface ImageGenerationInput {
   userDid: string;
-  originalImageUrl?: string;
-  generatedImageUrl: string;
+  originalImg?: string;
+  generatedImg: string;
   clientId: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   creditsConsumed: number;
@@ -21,8 +21,8 @@ interface ImageGenerationInput {
 
 export const ImageGenerationSchema = Joi.object<ImageGenerationInput>({
   userDid: Joi.string().required(),
-  originalImageUrl: Joi.string().uri().optional(),
-  generatedImageUrl: Joi.string().uri().required(),
+  originalImg: Joi.string().required(),
+  generatedImg: Joi.string().optional().allow(''),
   clientId: Joi.string().required(),
   status: Joi.string().valid('pending', 'processing', 'completed', 'failed').default('pending'),
   creditsConsumed: Joi.number().integer().min(0).required(),
@@ -39,9 +39,9 @@ export default class ImageGeneration extends Model<
 
   declare userDid: string;
 
-  declare originalImageUrl: CreationOptional<string>;
+  declare originalImg: CreationOptional<string>;
 
-  declare generatedImageUrl: string;
+  declare generatedImg: string;
 
   declare clientId: string;
 
@@ -137,12 +137,12 @@ ImageGeneration.init(
       allowNull: false,
       comment: 'DID of the user who requested the generation',
     },
-    originalImageUrl: {
+    originalImg: {
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'URL of the original image (for restoration/colorization)',
     },
-    generatedImageUrl: {
+    generatedImg: {
       type: DataTypes.TEXT,
       allowNull: false,
       comment: 'URL of the generated/processed image',
