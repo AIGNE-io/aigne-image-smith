@@ -24,23 +24,25 @@ export interface MeterEvent {
   metadata?: Record<string, any>;
 }
 
+const isTestMode = String(process.env.PAYMENT_TEST_MODE) === 'true';
+export const METER_NAME = isTestMode ? 'image_processing_test' : 'image_processing';
+const IMAGE_PROCESSING_PRICE_KEY = isTestMode ? 'image_processing_per_credit_test' : 'image_processing_per_credit';
+
 export const ensureMeter = async () => {
   try {
-    const meter = await payment.meters.retrieve('image_processing');
+    const meter = await payment.meters.retrieve(METER_NAME);
     return meter;
   } catch (error) {
     const meter = await payment.meters.create({
-      name: 'image_processing',
+      name: METER_NAME,
       description: 'AI image processing service meter',
-      event_name: 'image_processing',
+      event_name: METER_NAME,
       aggregation_method: 'sum',
       unit: 'Credits',
     });
     return meter;
   }
 };
-
-export const IMAGE_PROCESSING_PRICE_KEY = 'image_processing_per_credit';
 
 export const ensureCreditPrice = async () => {
   try {
@@ -230,7 +232,7 @@ export const grantWelcomeCredits = async (userDid: string, amount: number = 5): 
       name: 'New User Welcome',
       metadata: {
         granted_at: new Date().toISOString(),
-        service_type: 'image_processing',
+        service_type: METER_NAME,
         granted_by: 'system',
       },
     });
@@ -278,7 +280,7 @@ export const consumeCredits = async (
 
     // Report image processing consumption
     const meterEvent = await payment.meterEvents.create({
-      event_name: 'image_processing', // Keep consistent with meter name
+      event_name: METER_NAME, // Keep consistent with meter name
       timestamp: Math.floor(Date.now() / 1000),
       payload: {
         customer_id: userDid,

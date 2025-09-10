@@ -9,7 +9,7 @@ import Joi from 'joi';
 import { Op } from 'sequelize';
 
 import logger from '../libs/logger';
-import { ensureCustomer, getUserCreditBalance } from '../libs/payment';
+import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import { getImageUrl } from '../libs/utils';
 import ImageGeneration from '../store/models/image-generation';
 
@@ -92,13 +92,14 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Consume credits during processing - 直接集成消耗上报逻辑
     let meterEvent: any = null;
     const sessionId = `gen_${generation.id}_${Date.now()}`;
+    let customer = null;
     try {
       // 确保客户存在
-      await ensureCustomer(userDid);
+      customer = await ensureCustomer(userDid);
 
       // 直接上报图像处理消耗量
       meterEvent = await payment.meterEvents.create({
-        event_name: 'image_processing', // 保持与 meter 名称一致
+        event_name: METER_NAME, // 保持与 meter 名称一致
         timestamp: Math.floor(Date.now() / 1000),
         payload: {
           customer_id: userDid,
@@ -231,6 +232,27 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
     } catch (aiError) {
+      // 创建信用额度
+      const meter = await payment.meters.retrieve(METER_NAME);
+      if (meter && customer) {
+        await payment.creditGrants.create({
+          customer_id: customer.id,
+          amount: `${requiredCredits}`,
+          currency_id: meter.currency_id!,
+          applicability_config: {
+            scope: {
+              price_type: 'metered',
+            },
+          },
+          category: 'promotional',
+          name: '图片生成失败，Credit 退回',
+          metadata: {
+            granted_at: new Date().toISOString(),
+            service_type: METER_NAME,
+            granted_by: 'system',
+          },
+        });
+      }
       console.error(aiError);
       logger.error('AI 处理失败', {
         generationId: generation.id,
@@ -373,7 +395,7 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
     const { limit, offset, clientId } = value;
 
     // Build where clause
-    const whereClause: any = { userDid };
+    const whereClause: any = { userDid, status: 'completed' };
     if (clientId) {
       whereClause.clientId = clientId;
     }

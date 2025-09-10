@@ -5,6 +5,7 @@ import { Router } from 'express';
 
 import logger from '../libs/logger';
 import { ensureCreditCheckoutSession, ensureCustomer, ensureMeter } from '../libs/payment';
+import wsServer from '../ws';
 
 const router = Router();
 
@@ -166,10 +167,10 @@ router.post('/credits/checkout', auth(), user(), async (req, res) => {
   }
 });
 
-const handleWebhook = (req: any, res: any) => {
+const handleWebhook = async (req: any, res: any) => {
   try {
     const { body } = req;
-    const { type } = body;
+    const { type } = req.body;
 
     logger.info('received payment-kit webhook', {
       eventId: body.id,
@@ -191,6 +192,18 @@ const handleWebhook = (req: any, res: any) => {
           customerId: session.customer_id,
           amount: session.amount_total,
         });
+
+        const meta = body.data.object;
+        const { payment_status: paymentStatus } = meta;
+        if (paymentStatus === 'paid') {
+          // 1. 通过 key 和 customer 来标识一个用户是否成功参加了规则
+          const { customer } = meta;
+          const userDid = customer.did;
+          wsServer.broadcast(userDid, {
+            event: 'finish-payment',
+          });
+        }
+
         break;
       }
       case 'customer.subscription.updated':

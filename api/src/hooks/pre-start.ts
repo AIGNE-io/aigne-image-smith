@@ -1,4 +1,3 @@
-import payment from '@blocklet/payment-js';
 import '@blocklet/sdk/lib/error-handler';
 
 import { ensureSqliteBinaryFile } from '../libs/ensure-sqlite';
@@ -6,9 +5,6 @@ import logger from '../libs/logger';
 import { ensureCreditPrice, ensureMeter } from '../libs/payment';
 
 const { name } = require('../../../package.json');
-
-// 设置支付测试模式
-payment.environments.setTestMode(String(process.env.PAYMENT_TEST_MODE) === 'true');
 
 (async () => {
   try {
