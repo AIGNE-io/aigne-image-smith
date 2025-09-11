@@ -448,9 +448,6 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
 router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
-    if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
-    }
 
     const { id } = req.params;
     const generation = await ImageGeneration.findOne({
@@ -459,6 +456,13 @@ router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> 
 
     if (!generation) {
       return res.status(404).json({
+        error: '生成记录未找到',
+        message: '生成记录未找到或访问被拒绝',
+      });
+    }
+
+    if (userDid !== generation.userDid) {
+      return res.status(403).json({
         error: '生成记录未找到',
         message: '生成记录未找到或访问被拒绝',
       });
