@@ -48,7 +48,8 @@ scripts:
 environments: []
 capabilities:
   navigation: true
-screenshots: []
+screenshots:
+  - f45aa844d2aff0447810a4bf58f2a235.png
 components: []
 name: z2qaJJC9zbsHpCjZW2XTT7StPFY3MvTumVoXY
 egress: true
