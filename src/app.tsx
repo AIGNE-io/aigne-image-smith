@@ -2,11 +2,9 @@ import { ConfigProvider } from '@arcblock/ux/lib/Config';
 import { ErrorFallback } from '@arcblock/ux/lib/ErrorBoundary';
 import withTracker from '@arcblock/ux/lib/withTracker';
 import { Box, CircularProgress, CssBaseline } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import { SessionProvider } from './contexts/session';
 import { appThemeOptions } from './libs/theme';
@@ -34,12 +32,10 @@ function App() {
   return (
     <Suspense fallback={fallback}>
       <ErrorBoundary FallbackComponent={ErrorFallback} onReset={window.location.reload}>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <CssBaseline />
-          <Routes>
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </LocalizationProvider>
+        <CssBaseline />
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
       </ErrorBoundary>
     </Suspense>
   );
