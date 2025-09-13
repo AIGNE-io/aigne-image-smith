@@ -20,6 +20,7 @@ import ProjectContentEditor, {
   ProjectContentData,
   SUPPORTED_LANGUAGES,
 } from '../../../components/project-content-editor';
+import UploaderProvider from '../../../components/uploader';
 import api from '../../../libs/api';
 
 interface AIProject {
@@ -75,7 +76,7 @@ const defaultFormData: ProjectFormData = {
   },
 };
 
-export default function EditProject() {
+function EditProjectContent() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<AIProject | null>(null);
@@ -115,6 +116,9 @@ export default function EditProject() {
           });
           Object.keys(projectData.description || {}).forEach((lang) => {
             descData[lang] = projectData.description[lang] || '';
+          });
+          Object.keys(projectData.seoImageUrl || {}).forEach((lang) => {
+            seoImageData[lang] = projectData.seoImageUrl[lang] || '';
           });
 
           setFormData({
@@ -176,6 +180,7 @@ export default function EditProject() {
         name: formData.content.name,
         subtitle: formData.content.subtitle,
         description: formData.content.description,
+        seoImageUrl: formData.content.seoImageUrl,
         promptTemplate: formData.promptTemplate,
         uiConfig: formData.uiConfig,
       });
@@ -424,5 +429,13 @@ export default function EditProject() {
         </Box>
       </form>
     </Container>
+  );
+}
+
+export default function EditProject() {
+  return (
+    <UploaderProvider>
+      <EditProjectContent />
+    </UploaderProvider>
   );
 }

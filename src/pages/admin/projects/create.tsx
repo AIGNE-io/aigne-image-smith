@@ -20,6 +20,7 @@ import ProjectContentEditor, {
   ProjectContentData,
   SUPPORTED_LANGUAGES,
 } from '../../../components/project-content-editor';
+import UploaderProvider from '../../../components/uploader';
 import api from '../../../libs/api';
 
 interface ProjectFormData {
@@ -62,7 +63,7 @@ const defaultFormData: ProjectFormData = {
   },
 };
 
-export default function CreateProject() {
+function CreateProjectContent() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
   const [loading, setLoading] = useState(false);
@@ -97,6 +98,7 @@ export default function CreateProject() {
         name: formData.content.name,
         subtitle: formData.content.subtitle,
         description: formData.content.description,
+        seoImageUrl: formData.content.seoImageUrl,
         promptTemplate: formData.promptTemplate,
         uiConfig: formData.uiConfig,
       });
@@ -316,5 +318,13 @@ export default function CreateProject() {
         </Box>
       </form>
     </Container>
+  );
+}
+
+export default function CreateProject() {
+  return (
+    <UploaderProvider>
+      <CreateProjectContent />
+    </UploaderProvider>
   );
 }

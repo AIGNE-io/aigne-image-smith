@@ -1,8 +1,7 @@
 import Joi from 'joi';
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Transaction } from 'sequelize';
+import type { Sequelize } from 'sequelize';
 import { Worker } from 'snowflake-uuid';
-
-import { sequelize } from '.';
 
 const idGenerator = new Worker();
 const nextId = () => idGenerator.nextId().toString();
@@ -32,9 +31,9 @@ export interface ProjectI18nContent {
 
   // SEO相关
   seo?: {
-    title: string;
-    description: string;
-    keywords: string[];
+    title?: string;
+    description?: string;
+    keywords?: string[];
     imageUrl?: string; // OpenGraph image URL
   };
 
@@ -71,10 +70,10 @@ export const ProjectI18nSchema = Joi.object<ProjectI18nInput>({
     instructions: Joi.array().items(Joi.string()).optional(),
     tips: Joi.array().items(Joi.string()).optional(),
     seo: Joi.object({
-      title: Joi.string().required(),
-      description: Joi.string().required(),
-      keywords: Joi.array().items(Joi.string()).required(),
-      imageUrl: Joi.string().uri().optional(),
+      title: Joi.string().optional(),
+      description: Joi.string().optional(),
+      keywords: Joi.array().items(Joi.string()).optional(),
+      imageUrl: Joi.string().optional(),
     }).optional(),
     custom: Joi.object().optional(),
   }).required(),
@@ -175,60 +174,62 @@ export default class ProjectI18n extends Model<InferAttributes<ProjectI18n>, Inf
   }
 }
 
-ProjectI18n.init(
-  {
-    id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-      allowNull: false,
-      defaultValue: nextId,
-    },
-    projectId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      references: {
-        model: 'ai_projects',
-        key: 'id',
+export function initProjectI18n(sequelize: Sequelize) {
+  ProjectI18n.init(
+    {
+      id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+        allowNull: false,
+        defaultValue: nextId,
       },
-      comment: 'Reference to AI project',
-    },
-    locale: {
-      type: DataTypes.STRING(5),
-      allowNull: false,
-      comment: 'Locale code (e.g., en, zh, ja)',
-    },
-    content: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      comment: 'I18n content for the project',
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-  },
-  {
-    sequelize,
-    modelName: 'ProjectI18n',
-    tableName: 'project_i18n',
-    indexes: [
-      {
-        fields: ['projectId'],
-        name: 'idx_project_i18n_project_id',
+      projectId: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        references: {
+          model: 'ai_projects',
+          key: 'id',
+        },
+        comment: 'Reference to AI project',
       },
-      {
-        fields: ['locale'],
-        name: 'idx_project_i18n_locale',
+      locale: {
+        type: DataTypes.STRING(5),
+        allowNull: false,
+        comment: 'Locale code (e.g., en, zh, ja)',
       },
-      {
-        fields: ['projectId', 'locale'],
-        name: 'idx_project_i18n_project_locale',
-        unique: true,
+      content: {
+        type: DataTypes.JSON,
+        allowNull: false,
+        comment: 'I18n content for the project',
       },
-    ],
-  },
-);
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+    },
+    {
+      sequelize,
+      modelName: 'ProjectI18n',
+      tableName: 'project_i18n',
+      indexes: [
+        {
+          fields: ['projectId'],
+          name: 'idx_project_i18n_project_id',
+        },
+        {
+          fields: ['locale'],
+          name: 'idx_project_i18n_locale',
+        },
+        {
+          fields: ['projectId', 'locale'],
+          name: 'idx_project_i18n_project_locale',
+          unique: true,
+        },
+      ],
+    },
+  );
+}

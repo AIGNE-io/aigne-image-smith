@@ -57,7 +57,7 @@ function App() {
             <Route path="projects/:projectId/edit" element={<EditProject />} />
           </Route>
 
-          <Route path="/:projectId" element={<DynamicApp />} />
+          <Route path="/:slug" element={<DynamicApp />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>

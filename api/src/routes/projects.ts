@@ -23,6 +23,7 @@ const createProjectSchema = Joi.object({
   name: Joi.object().pattern(Joi.string(), Joi.string()).required(),
   subtitle: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
   description: Joi.object().pattern(Joi.string(), Joi.string()).required(),
+  seoImageUrl: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
   promptTemplate: Joi.string().min(10).required(),
   uiConfig: Joi.object({
     primaryColor: Joi.string().optional(),
@@ -141,6 +142,52 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
 });
 
 /**
+ * Get project i18n content by slug (public endpoint)
+ * GET /api/projects/by-slug/:slug/i18n/:locale?
+ */
+router.get('/by-slug/:slug/i18n/:locale?', async (req, res): Promise<any> => {
+  try {
+    const { slug, locale = 'en' } = req.params;
+
+    // First check if project exists and is active
+    const project = await AIProject.findActiveBySlug(slug);
+    if (!project) {
+      return res.status(404).json({
+        error: '项目未找到',
+        message: '项目不存在或已被禁用',
+      });
+    }
+
+    // Get i18n content with fallback
+    const i18nContent = await ProjectI18n.getWithFallback(project.id, locale);
+
+    if (!i18nContent) {
+      return res.status(404).json({
+        error: '多语言内容未找到',
+        message: '该项目暂无多语言内容配置',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        projectId: i18nContent.projectId,
+        locale: i18nContent.locale,
+        content: i18nContent.content,
+        createdAt: i18nContent.createdAt,
+        updatedAt: i18nContent.updatedAt,
+      },
+    });
+  } catch (error) {
+    logger.error('通过slug获取项目多语言内容失败:', error);
+    return res.status(500).json({
+      error: '获取多语言内容失败',
+      message: error instanceof Error ? error.message : '未知错误',
+    });
+  }
+});
+
+/**
  * Get project by ID (public endpoint)
  * GET /api/projects/:id
  */
@@ -156,6 +203,16 @@ router.get('/:id', async (req, res): Promise<any> => {
       });
     }
 
+    // Get all i18n records for this project to extract seoImageUrl
+    const i18nRecords = await ProjectI18n.findByProject(project.id);
+    const seoImageUrl: Record<string, string> = {};
+
+    for (const record of i18nRecords) {
+      if (record.content?.seo?.imageUrl) {
+        seoImageUrl[record.locale] = record.content.seo.imageUrl;
+      }
+    }
+
     return res.json({
       success: true,
       data: {
@@ -164,6 +221,7 @@ router.get('/:id', async (req, res): Promise<any> => {
         name: project.name,
         subtitle: project.subtitle,
         description: project.description,
+        seoImageUrl,
         promptTemplate: project.promptTemplate,
         uiConfig: project.uiConfig,
         metadata: project.metadata,
@@ -242,8 +300,34 @@ router.post('/admin', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
+    // Extract seoImageUrl for i18n handling
+    const { seoImageUrl, ...projectData } = value;
+
     // Create project
-    const project = await AIProject.validateAndCreate(value);
+    const project = await AIProject.validateAndCreate(projectData);
+
+    // Create i18n records for seoImageUrl if provided
+    if (seoImageUrl && typeof seoImageUrl === 'object') {
+      for (const [locale, imageUrl] of Object.entries(seoImageUrl)) {
+        if (imageUrl && typeof imageUrl === 'string') {
+          await ProjectI18n.upsertI18nContent({
+            projectId: project.id,
+            locale,
+            content: {
+              ui: {
+                title: `Project ${locale}`,
+                uploadButton: 'Upload',
+                processButton: 'Process',
+                downloadButton: 'Download',
+              },
+              seo: {
+                imageUrl,
+              },
+            },
+          });
+        }
+      }
+    }
 
     logger.info('项目创建成功', {
       projectId: project.id,
@@ -300,8 +384,67 @@ router.put('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
+    // Extract seoImageUrl for i18n handling
+    const { seoImageUrl, ...projectData } = value;
+
     // Update project
-    await project.update(value);
+    await project.update(projectData);
+
+    // Update i18n records for seoImageUrl if provided
+    if (seoImageUrl && typeof seoImageUrl === 'object') {
+      for (const [locale, imageUrl] of Object.entries(seoImageUrl)) {
+        if (imageUrl && typeof imageUrl === 'string') {
+          // Get existing i18n content or create minimal structure
+          const existingI18n = await ProjectI18n.findByProjectAndLocale(project.id, locale);
+          const existingContent = existingI18n?.content || {
+            ui: {
+              title: `Project ${locale}`,
+              uploadButton: 'Upload',
+              processButton: 'Process',
+              downloadButton: 'Download',
+            },
+            seo: {},
+          };
+
+          // Update the seo.imageUrl
+          const updatedContent = {
+            ...existingContent,
+            seo: {
+              ...existingContent.seo,
+              imageUrl,
+            },
+          };
+
+          await ProjectI18n.upsertI18nContent({
+            projectId: project.id,
+            locale,
+            content: updatedContent,
+          });
+        } else if (imageUrl === '') {
+          // Handle deletion - remove imageUrl from existing i18n content
+          const existingI18n = await ProjectI18n.findByProjectAndLocale(project.id, locale);
+          if (existingI18n?.content?.seo) {
+            const updatedContent = {
+              ...existingI18n.content,
+              seo: {
+                ...existingI18n.content.seo,
+                imageUrl: undefined,
+              },
+            };
+            // Remove undefined properties
+            if (updatedContent.seo.imageUrl === undefined) {
+              delete updatedContent.seo.imageUrl;
+            }
+
+            await ProjectI18n.upsertI18nContent({
+              projectId: project.id,
+              locale,
+              content: updatedContent,
+            });
+          }
+        }
+      }
+    }
 
     logger.info('项目更新成功', {
       projectId: project.id,

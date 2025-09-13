@@ -5,6 +5,7 @@ This document describes the credit-based payment system API endpoints for the Pi
 ## Overview
 
 The Pix-Loom payment system uses a credit-based model where:
+
 - Users receive **5 free credits** upon first login (welcome bonus)
 - Each image processing operation consumes **1 credit**
 - Users can purchase additional credits through integrated payment flow
@@ -13,6 +14,7 @@ The Pix-Loom payment system uses a credit-based model where:
 ## Authentication
 
 All endpoints require DID-based authentication using Blocklet SDK:
+
 ```javascript
 // Headers required
 Authorization: Bearer <user-session-token>
@@ -27,6 +29,7 @@ Authorization: Bearer <user-session-token>
 Get the current user's credit balance and account status.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -39,6 +42,7 @@ Get the current user's credit balance and account status.
 ```
 
 **Response Fields:**
+
 - `balance`: Current credit balance (number)
 - `isNewUser`: Whether user is eligible for welcome credits (boolean)
 - `isAuthenticated`: Authentication status (boolean)
@@ -52,6 +56,7 @@ Get the current user's credit balance and account status.
 Claim free welcome credits for new users (one-time only).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -70,6 +75,7 @@ Claim free welcome credits for new users (one-time only).
 ```
 
 **Error Response:**
+
 ```json
 {
   "error": "Welcome credits already claimed",
@@ -86,6 +92,7 @@ Claim free welcome credits for new users (one-time only).
 Consume credits for image processing operations.
 
 **Request Body:**
+
 ```json
 {
   "amount": 1,
@@ -100,12 +107,14 @@ Consume credits for image processing operations.
 ```
 
 **Request Fields:**
+
 - `amount` (required): Number of credits to consume (positive integer)
 - `operation_type` (optional): Type of operation performed
-- `image_type` (optional): Type of image being processed  
+- `image_type` (optional): Type of image being processed
 - `metadata` (optional): Additional operation metadata
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -123,6 +132,7 @@ Consume credits for image processing operations.
 ```
 
 **Error Response (Insufficient Credits):**
+
 ```json
 {
   "error": "Insufficient credits",
@@ -140,9 +150,11 @@ Consume credits for image processing operations.
 Get user's credit transaction history.
 
 **Query Parameters:**
+
 - `limit` (optional): Maximum number of transactions to return (1-100, default: 50)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -160,7 +172,7 @@ Get user's credit transaction history.
         }
       },
       {
-        "id": "meter_event_abc456", 
+        "id": "meter_event_abc456",
         "type": "debit",
         "amount": -1,
         "timestamp": 1640995800000,
@@ -176,6 +188,7 @@ Get user's credit transaction history.
 ```
 
 **Transaction Types:**
+
 - `credit`: Positive balance change (grants, purchases)
 - `debit`: Negative balance change (consumption)
 
@@ -188,6 +201,7 @@ Get user's credit transaction history.
 Create a payment checkout session for purchasing credits.
 
 **Request Body:**
+
 ```json
 {
   "credits": 50
@@ -195,9 +209,11 @@ Create a payment checkout session for purchasing credits.
 ```
 
 **Request Fields:**
+
 - `credits` (required): Number of credits to purchase (1-1000)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -211,6 +227,7 @@ Create a payment checkout session for purchasing credits.
 ```
 
 **Response Fields:**
+
 - `sessionId`: Checkout session identifier
 - `sessionUrl`: URL to redirect user for payment
 - `credits`: Number of credits being purchased
@@ -225,6 +242,7 @@ Create a payment checkout session for purchasing credits.
 Get available credit packages and pricing information.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -232,7 +250,7 @@ Get available credit packages and pricing information.
     "packages": [
       {
         "id": "basic",
-        "name": "Basic Package", 
+        "name": "Basic Package",
         "credits": 10,
         "price": 100,
         "pricePerCredit": 10,
@@ -241,7 +259,7 @@ Get available credit packages and pricing information.
       {
         "id": "standard",
         "name": "Standard Package",
-        "credits": 50, 
+        "credits": 50,
         "price": 450,
         "pricePerCredit": 9,
         "popular": true
@@ -250,7 +268,7 @@ Get available credit packages and pricing information.
         "id": "premium",
         "name": "Premium Package",
         "credits": 100,
-        "price": 800, 
+        "price": 800,
         "pricePerCredit": 8,
         "popular": false
       }
@@ -272,6 +290,7 @@ Handle payment system webhooks (internal endpoint).
 This endpoint processes payment completion events and automatically grants purchased credits to users.
 
 **Supported Webhook Events:**
+
 - `payment_intent.succeeded`: Successful payment completion
 - `checkout.session.completed`: Checkout session completion
 
@@ -290,6 +309,7 @@ All API endpoints follow consistent error response format:
 ```
 
 **Common HTTP Status Codes:**
+
 - `200`: Success
 - `400`: Bad Request (invalid input, insufficient credits)
 - `401`: Unauthorized (missing/invalid authentication)
@@ -304,7 +324,7 @@ Here's a typical integration flow for image processing:
 ```javascript
 // 1. Check user balance before processing
 const balanceResponse = await fetch('/api/payment/credits/balance', {
-  headers: { 'Authorization': `Bearer ${userToken}` }
+  headers: { Authorization: `Bearer ${userToken}` },
 });
 const { balance, isNewUser } = balanceResponse.data;
 
@@ -312,7 +332,7 @@ const { balance, isNewUser } = balanceResponse.data;
 if (isNewUser) {
   const welcomeResponse = await fetch('/api/payment/credits/claim-welcome', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${userToken}` }
+    headers: { Authorization: `Bearer ${userToken}` },
   });
   console.log('Welcome credits granted:', welcomeResponse.data.newBalance);
 }
@@ -322,17 +342,17 @@ if (balance >= 1) {
   // 4. Consume credit for image processing
   const consumeResponse = await fetch('/api/payment/credits/consume', {
     method: 'POST',
-    headers: { 
-      'Authorization': `Bearer ${userToken}`,
-      'Content-Type': 'application/json'
+    headers: {
+      Authorization: `Bearer ${userToken}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       amount: 1,
       operation_type: 'image_colorization',
-      metadata: { filename: 'user_photo.jpg' }
-    })
+      metadata: { filename: 'user_photo.jpg' },
+    }),
   });
-  
+
   // 5. Proceed with image processing
   if (consumeResponse.success) {
     await processImage();
@@ -342,63 +362,15 @@ if (balance >= 1) {
   // 6. Redirect to purchase more credits
   const checkoutResponse = await fetch('/api/payment/credits/checkout', {
     method: 'POST',
-    headers: { 
-      'Authorization': `Bearer ${userToken}`,
-      'Content-Type': 'application/json' 
+    headers: {
+      Authorization: `Bearer ${userToken}`,
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ credits: 10 })
+    body: JSON.stringify({ credits: 10 }),
   });
-  
+
   window.open(checkoutResponse.data.sessionUrl, '_blank');
 }
 ```
 
 ---
-
-## Environment Configuration
-
-Required environment variables:
-
-```bash
-# Blocklet Payment System Configuration
-BLOCKLET_PAYMENT_ENDPOINT=https://payment.blocklet.com/api/v1
-BLOCKLET_PAYMENT_TOKEN=your_payment_access_token
-
-# Optional: Custom pricing configuration
-WELCOME_CREDITS_AMOUNT=5
-CREDITS_PER_OPERATION=1
-```
-
----
-
-## Rate Limiting
-
-API endpoints have the following rate limits:
-
-- **Balance/History endpoints**: 100 requests per minute
-- **Consume credits**: 10 requests per minute  
-- **Claim welcome**: 1 request per user (one-time only)
-- **Checkout creation**: 5 requests per minute
-
----
-
-## Testing
-
-Use the provided test file for manual testing:
-```bash
-node api/src/routes/__tests__/payment.test.js
-```
-
-Or test endpoints directly with curl:
-```bash
-# Get balance
-curl -H "Authorization: Bearer ${TOKEN}" \
-     http://localhost:3000/api/payment/credits/balance
-
-# Consume credits  
-curl -X POST \
-     -H "Authorization: Bearer ${TOKEN}" \
-     -H "Content-Type: application/json" \
-     -d '{"amount": 1}' \
-     http://localhost:3000/api/payment/credits/consume
-```

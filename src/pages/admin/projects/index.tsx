@@ -31,6 +31,7 @@ import api from '../../../libs/api';
 
 interface AIProject {
   id: string;
+  slug: string;
   name: Record<string, string>;
   description: Record<string, string>;
   promptTemplate: string;
@@ -187,7 +188,7 @@ export default function ProjectsManagement() {
                     </Tooltip>
 
                     <Tooltip title="预览应用">
-                      <IconButton size="small" onClick={() => window.open(`/${project.id}`, '_blank')}>
+                      <IconButton size="small" onClick={() => window.open(`/${project.slug}`, '_blank')}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>

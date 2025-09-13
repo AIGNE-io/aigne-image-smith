@@ -7,6 +7,7 @@ import { config } from '../../libs/env';
 import logger from '../../libs/logger';
 // Initialize models with sequelize instance to avoid circular dependency issues
 import { initAIProject } from './ai-project';
+import { initProjectI18n } from './project-i18n';
 
 // eslint-disable-next-line import/prefer-default-export
 export const sequelize = new Sequelize(config.database.url, {
@@ -19,9 +20,8 @@ sequelize.query('pragma synchronous = normal;');
 sequelize.query('pragma journal_size_limit = 67108864;');
 
 // import { initImageGeneration } from './image-generation';
-// import { initProjectI18n } from './project-i18n';
 
 // Initialize models
 initAIProject(sequelize);
+initProjectI18n(sequelize);
 // initImageGeneration(sequelize);
-// initProjectI18n(sequelize);

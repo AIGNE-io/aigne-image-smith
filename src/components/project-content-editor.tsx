@@ -1,6 +1,24 @@
-import { ContentCopy as ContentCopyIcon } from '@mui/icons-material';
-import { Badge, Box, Chip, IconButton, Menu, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
+import { ContentCopy as ContentCopyIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Badge,
+  Box,
+  Card,
+  CardMedia,
+  Chip,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useState } from 'react';
+
+import { getImageUrl } from '../libs/utils';
+import { UploaderButton } from './uploader';
 
 export interface LanguageConfig {
   code: string;
@@ -259,11 +277,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
           />
         </Box>
 
-        {/* SEO 图片URL */}
+        {/* SEO 图片 */}
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              OpenGraph 图片URL <span style={{ color: '#f44336' }}>*</span>
+              OpenGraph 图片 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
             {values.seoImageUrl[currentLanguage.code] && getAvailableCopyLanguages('seoImageUrl').length > 0 && (
               <Tooltip title="从其他语言复制">
@@ -277,25 +295,101 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
               </Tooltip>
             )}
           </Box>
-          <TextField
-            fullWidth
-            value={values.seoImageUrl[currentLanguage.code] || ''}
-            onChange={(e) => handleFieldChange('seoImageUrl', e.target.value)}
-            disabled={disabled}
-            placeholder="https://example.com/image.jpg"
-            helperText="用于社交媒体分享的预览图片"
-            error={!values.seoImageUrl[currentLanguage.code]?.trim()}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                fontSize: '0.95rem',
-                lineHeight: 1.5,
-              },
-              '& .MuiFormHelperText-root': {
-                fontSize: '0.8rem',
-                marginTop: 1.5,
-              },
-            }}
-          />
+
+          {values.seoImageUrl[currentLanguage.code] ? (
+            // 显示已上传的图片预览
+            <Box sx={{ position: 'relative', display: 'inline-block' }}>
+              <Card
+                sx={{
+                  maxWidth: 300,
+                  position: 'relative',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}>
+                <CardMedia
+                  component="img"
+                  height="150"
+                  image={getImageUrl(values.seoImageUrl[currentLanguage.code]!!)}
+                  alt="OpenGraph 预览图片"
+                  sx={{ objectFit: 'cover' }}
+                  onError={(e) => {
+                    // 如果图片加载失败，显示占位符
+                    const target = e.target as HTMLImageElement;
+                    target.src =
+                      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPgogIDx0ZXh0IHg9IjE1MCIgeT0iNzUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9IjAuM2VtIj7lm77niYfkuI3lrZjlnKg8L3RleHQ+Cjwvc3ZnPg==';
+                  }}
+                />
+                {/* 删除按钮 */}
+                <IconButton
+                  size="small"
+                  onClick={() => handleFieldChange('seoImageUrl', '')}
+                  disabled={disabled}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    bgcolor: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: 'rgba(0, 0, 0, 0.8)',
+                    },
+                    width: 28,
+                    height: 28,
+                  }}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Card>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 1, fontSize: '0.75rem' }}>
+                用于社交媒体分享的预览图片
+              </Typography>
+            </Box>
+          ) : (
+            // 显示上传按钮
+            <Box
+              sx={{
+                border: '2px dashed',
+                borderColor: !values.seoImageUrl[currentLanguage.code]?.trim() ? 'error.main' : 'divider',
+                borderRadius: 2,
+                p: 4,
+                textAlign: 'center',
+                bgcolor: 'grey.50',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  '& .upload-text': {
+                    color: 'primary.dark',
+                  },
+                },
+              }}>
+              <Stack spacing={2} alignItems="center">
+                <UploaderButton
+                  isLoggedIn
+                  compact={false}
+                  title="上传 OpenGraph 图片"
+                  description="选择用于社交媒体分享的预览图片"
+                  buttonText="选择图片"
+                  openLoginDialog={() => {}}
+                  onChange={(res: any) => {
+                    if (res?.response?.data?.filename) {
+                      handleFieldChange('seoImageUrl', res.response.data.filename);
+                    }
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  color={!values.seoImageUrl[currentLanguage.code]?.trim() ? 'error' : 'text.secondary'}
+                  className="upload-text"
+                  sx={{ fontSize: '0.75rem', transition: 'color 0.2s ease' }}>
+                  支持 JPG、PNG 格式，建议尺寸 1200x630 像素
+                </Typography>
+              </Stack>
+            </Box>
+          )}
         </Box>
       </Box>
 

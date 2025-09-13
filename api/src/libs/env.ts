@@ -31,8 +31,6 @@ function parseDatabaseConfiguration(value: object) {
 const envConfig = {
   ...env,
   chainHost: process.env.CHAIN_HOST || '',
-  paymentEndpoint: process.env.BLOCKLET_PAYMENT_ENDPOINT || '',
-  paymentToken: process.env.BLOCKLET_PAYMENT_TOKEN || '',
 };
 
 export { envConfig as env };

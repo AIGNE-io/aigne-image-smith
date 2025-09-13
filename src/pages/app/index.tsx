@@ -7,12 +7,13 @@ import ProjectTemplate from './project-template';
 
 interface AIProject {
   id: string;
+  slug: string;
   name: Record<string, string>;
+  subtitle: Record<string, string>;
   description: Record<string, string>;
   promptTemplate: string;
   uiConfig?: Record<string, any>;
   status: 'active' | 'draft' | 'archived';
-  logoUrl?: string;
   metadata?: Record<string, any>;
   createdAt: string;
 }
@@ -45,15 +46,15 @@ interface ProjectI18nContent {
 }
 
 export default function DynamicApp() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [project, setProject] = useState<AIProject | null>(null);
   const [i18nContent, setI18nContent] = useState<ProjectI18nContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!projectId) {
-      setError('项目ID不能为空');
+    if (!slug) {
+      setError('项目路径不能为空');
       setLoading(false);
       return;
     }
@@ -65,8 +66,8 @@ export default function DynamicApp() {
 
         // Load project info and i18n content in parallel
         const [projectResponse, i18nResponse] = await Promise.all([
-          api.get(`/projects/${projectId}`),
-          api.get(`/projects/${projectId}/i18n/zh`).catch(() => ({ data: { success: false } })),
+          api.get(`/api/projects/by-slug/${slug}`),
+          api.get(`/api/projects/by-slug/${slug}/i18n/zh`).catch(() => ({ data: { success: false } })),
         ]);
 
         if (!projectResponse.data.success) {
@@ -83,7 +84,11 @@ export default function DynamicApp() {
           setI18nContent({
             ui: {
               title: projectResponse.data.data.name.zh || projectResponse.data.data.name.en,
-              subtitle: projectResponse.data.data.description.zh || projectResponse.data.data.description.en,
+              subtitle:
+                projectResponse.data.data.subtitle?.zh ||
+                projectResponse.data.data.subtitle?.en ||
+                projectResponse.data.data.description.zh ||
+                projectResponse.data.data.description.en,
               uploadButton: '上传图片',
               processButton: '开始处理',
               downloadButton: '下载结果',
@@ -107,7 +112,7 @@ export default function DynamicApp() {
     };
 
     loadProjectData();
-  }, [projectId]);
+  }, [slug]);
 
   if (loading) {
     return (
@@ -125,5 +130,5 @@ export default function DynamicApp() {
     );
   }
 
-  return <ProjectTemplate project={project} projectId={projectId!} />;
+  return <ProjectTemplate project={project} projectId={project.id} />;
 }
