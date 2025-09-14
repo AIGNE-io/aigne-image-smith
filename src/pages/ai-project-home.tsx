@@ -1331,18 +1331,14 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         ) : (
                           // 单图模式：只显示生成的图片或原图（如果还没有生成结果）
                           // 严格限制高度以适应第一屏，确保图片完整显示
-                          <>
-                            {generatedImage && (
-                              <CompareImage
-                                src={getImageUrl(generatedImage)}
-                                alt={t('home.image.restoredImage')}
-                                style={{
-                                  position: 'absolute',
-                                  zIndex: 1,
-                                }}
-                              />
-                            )}
-                          </>
+                          <CompareImage
+                            src={getImageUrl(generatedImage || originalImage)}
+                            alt={generatedImage ? t('home.image.restoredImage') : t('home.image.originalImage')}
+                            style={{
+                              position: 'absolute',
+                              zIndex: 1,
+                            }}
+                          />
                         )}
                       </ImageWrapper>
                     </ImageCompareContainer>
