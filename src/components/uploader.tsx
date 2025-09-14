@@ -53,6 +53,8 @@ export function UploaderButton({
   description,
   buttonText,
   compact = false,
+  customTrigger,
+  disabled = false,
 }: {
   openLoginDialog: Function;
   onChange?: Function;
@@ -61,9 +63,21 @@ export function UploaderButton({
   description?: string;
   buttonText?: string;
   compact?: boolean;
+  customTrigger?: (onClick: () => void) => ReactNode;
+  disabled?: boolean;
 }) {
   const { t } = useLocaleContext();
   const uploaderRef = useUploader();
+
+  const handleClick = () => {
+    if (disabled) return;
+
+    if (isLoggedIn) {
+      handleOpen();
+    } else {
+      openLoginDialog();
+    }
+  };
 
   const handleOpen = () => {
     // @ts-ignore
@@ -83,21 +97,22 @@ export function UploaderButton({
     }
   };
 
+  // 如果提供了自定义触发器，直接返回它
+  if (customTrigger) {
+    return <>{customTrigger(handleClick)}</>;
+  }
+
   if (compact) {
     return (
       <Button
         variant="outlined"
         startIcon={<CloudUploadIcon />}
-        onClick={() => {
-          if (isLoggedIn) {
-            handleOpen();
-          } else {
-            openLoginDialog();
-          }
-        }}
+        onClick={handleClick}
+        disabled={disabled}
         sx={{
           borderRadius: '8px',
           textTransform: 'none',
+          opacity: disabled ? 0.6 : 1,
         }}>
         {buttonText || t('home.uploader.selectButton')}
       </Button>
@@ -138,17 +153,14 @@ export function UploaderButton({
       <GoldenButton
         size="large"
         startIcon={<CloudUploadIcon />}
-        onClick={() => {
-          if (isLoggedIn) {
-            handleOpen();
-          } else {
-            openLoginDialog();
-          }
-        }}
+        onClick={handleClick}
+        disabled={disabled}
         sx={{
           fontSize: { xs: '0.875rem', sm: '1.1rem' },
           px: { xs: 2, sm: 4 },
           py: { xs: 1, sm: 1.5 },
+          opacity: disabled ? 0.6 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
         }}>
         {buttonText || t('home.uploader.selectButton')}
       </GoldenButton>

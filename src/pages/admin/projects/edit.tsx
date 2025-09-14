@@ -20,6 +20,7 @@ import ProjectContentEditor, {
   ProjectContentData,
   SUPPORTED_LANGUAGES,
 } from '../../../components/project-content-editor';
+import { ControlsConfigEditor, ProjectControlsConfig } from '../../../components/project-controls';
 import UploaderProvider from '../../../components/uploader';
 import api from '../../../libs/api';
 
@@ -28,8 +29,10 @@ interface AIProject {
   name: Record<string, string>;
   subtitle?: Record<string, string>;
   description: Record<string, string>;
+  seoImageUrl?: Record<string, string>;
   promptTemplate: string;
   uiConfig?: Record<string, any>;
+  controlsConfig?: ProjectControlsConfig;
   status: 'active' | 'draft' | 'archived';
   metadata?: Record<string, any>;
   createdAt: string;
@@ -47,6 +50,7 @@ interface ProjectFormData {
       showComparisonSlider: boolean;
     };
   };
+  controlsConfig: ProjectControlsConfig;
 }
 
 // Initialize empty values for all supported languages
@@ -73,6 +77,13 @@ const defaultFormData: ProjectFormData = {
       uploadMultiple: false,
       showComparisonSlider: true,
     },
+  },
+  controlsConfig: {
+    inputConfig: {
+      maxImages: 1,
+      requirements: '',
+    },
+    controlsConfig: [],
   },
 };
 
@@ -137,6 +148,13 @@ function EditProjectContent() {
                 showComparisonSlider: projectData.uiConfig?.features?.showComparisonSlider !== false,
               },
             },
+            controlsConfig: projectData.controlsConfig || {
+              inputConfig: {
+                maxImages: 1,
+                requirements: '',
+              },
+              controlsConfig: [],
+            },
           });
         } else {
           setError('项目不存在或已被禁用');
@@ -183,6 +201,7 @@ function EditProjectContent() {
         seoImageUrl: formData.content.seoImageUrl,
         promptTemplate: formData.promptTemplate,
         uiConfig: formData.uiConfig,
+        controlsConfig: formData.controlsConfig,
       });
 
       if (response.data.success) {
@@ -321,45 +340,27 @@ function EditProjectContent() {
             </CardContent>
           </Card>
 
+          {/* 控制组件配置 */}
+          <Card elevation={1}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
+                输入与控制配置
+              </Typography>
+              <ControlsConfigEditor
+                config={formData.controlsConfig}
+                onChange={(controlsConfig) => setFormData({ ...formData, controlsConfig })}
+                disabled={loading}
+              />
+            </CardContent>
+          </Card>
+
           {/* 功能配置 */}
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                功能配置
+                UI 功能配置
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.uiConfig.features.uploadMultiple}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            uiConfig: {
-                              ...formData.uiConfig,
-                              features: {
-                                ...formData.uiConfig.features,
-                                uploadMultiple: e.target.checked,
-                              },
-                            },
-                          })
-                        }
-                        disabled={loading}
-                      />
-                    }
-                    label={
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                          支持多图片上传
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          允许用户一次上传多张图片进行批处理
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </Box>
                 <Box sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
                   <FormControlLabel
                     control={

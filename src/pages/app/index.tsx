@@ -14,6 +14,7 @@ interface AIProject {
   description: Record<string, string>;
   promptTemplate: string;
   uiConfig?: Record<string, any>;
+  controlsConfig?: Record<string, any>;
   status: 'active' | 'draft' | 'archived';
   metadata?: Record<string, any>;
   createdAt: string;
@@ -102,6 +103,14 @@ export default function DynamicApp() {
         uploadMultiple: false,
         showComparisonSlider: true,
       },
+    },
+    controlsConfig: project.controlsConfig || {
+      inputConfig: {
+        maxImages: 1,
+        minImages: 1,
+        requirements: '',
+      },
+      controlsConfig: [],
     },
   };
 

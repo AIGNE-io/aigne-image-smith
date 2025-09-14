@@ -15,6 +15,26 @@ export interface ProjectUIConfig {
   customStyles?: Record<string, any>;
 }
 
+export interface ProjectControlsConfig {
+  inputConfig: {
+    maxImages: number;
+    minImages?: number;
+    imageDescriptions?: Record<string, string[]>;
+    allowedTypes?: string[];
+    maxSize?: number;
+    requirements?: Record<string, string>;
+  };
+  controlsConfig: Array<{
+    type: string;
+    key: string;
+    label: string;
+    description?: string;
+    required?: boolean;
+    defaultValue?: any;
+    [key: string]: any;
+  }>;
+}
+
 interface AIProjectInput {
   id?: string;
   slug: string; // URL路径，唯一标识
@@ -23,6 +43,7 @@ interface AIProjectInput {
   description: Record<string, string>; // 多语言描述
   promptTemplate: string; // AI Prompt 模板
   uiConfig?: ProjectUIConfig; // UI配置
+  controlsConfig?: ProjectControlsConfig; // 控制组件配置
   status: 'active' | 'draft' | 'archived';
   metadata?: Record<string, any>;
 }
@@ -51,6 +72,28 @@ export const AIProjectSchema = Joi.object<AIProjectInput>({
     }).optional(),
     customStyles: Joi.object().optional(),
   }).optional(),
+  controlsConfig: Joi.object({
+    inputConfig: Joi.object({
+      maxImages: Joi.number().integer().min(1).required(),
+      minImages: Joi.number().integer().min(0).optional(),
+      imageDescriptions: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string())).optional(),
+      allowedTypes: Joi.array().items(Joi.string()).optional(),
+      maxSize: Joi.number().positive().optional(),
+      requirements: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
+    }).required(),
+    controlsConfig: Joi.array()
+      .items(
+        Joi.object({
+          type: Joi.string().required(),
+          key: Joi.string().required(),
+          label: Joi.string().required(),
+          description: Joi.string().optional(),
+          required: Joi.boolean().optional(),
+          defaultValue: Joi.any().optional(),
+        }).unknown(),
+      )
+      .optional(),
+  }).optional(),
   status: Joi.string().valid('active', 'draft', 'archived').default('active'),
   metadata: Joi.object().optional(),
 });
@@ -69,6 +112,8 @@ export default class AIProject extends Model<InferAttributes<AIProject>, InferCr
   declare promptTemplate: string;
 
   declare uiConfig: CreationOptional<ProjectUIConfig>;
+
+  declare controlsConfig: CreationOptional<ProjectControlsConfig>;
 
   declare status: 'active' | 'draft' | 'archived';
 
@@ -185,6 +230,12 @@ export function initAIProject(sequelize: Sequelize) {
         allowNull: true,
         defaultValue: {},
         comment: 'UI configuration including colors, layout, features',
+      },
+      controlsConfig: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: {},
+        comment: 'Controls configuration including input settings and dynamic controls',
       },
       status: {
         type: DataTypes.ENUM('active', 'draft', 'archived'),

@@ -36,9 +36,12 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 'react-share';
 
-import UploaderProvider, { UploaderButton } from '../components/uploader';
+import { MultiImageUploader } from '../components/multi-image-uploader';
+import { ControlValues, ProjectControls, ProjectControlsConfig } from '../components/project-controls';
+import UploaderProvider from '../components/uploader';
 import { useSessionContext } from '../contexts/session';
 import api from '../libs/api';
+import { buildPromptVariables, replacePromptVariables } from '../libs/prompt-utils';
 import { formatBalance, getCreditPage, getImageUrl } from '../libs/utils';
 import { useSubscription } from '../libs/ws';
 
@@ -69,19 +72,6 @@ const VintageCard = styled(Paper)(({ theme }) => ({
     right: 0,
     height: '1px',
     background: `linear-gradient(90deg, transparent, ${theme.palette.divider}, transparent)`,
-  },
-}));
-
-const UploadArea = styled(VintageCard)<{ isDragActive: boolean }>(({ isDragActive, theme }) => ({
-  border: `3px dashed ${isDragActive ? theme.palette.primary.main : theme.palette.divider}`,
-  textAlign: 'center',
-  cursor: 'pointer',
-  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  backgroundColor: isDragActive ? theme.palette.action.hover : theme.palette.background.default,
-  '&:hover': {
-    borderColor: theme.palette.primary.main,
-    transform: 'translateY(-2px)',
-    boxShadow: theme.shadows[6],
   },
 }));
 
@@ -187,6 +177,7 @@ interface AIProjectConfig {
       showComparisonSlider?: boolean;
     };
   };
+  controlsConfig?: ProjectControlsConfig;
 }
 
 interface AIProjectHomeProps {
@@ -197,8 +188,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const { t, locale } = useLocaleContext();
   const { session } = useSessionContext();
   const theme = useTheme();
-  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [originalImages, setOriginalImages] = useState<string[]>([]);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [controlValues, setControlValues] = useState<ControlValues>({});
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   const [decimal, setDecimal] = useState<number>(2);
   const [processing, setProcessing] = useState<ProcessingStatus>({
@@ -418,26 +410,24 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     }
   };
 
-  // 处理文件上传 - 从 UploaderButton 接收文件路径
-  const handleFileUpload = useCallback(
-    async (res: any) => {
-      if (!res || !res.response || !res.response.data) {
-        setError(t('home.error.uploadFailed'));
-        return;
-      }
-      setError(null);
-      // 设置原图预览使用上传后的 URL
-      setOriginalImage(res.response?.data?.filename);
+  // 处理图片变更
+  const handleImagesChange = useCallback(
+    async (images: string[]) => {
+      setOriginalImages(images);
       setGeneratedImage(null);
+      setError(null);
 
-      // 开始处理
-      await processImage(res.response?.data?.filename);
+      // 如果有足够的图片，自动开始处理
+      const minImages = config.controlsConfig?.inputConfig.minImages || 1;
+      if (images.length >= minImages) {
+        await processImages(images);
+      }
     },
-    [creditInfo],
+    [config.controlsConfig?.inputConfig.minImages, creditInfo],
   );
 
   // 真实AI图片生成处理
-  const processImage = async (originalImg: string) => {
+  const processImages = async (images: string[]) => {
     // 检查用户是否已认证
     if (!isLoggedIn) {
       setError(t('home.error.loginRequired'));
@@ -451,8 +441,15 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       return;
     }
 
-    if (!originalImg) {
+    if (images.length === 0) {
       setError(t('home.error.noImage'));
+      return;
+    }
+
+    // 验证图片数量
+    const minImages = config.controlsConfig?.inputConfig.minImages || 1;
+    if (images.length < minImages) {
+      setError(`At least ${minImages} image(s) required`);
       return;
     }
 
@@ -470,11 +467,18 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       // 调用真实的AI生成API
       setProcessing((prev) => ({ ...prev, message: t('home.processing.analyzing') }));
 
+      // 构建动态 prompt
+      const promptVariables = buildPromptVariables(controlValues, images);
+      const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
+
       const { data } = await api.post('/api/ai/generate', {
-        prompt: config.prompt,
-        originalImg,
+        prompt: finalPrompt,
+        originalImages: images, // 所有图片
         clientId: config.clientId,
-        metadata: {},
+        metadata: {
+          controlValues,
+          imageCount: images.length,
+        },
       });
 
       if (!data.success) {
@@ -539,7 +543,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       }
 
       // 停止假进度条
-      setOriginalImage(null);
+      setOriginalImages([]);
       stopFakeProgress();
       setError(errorMessage);
       setProcessing({
@@ -572,7 +576,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
   // 重试生成功能
   const handleRetry = async () => {
-    if (!originalImage || processing.isProcessing) return;
+    if (originalImages.length === 0 || processing.isProcessing) return;
 
     // 检查Credit余额
     const requiredCredits = 1;
@@ -587,7 +591,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     setError(null);
 
     // 重新调用AI处理
-    await processImage(originalImage);
+    await processImages(originalImages);
   };
 
   // 复制图片到剪贴板
@@ -1103,57 +1107,75 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </VintageCard>
             )}
 
-            {/* 上传区域 - 始终显示 */}
-            <UploadArea
-              isDragActive={false}
-              elevation={4}
-              sx={{
-                py: { xs: 3, sm: 3 },
-                px: { xs: 2, sm: 3 },
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: processing.isProcessing ? 0.7 : 1,
-                pointerEvents: processing.isProcessing ? 'none' : 'auto',
-                transition: 'all 0.3s ease',
-                cursor: 'default',
-              }}>
+            {/* 上传区域 - 多图支持 */}
+            <VintageCard elevation={4} style={{ flex: 1 }}>
               {processing.isProcessing ? (
-                <Stack spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
-                  <AutoFixHighIcon
-                    sx={(theme) => ({
-                      fontSize: 48,
-                      color: theme.palette.primary.main,
-                      animation: `${sparkleAnimation} 2s ease-in-out infinite`,
-                    })}
-                  />
-                  <Typography
-                    variant="h6"
-                    textAlign="center"
-                    sx={(theme) => ({
-                      color: theme.palette.text.primary,
-                      fontStyle: 'italic',
-                    })}>
-                    {t('home.processing.magic')}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    textAlign="center"
-                    sx={(theme) => ({ color: theme.palette.text.secondary })}>
-                    {t('home.processing.wait')}
-                  </Typography>
-                </Stack>
+                <Box sx={{ py: { xs: 3, sm: 4 } }}>
+                  <Stack spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
+                    <AutoFixHighIcon
+                      sx={(theme) => ({
+                        fontSize: 48,
+                        color: theme.palette.primary.main,
+                        animation: `${sparkleAnimation} 2s ease-in-out infinite`,
+                      })}
+                    />
+                    <Typography
+                      variant="h6"
+                      textAlign="center"
+                      sx={(theme) => ({
+                        color: theme.palette.text.primary,
+                        fontStyle: 'italic',
+                      })}>
+                      {t('home.processing.magic')}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      textAlign="center"
+                      sx={(theme) => ({ color: theme.palette.text.secondary })}>
+                      {t('home.processing.wait')}
+                    </Typography>
+                  </Stack>
+                </Box>
               ) : (
-                <UploaderButton
+                <MultiImageUploader
+                  images={originalImages}
+                  onImagesChange={handleImagesChange}
+                  maxImages={config.controlsConfig?.inputConfig.maxImages || 1}
+                  minImages={config.controlsConfig?.inputConfig.minImages || 1}
+                  imageDescriptions={config.controlsConfig?.inputConfig.imageDescriptions}
+                  requirements={config.controlsConfig?.inputConfig.requirements}
                   isLoggedIn={isLoggedIn}
-                  onChange={handleFileUpload}
                   openLoginDialog={() => {
                     session?.login();
                   }}
+                  disabled={processing.isProcessing}
+                  currentLanguage={locale}
                 />
               )}
-            </UploadArea>
+            </VintageCard>
+
+            {/* 动态控制组件 */}
+            {config.controlsConfig?.controlsConfig && config.controlsConfig.controlsConfig.length > 0 && (
+              <VintageCard elevation={2} sx={{ py: 2, px: 3 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={(theme) => ({
+                    color: theme.palette.text.primary,
+                    textAlign: 'center',
+                    fontWeight: 600,
+                    mb: 2,
+                    fontSize: '0.875rem',
+                  })}>
+                  Customization Options
+                </Typography>
+                <ProjectControls
+                  controlsConfig={config.controlsConfig.controlsConfig}
+                  values={controlValues}
+                  onChange={setControlValues}
+                  disabled={processing.isProcessing}
+                />
+              </VintageCard>
+            )}
 
             {/* 使用指南 - 始终显示 */}
             <VintageCard elevation={2} sx={{ py: 2, px: 3 }}>
@@ -1214,7 +1236,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         overflow: 'hidden',
                         border: (theme) => `2px solid ${theme.palette.divider}`,
                       }}>
-                      <CompareImage src={getImageUrl(originalImage || '')} alt={t('home.image.processing')} />
+                      <CompareImage src={getImageUrl(originalImages[0] || '')} alt={t('home.image.processing')} />
                     </Box>
 
                     <Stack spacing={2} alignItems="center" sx={{ width: '100%', maxWidth: '250px' }}>
@@ -1257,7 +1279,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       </Box>
                     </Stack>
                   </Box>
-                ) : originalImage ? (
+                ) : originalImages.length > 0 ? (
                   // 有图片时的展示 - 根据配置决定是否显示对比
                   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ImageCompareContainer sx={{ flex: 1, maxWidth: 'none', display: 'flex', alignItems: 'center' }}>
@@ -1266,7 +1288,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                           // 对比模式：显示原图和生成图的对比
                           <>
                             <CompareImage
-                              src={getImageUrl(originalImage)}
+                              src={getImageUrl(originalImages[0])}
                               alt={t('home.image.originalImage')}
                               style={{
                                 position: generatedImage ? 'absolute' : 'relative',
@@ -1332,7 +1354,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                           // 单图模式：只显示生成的图片或原图（如果还没有生成结果）
                           // 严格限制高度以适应第一屏，确保图片完整显示
                           <CompareImage
-                            src={getImageUrl(generatedImage || originalImage)}
+                            src={getImageUrl(generatedImage || originalImages[0])}
                             alt={generatedImage ? t('home.image.restoredImage') : t('home.image.originalImage')}
                             style={{
                               position: 'absolute',
@@ -1440,7 +1462,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </Box>
 
               {/* 操作按钮区域 - 生成后才显示 */}
-              {originalImage && generatedImage && (
+              {originalImages.length > 0 && generatedImage && (
                 <>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
@@ -1593,7 +1615,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   key={item.id}
                   onClick={() => {
                     if (!processing.isProcessing) {
-                      setOriginalImage(item.originalImg);
+                      setOriginalImages([item.originalImg]);
                       setGeneratedImage(item.generatedImg);
                       setCompareSlider(50);
                       // 滚动到顶部查看结果

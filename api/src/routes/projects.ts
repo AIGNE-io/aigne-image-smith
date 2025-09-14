@@ -8,6 +8,91 @@ import ProjectI18n from '../store/models/project-i18n';
 
 const router = Router();
 
+// Control component validation schemas
+const controlOptionSchema = Joi.object({
+  value: Joi.string().required(),
+  label: Joi.string().required(),
+  color: Joi.string().optional(),
+  description: Joi.string().optional(),
+});
+
+const baseControlConfigSchema = Joi.object({
+  type: Joi.string().required(),
+  key: Joi.string().required(),
+  label: Joi.string().required(),
+  description: Joi.string().optional(),
+  required: Joi.boolean().optional(),
+  defaultValue: Joi.any().optional(),
+});
+
+const selectControlSchema = baseControlConfigSchema.keys({
+  type: Joi.string().valid('select').required(),
+  options: Joi.array().items(controlOptionSchema).required(),
+  multiple: Joi.boolean().optional(),
+});
+
+const sliderControlSchema = baseControlConfigSchema.keys({
+  type: Joi.string().valid('slider').required(),
+  min: Joi.number().required(),
+  max: Joi.number().required(),
+  step: Joi.number().optional(),
+  marks: Joi.array()
+    .items(
+      Joi.object({
+        value: Joi.number().required(),
+        label: Joi.string().required(),
+      }),
+    )
+    .optional(),
+});
+
+const numberControlSchema = baseControlConfigSchema.keys({
+  type: Joi.string().valid('number').required(),
+  min: Joi.number().optional(),
+  max: Joi.number().optional(),
+  step: Joi.number().optional(),
+  unit: Joi.string().optional(),
+});
+
+const textControlSchema = baseControlConfigSchema.keys({
+  type: Joi.string().valid('text').required(),
+  placeholder: Joi.string().optional(),
+  maxLength: Joi.number().optional(),
+});
+
+const backgroundSelectorSchema = baseControlConfigSchema.keys({
+  type: Joi.string().valid('backgroundSelector').required(),
+  backgrounds: Joi.array()
+    .items(
+      Joi.object({
+        value: Joi.string().required(),
+        label: Joi.string().required(),
+        color: Joi.string().required(),
+      }),
+    )
+    .required(),
+});
+
+const controlConfigSchema = Joi.alternatives().try(
+  selectControlSchema,
+  sliderControlSchema,
+  numberControlSchema,
+  textControlSchema,
+  backgroundSelectorSchema,
+);
+
+const controlsConfigSchema = Joi.object({
+  inputConfig: Joi.object({
+    maxImages: Joi.number().integer().min(1).max(10).required(),
+    minImages: Joi.number().integer().min(1).optional(),
+    imageDescriptions: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string())).optional(),
+    allowedTypes: Joi.array().items(Joi.string()).optional(),
+    maxSize: Joi.number().optional(),
+    requirements: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
+  }).required(),
+  controlsConfig: Joi.array().items(controlConfigSchema).optional(),
+});
+
 // Validation schemas
 const createProjectSchema = Joi.object({
   slug: Joi.string()
@@ -38,6 +123,7 @@ const createProjectSchema = Joi.object({
     }).optional(),
     customStyles: Joi.object().optional(),
   }).optional(),
+  controlsConfig: controlsConfigSchema.optional(),
   logoUrl: Joi.string().uri().optional(),
   metadata: Joi.object().optional(),
 });
@@ -130,6 +216,7 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
         uiConfig: project.uiConfig,
         metadata: project.metadata,
         createdAt: project.createdAt,
+        controlsConfig: project.controlsConfig,
       },
     });
   } catch (error) {
@@ -180,6 +267,7 @@ router.get('/:id', async (req, res): Promise<any> => {
         uiConfig: project.uiConfig,
         metadata: project.metadata,
         createdAt: project.createdAt,
+        controlsConfig: project.controlsConfig,
       },
     });
   } catch (error) {

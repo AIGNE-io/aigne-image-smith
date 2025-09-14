@@ -6,12 +6,43 @@ import { uploadToMediaKit } from '@blocklet/uploader-server';
 import axios from 'axios';
 import { Router } from 'express';
 import Joi from 'joi';
+// Import prompt processing utilities for dynamic prompt building
+// Note: These utilities are in the frontend src directory, so we need proper path resolution
+import path from 'path';
 import { Op } from 'sequelize';
 
 import logger from '../libs/logger';
 import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import { getImageUrl } from '../libs/utils';
 import ImageGeneration from '../store/models/image-generation';
+
+const promptUtilsPath = path.resolve(__dirname, '../../../src/libs/promptUtils.ts');
+
+// Dynamic import for prompt utilities since they're TypeScript modules
+let promptUtils: any = null;
+try {
+  // eslint-disable-next-line import/no-dynamic-require, global-require
+  promptUtils = require(promptUtilsPath);
+} catch (error) {
+  // Fallback: implement basic prompt processing inline
+  promptUtils = {
+    replacePromptVariables: (template: string, variables: Record<string, any>) => {
+      let result = template;
+      Object.entries(variables).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        result = result.replace(regex, String(value));
+      });
+      return result;
+    },
+    buildPromptVariables: (controlValues: Record<string, any>, images: string[]) => {
+      const variables = { ...controlValues };
+      images.forEach((image, index) => {
+        variables[`image${index + 1}`] = image;
+      });
+      return variables;
+    },
+  };
+}
 
 const router = Router();
 
@@ -25,11 +56,18 @@ const model = new AIGNEHubChatModel({
 
 // Validation schemas
 const generateImageSchema = Joi.object({
-  prompt: Joi.string().min(1).max(1000).required(),
+  // Support both old single prompt and new dynamic prompt building
+  prompt: Joi.string().min(1).max(1000).optional(),
+  promptTemplate: Joi.string().min(1).max(1000).optional(),
+  controlValues: Joi.object().optional(),
+
+  // Support both single image (legacy) and multiple images (new)
   originalImg: Joi.string().optional(),
+  originalImages: Joi.array().items(Joi.string()).max(10).optional(),
+
   clientId: Joi.string().required(),
   metadata: Joi.object().optional(),
-});
+}).or('prompt', 'promptTemplate'); // At least one prompt method must be provided
 
 const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
@@ -55,7 +93,34 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
-    const { prompt, originalImg, clientId, metadata } = value;
+    const { prompt, promptTemplate, controlValues, originalImages, clientId, metadata } = value;
+
+    // Build final prompt - support both old and new systems
+    let finalPrompt: string;
+    let imageUrls: string[] = [];
+
+    if (prompt) {
+      // Legacy mode: use provided prompt directly
+      finalPrompt = prompt;
+      imageUrls = originalImages;
+    } else if (promptTemplate) {
+      // New mode: build prompt from template and control values
+      imageUrls = originalImages;
+      try {
+        const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, originalImages);
+        finalPrompt = promptUtils.replacePromptVariables(promptTemplate, promptVariables);
+      } catch (promptError) {
+        return res.status(400).json({
+          error: 'Invalid prompt template or variables',
+          message: promptError instanceof Error ? promptError.message : 'Prompt building failed',
+        });
+      }
+    } else {
+      return res.status(400).json({
+        error: 'Missing prompt data',
+        message: 'Either prompt or promptTemplate must be provided',
+      });
+    }
 
     // Check credit balance first
     const balanceInfo = await getUserCreditBalance(userDid);
@@ -73,7 +138,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Create initial record in database
     const generation = await ImageGeneration.validateAndCreate({
       userDid,
-      originalImg,
+      originalImg: imageUrls.length > 0 ? imageUrls[0] : '', // Store first image for backward compatibility
       generatedImg: '', // Will be updated when processing completes
       clientId,
       status: 'pending',
@@ -81,7 +146,10 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       metadata: {
         requestIp: req.ip,
         startTime: new Date().toISOString(),
-        prompt,
+        prompt: finalPrompt,
+        originalImages: imageUrls, // Store all original images
+        promptTemplate: promptTemplate || undefined,
+        controlValues: controlValues || undefined,
         ...metadata,
       },
     });
@@ -108,7 +176,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         identifier: `${userDid}_${sessionId}_${Date.now()}`,
         metadata: {
           generation_id: generation.id,
-          original_image_url: originalImg,
+          original_image_url: imageUrls.length > 0 ? imageUrls[0] : '',
+          original_images_count: imageUrls.length,
         },
       });
 
@@ -138,14 +207,11 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const processingStartTime = Date.now();
 
     try {
-      const fullPrompt = prompt;
+      // Prepare message content with the final prompt
+      const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
 
-      // Prepare message content
-      const messageContent: any[] = [{ type: 'text', text: fullPrompt }];
-
-      // Add original image if provided
-      if (originalImg) {
-        const imgUrl = getImageUrl(originalImg);
+      // Add all original images if provided
+      if (imageUrls.length > 0) {
         const getMimeType = async (imgUrl: string) => {
           try {
             const { data } = await axios.get(`${imgUrl}.json`);
@@ -154,19 +220,25 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
             return 'image/jpeg';
           }
         };
-        const mimeType = await getMimeType(imgUrl);
-        messageContent.push({
-          type: 'url',
-          url: imgUrl,
-          mimeType,
-        });
+
+        // Process each image and add to message content
+        for (const imageUrl of imageUrls) {
+          const imgUrl = getImageUrl(imageUrl);
+          const mimeType = await getMimeType(imgUrl);
+          messageContent.push({
+            type: 'url',
+            url: imgUrl,
+            mimeType,
+          });
+        }
       }
 
       // Call AIGNE Hub API
       logger.info('Starting AIGNE Hub API call', {
         generationId: generation.id,
-        prompt: fullPrompt,
-        hasOriginalImage: getImageUrl(originalImg),
+        prompt: finalPrompt,
+        imageCount: imageUrls.length,
+        originalImages: imageUrls.map((url) => getImageUrl(url)),
       });
 
       const result = await model.invoke({
@@ -287,7 +359,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       success: true,
       data: {
         generationId: generation.id,
-        originalImg,
+        originalImg: imageUrls.length > 0 ? imageUrls[0] : '', // First image for backward compatibility
+        originalImages: imageUrls, // All original images
         generatedImg,
         processingTimeMs: processingTime,
         creditsConsumed: requiredCredits,
@@ -295,6 +368,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         newBalance,
         status: 'completed',
         message: 'Processing completed',
+        prompt: finalPrompt,
       },
     });
   } catch (error) {

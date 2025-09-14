@@ -1,50 +1,38 @@
 import { ContentCopy as ContentCopyIcon } from '@mui/icons-material';
-import { Badge, Box, Chip, IconButton, Menu, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
+import { Badge, Box, IconButton, Menu, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
 
-export interface LanguageConfig {
-  code: string;
-  name: string;
-  flag: string;
-}
-
-export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
-  { code: 'zh', name: '简体中文', flag: '🇨🇳' },
-  { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-];
+import { SUPPORTED_LANGUAGES } from './project-content-editor';
 
 interface MultiLanguageEditorProps {
   label: string;
   values: Record<string, string>;
   onChange: (values: Record<string, string>) => void;
+  disabled?: boolean;
   required?: boolean;
   multiline?: boolean;
   rows?: number;
   placeholder?: string;
   helperText?: string;
-  disabled?: boolean;
 }
 
 export default function MultiLanguageEditor({
   label,
   values,
   onChange,
+  disabled = false,
   required = false,
   multiline = false,
   rows = 1,
   placeholder,
   helperText,
-  disabled = false,
 }: MultiLanguageEditorProps) {
   const [activeTab, setActiveTab] = useState(0);
   const [copyMenuAnchor, setCopyMenuAnchor] = useState<null | HTMLElement>(null);
 
   const currentLanguage = SUPPORTED_LANGUAGES[activeTab];
-  const currentValue = currentLanguage ? values[currentLanguage.code] || '' : '';
 
-  const handleValueChange = (value: string) => {
+  const handleFieldChange = (value: string) => {
     if (!currentLanguage) return;
     onChange({
       ...values,
@@ -53,9 +41,10 @@ export default function MultiLanguageEditor({
   };
 
   const handleCopyFrom = (sourceLanguageCode: string) => {
+    if (!currentLanguage) return;
     const sourceValue = values[sourceLanguageCode];
     if (sourceValue) {
-      handleValueChange(sourceValue);
+      handleFieldChange(sourceValue);
     }
     setCopyMenuAnchor(null);
   };
@@ -68,38 +57,34 @@ export default function MultiLanguageEditor({
     return Boolean(values[languageCode]?.trim());
   };
 
+  const openCopyMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setCopyMenuAnchor(event.currentTarget);
+  };
+
+  const getAvailableCopyLanguages = () => {
+    return SUPPORTED_LANGUAGES.filter(
+      (lang) => currentLanguage && lang.code !== currentLanguage.code && values[lang.code]?.trim(),
+    );
+  };
+
+  if (!currentLanguage) return null;
+
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 2 }}>
       {/* 标题和状态栏 */}
-      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-        <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
-          {label}
-          {required && <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>}
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+          {label} {required && <span style={{ color: '#f44336' }}>*</span>}
         </Typography>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Chip
-            size="small"
-            label={`${getCompletionCount()}/${SUPPORTED_LANGUAGES.length}`}
-            color={getCompletionCount() === SUPPORTED_LANGUAGES.length ? 'success' : 'default'}
-            variant="outlined"
-            sx={{ fontSize: '0.75rem' }}
-          />
-          {currentValue && (
-            <Tooltip title="从其他语言复制内容">
-              <IconButton
-                size="small"
-                onClick={(e) => setCopyMenuAnchor(e.currentTarget)}
-                disabled={disabled}
-                sx={{ padding: '4px' }}>
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            {getCompletionCount()}/{SUPPORTED_LANGUAGES.length} 语言
+          </Typography>
         </Box>
       </Box>
 
       {/* 语言标签页 */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
@@ -107,30 +92,32 @@ export default function MultiLanguageEditor({
           sx={{
             minHeight: 'auto',
             '& .MuiTab-root': {
-              minHeight: 56,
-              padding: '12px 16px',
-              fontSize: '0.875rem',
+              minHeight: 42,
+              padding: '8px 12px',
+              fontSize: '0.8rem',
             },
           }}>
           {SUPPORTED_LANGUAGES.map((lang) => (
             <Tab
               key={lang.code}
               label={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box component="span" sx={{ fontSize: '1.1rem' }}>
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <Box component="span" sx={{ fontSize: '0.9rem' }}>
                     {lang.flag}
                   </Box>
-                  <Box component="span">{lang.name}</Box>
+                  <Box component="span" sx={{ fontSize: '0.8rem' }}>
+                    {lang.code.toUpperCase()}
+                  </Box>
                   {isLanguageComplete(lang.code) && (
                     <Badge
                       color="success"
                       variant="dot"
                       sx={{
                         '& .MuiBadge-dot': {
-                          right: -4,
-                          top: 4,
-                          width: 6,
-                          height: 6,
+                          right: -2,
+                          top: 2,
+                          width: 4,
+                          height: 4,
                         },
                       }}
                     />
@@ -142,29 +129,38 @@ export default function MultiLanguageEditor({
         </Tabs>
       </Box>
 
-      {/* 输入框 */}
-      <TextField
-        fullWidth
-        value={currentValue}
-        onChange={(e) => handleValueChange(e.target.value)}
-        multiline={multiline}
-        rows={rows}
-        placeholder={placeholder}
-        helperText={helperText}
-        disabled={disabled}
-        error={required && !currentValue.trim()}
-        InputLabelProps={{ shrink: true }}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            fontSize: '0.95rem',
-            lineHeight: 1.5,
-          },
-          '& .MuiFormHelperText-root': {
-            fontSize: '0.8rem',
-            marginTop: 1.5,
-          },
-        }}
-      />
+      {/* 当前语言的编辑区域 */}
+      <Box display="flex" alignItems="flex-start" gap={1}>
+        <TextField
+          fullWidth
+          size="small"
+          multiline={multiline}
+          rows={multiline ? rows : undefined}
+          value={values[currentLanguage.code] || ''}
+          onChange={(e) => handleFieldChange(e.target.value)}
+          disabled={disabled}
+          placeholder={placeholder || `输入${label}...`}
+          helperText={helperText}
+          error={required && !values[currentLanguage.code]?.trim()}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              fontSize: '0.875rem',
+              lineHeight: 1.4,
+            },
+            '& .MuiFormHelperText-root': {
+              fontSize: '0.75rem',
+              marginTop: 1,
+            },
+          }}
+        />
+        {getAvailableCopyLanguages().length > 0 && (
+          <Tooltip title="从其他语言复制">
+            <IconButton size="small" onClick={openCopyMenu} disabled={disabled} sx={{ mt: 0.5, padding: '4px' }}>
+              <ContentCopyIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
 
       {/* 复制菜单 */}
       <Menu
@@ -174,24 +170,22 @@ export default function MultiLanguageEditor({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{
-          sx: { mt: 1, minWidth: 200 },
+          sx: { mt: 1, minWidth: 180 },
         }}>
-        <MenuItem disabled sx={{ fontSize: '0.875rem', color: 'text.secondary', py: 1 }}>
+        <MenuItem disabled sx={{ fontSize: '0.8rem', color: 'text.secondary', py: 0.5 }}>
           从以下语言复制:
         </MenuItem>
-        {SUPPORTED_LANGUAGES.filter(
-          (lang) => currentLanguage && lang.code !== currentLanguage.code && values[lang.code]?.trim(),
-        ).map((lang) => (
-          <MenuItem key={lang.code} onClick={() => handleCopyFrom(lang.code)} sx={{ py: 1 }}>
-            <Box display="flex" alignItems="center" gap={1.5} width="100%">
-              <Box component="span" sx={{ fontSize: '1rem' }}>
+        {getAvailableCopyLanguages().map((lang) => (
+          <MenuItem key={lang.code} onClick={() => handleCopyFrom(lang.code)} sx={{ py: 0.5 }}>
+            <Box display="flex" alignItems="center" gap={1} width="100%">
+              <Box component="span" sx={{ fontSize: '0.9rem' }}>
                 {lang.flag}
               </Box>
-              <Box component="span" sx={{ fontSize: '0.9rem' }}>
+              <Box component="span" sx={{ fontSize: '0.85rem' }}>
                 {lang.name}
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto', fontSize: '0.75rem' }}>
-                {values[lang.code]?.slice(0, 15)}...
+              <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto', fontSize: '0.7rem' }}>
+                {values[lang.code]?.slice(0, 10)}...
               </Typography>
             </Box>
           </MenuItem>
