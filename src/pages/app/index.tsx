@@ -96,6 +96,13 @@ export default function DynamicApp() {
     subtitle: getLocalizedText(project.subtitle, '') || '',
     description: getLocalizedText(project.description, '') || '',
     prompt: project.promptTemplate || '',
+    uiConfig: project.uiConfig || {
+      layout: 'card',
+      features: {
+        uploadMultiple: false,
+        showComparisonSlider: true,
+      },
+    },
   };
 
   return <AIProjectHome config={config} />;

@@ -104,7 +104,6 @@ const ImageCompareContainer = styled(Box)(({ theme }) => ({
     bottom: 0,
     background: `linear-gradient(45deg, transparent 30%, ${theme.palette.action.hover} 50%, transparent 70%)`,
     pointerEvents: 'none',
-    animation: `${sparkleAnimation} 3s ease-in-out infinite`,
   },
 }));
 
@@ -117,9 +116,8 @@ const CompareImage = styled('img')({
   display: 'block',
 });
 
-const ImageWrapper = styled(Box)(({ theme }) => ({
+const ImageWrapper = styled(Box)(() => ({
   position: 'relative',
-  backgroundColor: theme.palette.common.black,
   width: '100%',
   height: '100%',
   minHeight: '200px',
@@ -182,6 +180,13 @@ interface AIProjectConfig {
   title: string;
   subtitle: string;
   description: string;
+  uiConfig?: {
+    layout?: string;
+    features?: {
+      uploadMultiple?: boolean;
+      showComparisonSlider?: boolean;
+    };
+  };
 }
 
 interface AIProjectHomeProps {
@@ -1253,77 +1258,97 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     </Stack>
                   </Box>
                 ) : originalImage ? (
-                  // 有图片时的对比展示
+                  // 有图片时的展示 - 根据配置决定是否显示对比
                   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ImageCompareContainer sx={{ flex: 1, maxWidth: 'none', display: 'flex', alignItems: 'center' }}>
                       <ImageWrapper>
-                        <CompareImage
-                          src={getImageUrl(originalImage)}
-                          alt={t('home.image.originalImage')}
-                          style={{
-                            position: generatedImage ? 'absolute' : 'relative',
-                            clipPath: generatedImage ? `inset(0 ${100 - compareSlider}% 0 0)` : 'none',
-                            zIndex: 2,
-                          }}
-                        />
-
-                        {generatedImage && (
+                        {config.uiConfig?.features?.showComparisonSlider !== false ? (
+                          // 对比模式：显示原图和生成图的对比
                           <>
                             <CompareImage
-                              src={getImageUrl(generatedImage)}
-                              alt={t('home.image.restoredImage')}
+                              src={getImageUrl(originalImage)}
+                              alt={t('home.image.originalImage')}
                               style={{
-                                position: 'absolute',
-                                clipPath: `inset(0 0 0 ${compareSlider}%)`,
-                                zIndex: 1,
+                                position: generatedImage ? 'absolute' : 'relative',
+                                clipPath: generatedImage ? `inset(0 ${100 - compareSlider}% 0 0)` : 'none',
+                                zIndex: 2,
                               }}
                             />
 
-                            <Box
-                              sx={(theme) => ({
-                                position: 'absolute',
-                                left: `${compareSlider}%`,
-                                top: 0,
-                                bottom: 0,
-                                width: '2px',
-                                backgroundColor: theme.palette.primary.main,
-                                boxShadow: `0 0 6px ${theme.palette.primary.main}60`,
-                                transform: 'translateX(-1px)',
-                                zIndex: 5,
-                              })}
-                            />
+                            {generatedImage && (
+                              <>
+                                <CompareImage
+                                  src={getImageUrl(generatedImage)}
+                                  alt={t('home.image.restoredImage')}
+                                  style={{
+                                    position: 'absolute',
+                                    clipPath: `inset(0 0 0 ${compareSlider}%)`,
+                                    zIndex: 1,
+                                  }}
+                                />
 
-                            <Chip
-                              label={t('home.image.original')}
-                              size="small"
-                              sx={(theme) => ({
-                                position: 'absolute',
-                                top: 8,
-                                left: 8,
-                                background: `${theme.palette.common.black}B3`,
-                                color: theme.palette.common.white,
-                                zIndex: 6,
-                              })}
-                            />
-                            <Chip
-                              label={t('home.image.restored')}
-                              size="small"
-                              sx={(theme) => ({
-                                position: 'absolute',
-                                top: 8,
-                                right: 8,
-                                backgroundColor: theme.palette.primary.main,
-                                color: theme.palette.common.white,
-                                zIndex: 6,
-                              })}
-                            />
+                                <Box
+                                  sx={(theme) => ({
+                                    position: 'absolute',
+                                    left: `${compareSlider}%`,
+                                    top: 0,
+                                    bottom: 0,
+                                    width: '2px',
+                                    backgroundColor: theme.palette.primary.main,
+                                    boxShadow: `0 0 6px ${theme.palette.primary.main}60`,
+                                    transform: 'translateX(-1px)',
+                                    zIndex: 5,
+                                  })}
+                                />
+
+                                <Chip
+                                  label={t('home.image.original')}
+                                  size="small"
+                                  sx={(theme) => ({
+                                    position: 'absolute',
+                                    top: 8,
+                                    left: 8,
+                                    background: `${theme.palette.common.black}B3`,
+                                    color: theme.palette.common.white,
+                                    zIndex: 6,
+                                  })}
+                                />
+                                <Chip
+                                  label={t('home.image.restored')}
+                                  size="small"
+                                  sx={(theme) => ({
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                    zIndex: 6,
+                                  })}
+                                />
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          // 单图模式：只显示生成的图片或原图（如果还没有生成结果）
+                          // 严格限制高度以适应第一屏，确保图片完整显示
+                          <>
+                            {generatedImage && (
+                              <CompareImage
+                                src={getImageUrl(generatedImage)}
+                                alt={t('home.image.restoredImage')}
+                                style={{
+                                  position: 'absolute',
+                                  zIndex: 1,
+                                }}
+                              />
+                            )}
                           </>
                         )}
                       </ImageWrapper>
                     </ImageCompareContainer>
 
-                    {/* 滑块移到图片下方 */}
-                    {generatedImage && (
+                    {/* 滑块移到图片下方 - 根据配置显示 */}
+                    {generatedImage && config.uiConfig?.features?.showComparisonSlider !== false && (
                       <Box sx={{ mt: 1, px: 0 }}>
                         <Stack direction="row" alignItems="center" spacing={2} sx={{ px: 1 }}>
                           <Slider
