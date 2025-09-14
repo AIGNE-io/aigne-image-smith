@@ -27,7 +27,7 @@ export interface LanguageConfig {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
-  { code: 'zh-CN', name: '简体中文', flag: '🇨🇳' },
+  { code: 'zh', name: '简体中文', flag: '🇨🇳' },
   { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
@@ -174,7 +174,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
               项目名称 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
-            {values.name[currentLanguage.code] && getAvailableCopyLanguages('name').length > 0 && (
+            {getAvailableCopyLanguages('name').length > 0 && (
               <Tooltip title="从其他语言复制">
                 <IconButton
                   size="small"
@@ -208,7 +208,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
               项目副标题 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
-            {values.subtitle[currentLanguage.code] && getAvailableCopyLanguages('subtitle').length > 0 && (
+            {getAvailableCopyLanguages('subtitle').length > 0 && (
               <Tooltip title="从其他语言复制">
                 <IconButton
                   size="small"
@@ -242,7 +242,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
               项目描述 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
-            {values.description[currentLanguage.code] && getAvailableCopyLanguages('description').length > 0 && (
+            {getAvailableCopyLanguages('description').length > 0 && (
               <Tooltip title="从其他语言复制">
                 <IconButton
                   size="small"
@@ -283,7 +283,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
               OpenGraph 图片 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
-            {values.seoImageUrl[currentLanguage.code] && getAvailableCopyLanguages('seoImageUrl').length > 0 && (
+            {getAvailableCopyLanguages('seoImageUrl').length > 0 && (
               <Tooltip title="从其他语言复制">
                 <IconButton
                   size="small"

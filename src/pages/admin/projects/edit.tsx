@@ -231,7 +231,7 @@ function EditProjectContent() {
         </IconButton>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
           编辑项目:{' '}
-          {project?.name['zh-CN'] ||
+          {project?.name.zh ||
             project?.name.zh ||
             project?.name.en ||
             Object.values(project?.name || {})[0] ||

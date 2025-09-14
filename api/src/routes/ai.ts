@@ -50,7 +50,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = generateImageSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
-        error: '请求数据无效',
+        error: 'Invalid request data',
         details: error.details,
       });
     }
@@ -64,8 +64,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     if (currentBalance < requiredCredits) {
       return res.status(400).json({
-        error: '积分不足',
-        message: `需要: ${requiredCredits} 积分，可用: ${currentBalance} 积分`,
+        error: 'Insufficient credits',
+        message: `Required: ${requiredCredits} credits, Available: ${currentBalance} credits`,
         currentBalance,
       });
     }
@@ -89,17 +89,17 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Update status to processing
     await generation.updateStatus('processing');
 
-    // Consume credits during processing - 直接集成消耗上报逻辑
+    // Consume credits during processing - directly integrate consumption reporting logic
     let meterEvent: any = null;
     const sessionId = `gen_${generation.id}_${Date.now()}`;
     let customer = null;
     try {
-      // 确保客户存在
+      // Ensure customer exists
       customer = await ensureCustomer(userDid);
 
-      // 直接上报图像处理消耗量
+      // Report image processing consumption directly
       meterEvent = await payment.meterEvents.create({
-        event_name: METER_NAME, // 保持与 meter 名称一致
+        event_name: METER_NAME, // Keep consistent with meter name
         timestamp: Math.floor(Date.now() / 1000),
         payload: {
           customer_id: userDid,
@@ -112,7 +112,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         },
       });
 
-      logger.info('settled processing session', {
+      logger.info('Settled processing session', {
         customerId: userDid,
         billedCredits: requiredCredits,
         sessionId,
@@ -121,12 +121,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     } catch (creditError) {
       // If credit consumption fails, mark generation as failed
       await generation.updateStatus('failed', {
-        errorMessage: `积分消费失败: ${creditError instanceof Error ? creditError.message : '未知错误'}`,
+        errorMessage: `Credit consumption failed: ${creditError instanceof Error ? creditError.message : 'Unknown error'}`,
       });
 
       return res.status(400).json({
-        error: '积分消费失败',
-        message: creditError instanceof Error ? creditError.message : '未知错误',
+        error: 'Credit consumption failed',
+        message: creditError instanceof Error ? creditError.message : 'Unknown error',
         generationId: generation.id,
       });
     }
@@ -163,7 +163,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       }
 
       // Call AIGNE Hub API
-      logger.info('开始调用 AIGNE Hub API', {
+      logger.info('Starting AIGNE Hub API call', {
         generationId: generation.id,
         prompt: fullPrompt,
         hasOriginalImage: getImageUrl(originalImg),
@@ -180,8 +180,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
       if (!result.files || result.files.length === 0) {
         return res.status(400).json({
-          error: '图片生成失败',
-          message: '图片生成失败',
+          error: 'Image generation failed',
+          message: 'Image generation failed',
           generationId: generation.id,
         });
       }
@@ -223,16 +223,16 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       processingTime = Date.now() - processingStartTime;
 
       if (!generatedImg) {
-        throw new Error('AI 模型未返回有效的图片结果');
+        throw new Error('AI model did not return valid image result');
       }
 
-      logger.info('AIGNE Hub API 调用成功', {
+      logger.info('AIGNE Hub API call successful', {
         generationId: generation.id,
         processingTime,
         resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
     } catch (aiError) {
-      // 创建信用额度
+      // Create credit grant
       const meter = await payment.meters.retrieve(METER_NAME);
       if (meter && customer) {
         await payment.creditGrants.create({
@@ -245,7 +245,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
             },
           },
           category: 'promotional',
-          name: '图片生成失败，Credit 退回',
+          name: 'Image generation failed, credit refunded',
           metadata: {
             granted_at: new Date().toISOString(),
             service_type: METER_NAME,
@@ -254,7 +254,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         });
       }
       console.error(aiError);
-      logger.error('AI 处理失败', {
+      logger.error('AI processing failed', {
         generationId: generation.id,
         error: aiError instanceof Error ? aiError.message : '未知错误',
         processingTime: Date.now() - processingStartTime,
@@ -263,12 +263,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       // Update generation record with failure
       await generation.updateStatus('failed', {
         processingTimeMs: Date.now() - processingStartTime,
-        errorMessage: `AI 处理失败: ${aiError instanceof Error ? aiError.message : '未知错误'}`,
+        errorMessage: `AI processing failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`,
       });
 
       return res.status(400).json({
-        error: 'AI 处理失败',
-        message: aiError instanceof Error ? aiError.message : '未知错误',
+        error: 'AI processing failed',
+        message: aiError instanceof Error ? aiError.message : 'Unknown error',
         generationId: generation.id,
       });
     }
@@ -294,12 +294,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         fileName,
         newBalance,
         status: 'completed',
-        message: '处理完成',
+        message: 'Processing completed',
       },
     });
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    logger.error('AI 生成失败:', error);
+    logger.error('AI generation failed:', error);
 
     // Try to update generation record if it exists
     try {
@@ -313,17 +313,17 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         if (failedGeneration && failedGeneration.status !== 'completed') {
           await failedGeneration.updateStatus('failed', {
             processingTimeMs: processingTime,
-            errorMessage: error instanceof Error ? error.message : '未知处理错误',
+            errorMessage: error instanceof Error ? error.message : 'Unknown processing error',
           });
         }
       }
     } catch (updateError) {
-      logger.error('更新生成状态失败:', updateError);
+      logger.error('Failed to update generation status:', updateError);
     }
 
     return res.status(400).json({
-      error: 'AI 生成失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'AI generation failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -336,7 +336,7 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
   try {
     const userDid = req.user?.did;
     if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
     const { id } = req.params;
@@ -346,8 +346,8 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
 
     if (!generation) {
       return res.status(404).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
@@ -367,10 +367,10 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
       },
     });
   } catch (error) {
-    logger.error('获取生成状态失败:', error);
+    logger.error('Failed to get generation status:', error);
     return res.status(400).json({
-      error: '获取生成状态失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation status',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -387,7 +387,7 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = getHistorySchema.validate(req.query);
     if (error) {
       return res.status(400).json({
-        error: '查询参数无效',
+        error: 'Invalid query parameters',
         details: error.details,
       });
     }
@@ -433,10 +433,10 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('获取生成历史失败:', error);
+    logger.error('Failed to get generation history:', error);
     return res.status(400).json({
-      error: '获取生成历史失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation history',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -456,15 +456,15 @@ router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> 
 
     if (!generation) {
       return res.status(404).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
     if (userDid !== generation.userDid) {
       return res.status(403).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
@@ -473,15 +473,15 @@ router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> 
     return res.json({
       success: true,
       data: {
-        message: '生成记录删除成功',
+        message: 'Generation record deleted successfully',
         deletedId: id,
       },
     });
   } catch (error) {
-    logger.error('删除生成记录失败:', error);
+    logger.error('Failed to delete generation record:', error);
     return res.status(400).json({
-      error: '删除生成记录失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to delete generation record',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -494,7 +494,7 @@ router.get('/stats', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
     const stats = await ImageGeneration.getUserStats(userDid);
@@ -517,14 +517,14 @@ router.get('/stats', auth(), user(), async (req, res): Promise<any> => {
       data: {
         ...stats,
         recentActivity,
-        period: '30 天',
+        period: '30 days',
       },
     });
   } catch (error) {
-    logger.error('获取生成统计失败:', error);
+    logger.error('Failed to get generation statistics:', error);
     return res.status(400).json({
-      error: '获取生成统计失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation statistics',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

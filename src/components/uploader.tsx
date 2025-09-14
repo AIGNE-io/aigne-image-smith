@@ -1,4 +1,5 @@
 // src/contexts/uploader.tsx，封装的 Provider 方案
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { Button, Stack, Typography, styled } from '@mui/material';
@@ -48,9 +49,9 @@ export function UploaderButton({
   onChange = undefined,
   openLoginDialog,
   isLoggedIn,
-  title = '上传图片',
-  description = '选择图片文件',
-  buttonText = '选择图片',
+  title,
+  description,
+  buttonText,
   compact = false,
 }: {
   openLoginDialog: Function;
@@ -61,6 +62,7 @@ export function UploaderButton({
   buttonText?: string;
   compact?: boolean;
 }) {
+  const { t } = useLocaleContext();
   const uploaderRef = useUploader();
 
   const handleOpen = () => {
@@ -97,7 +99,7 @@ export function UploaderButton({
           borderRadius: '8px',
           textTransform: 'none',
         }}>
-        {buttonText}
+        {buttonText || t('home.uploader.selectButton')}
       </Button>
     );
   }
@@ -120,7 +122,7 @@ export function UploaderButton({
           fontWeight: 300,
           fontSize: { xs: '1.25rem', sm: '1.5rem' },
         })}>
-        {title}
+        {title || t('home.uploader.title')}
       </Typography>
 
       <Typography
@@ -130,7 +132,7 @@ export function UploaderButton({
           color: theme.palette.text.secondary,
           lineHeight: 1.6,
         })}>
-        {description}
+        {description || `${t('home.uploader.clickToSelect')}\n${t('home.uploader.description')}`}
       </Typography>
 
       <GoldenButton
@@ -148,7 +150,7 @@ export function UploaderButton({
           px: { xs: 2, sm: 4 },
           py: { xs: 1, sm: 1.5 },
         }}>
-        {buttonText}
+        {buttonText || t('home.uploader.selectButton')}
       </GoldenButton>
     </Stack>
   );

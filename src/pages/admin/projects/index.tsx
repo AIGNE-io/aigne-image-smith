@@ -2,7 +2,6 @@ import {
   Add as AddIcon,
   Archive as ArchiveIcon,
   Edit as EditIcon,
-  Language as LanguageIcon,
   Unarchive as UnarchiveIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
@@ -181,14 +180,16 @@ export default function ProjectsManagement() {
                       </Tooltip>
                     )}
 
-                    <Tooltip title="多语言配置">
-                      <IconButton size="small" component={Link} to={`/admin/projects/${project.id}/i18n`}>
-                        <LanguageIcon />
-                      </IconButton>
-                    </Tooltip>
-
                     <Tooltip title="预览应用">
-                      <IconButton size="small" onClick={() => window.open(`/${project.slug}`, '_blank')}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          // 获取当前应用的base路径
+                          const basename = window?.blocklet?.prefix || '/';
+                          const previewUrl = basename === '/' ? `/${project.slug}` : `${basename}${project.slug}`;
+                          // console.log('Preview URL:', previewUrl, 'Project slug:', project.slug, 'Basename:', basename);
+                          window.open(previewUrl, '_blank');
+                        }}>
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>

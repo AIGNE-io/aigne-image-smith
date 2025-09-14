@@ -1,9 +1,10 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { Alert, Box, CircularProgress, Container } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import api from '../../libs/api';
-import ProjectTemplate from './project-template';
+import AIProjectHome from '../ai-project-home';
 
 interface AIProject {
   id: string;
@@ -18,37 +19,10 @@ interface AIProject {
   createdAt: string;
 }
 
-interface ProjectI18nContent {
-  ui: {
-    title: string;
-    subtitle?: string;
-    uploadButton: string;
-    processButton: string;
-    downloadButton: string;
-    uploadPlaceholder?: string;
-    processingText?: string;
-    successText?: string;
-    errorText?: string;
-    tryAgainButton?: string;
-    backButton?: string;
-    historyButton?: string;
-    creditsText?: string;
-  };
-  features?: string[];
-  instructions?: string[];
-  tips?: string[];
-  seo?: {
-    title: string;
-    description: string;
-    keywords: string[];
-  };
-  custom?: Record<string, any>;
-}
-
 export default function DynamicApp() {
+  const { locale } = useLocaleContext();
   const { slug } = useParams<{ slug: string }>();
   const [project, setProject] = useState<AIProject | null>(null);
-  const [i18nContent, setI18nContent] = useState<ProjectI18nContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,46 +37,12 @@ export default function DynamicApp() {
       try {
         setLoading(true);
         setError(null);
-
         // Load project info and i18n content in parallel
-        const [projectResponse, i18nResponse] = await Promise.all([
-          api.get(`/api/projects/by-slug/${slug}`),
-          api.get(`/api/projects/by-slug/${slug}/i18n/zh`).catch(() => ({ data: { success: false } })),
-        ]);
-
+        const [projectResponse] = await Promise.all([api.get(`/api/projects/by-slug/${slug}`)]);
         if (!projectResponse.data.success) {
           throw new Error('项目不存在或已被禁用');
         }
-
         setProject(projectResponse.data.data);
-
-        // Set i18n content if available
-        if (i18nResponse.data.success) {
-          setI18nContent(i18nResponse.data.data.content);
-        } else {
-          // Provide default i18n content if none configured
-          setI18nContent({
-            ui: {
-              title: projectResponse.data.data.name.zh || projectResponse.data.data.name.en,
-              subtitle:
-                projectResponse.data.data.subtitle?.zh ||
-                projectResponse.data.data.subtitle?.en ||
-                projectResponse.data.data.description.zh ||
-                projectResponse.data.data.description.en,
-              uploadButton: '上传图片',
-              processButton: '开始处理',
-              downloadButton: '下载结果',
-              uploadPlaceholder: '点击或拖拽图片到这里',
-              processingText: '处理中，请稍候...',
-              successText: '处理完成！',
-              errorText: '处理失败',
-              tryAgainButton: '重试',
-              backButton: '返回',
-              historyButton: '历史记录',
-              creditsText: '剩余积分',
-            },
-          });
-        }
       } catch (err) {
         console.error('Load project data error:', err);
         setError(err instanceof Error ? err.message : '加载项目信息失败');
@@ -122,7 +62,7 @@ export default function DynamicApp() {
     );
   }
 
-  if (error || !project || !i18nContent) {
+  if (error || !project) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Alert severity="error">{error || '项目信息加载失败'}</Alert>
@@ -130,5 +70,33 @@ export default function DynamicApp() {
     );
   }
 
-  return <ProjectTemplate project={project} projectId={project.id} />;
+  // 转换项目数据为AIProjectHome的配置格式
+  const getLocalizedText = (obj: Record<string, string> | undefined, fallback = '') => {
+    if (!obj || typeof obj !== 'object') return fallback;
+
+    // 优先使用当前语言环境
+    if (obj[locale]) return obj[locale];
+
+    // 定义语言回退顺序
+    const fallbackOrder = ['zh', 'en', 'zh-tw', 'ja'];
+
+    // 按顺序查找可用的语言版本
+    for (const lang of fallbackOrder) {
+      if (obj[lang]) return obj[lang];
+    }
+
+    // 如果以上都没有，使用第一个可用的值
+    const keys = Object.keys(obj);
+    return keys.length > 0 && keys[0] && obj[keys[0]] ? obj[keys[0]] : fallback;
+  };
+
+  const config = {
+    clientId: project.id, // 使用项目ID作为clientId
+    title: getLocalizedText(project.name, '') || '',
+    subtitle: getLocalizedText(project.subtitle, '') || '',
+    description: getLocalizedText(project.description, '') || '',
+    prompt: project.promptTemplate || '',
+  };
+
+  return <AIProjectHome config={config} />;
 }

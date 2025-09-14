@@ -7,6 +7,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AdminLayout from './components/layout/admin-layout';
+import Layout from './components/layout/layout';
 import PrivateRoute from './components/private-route';
 import { SessionProvider } from './contexts/session';
 import { appThemeOptions } from './libs/theme';
@@ -57,7 +58,10 @@ function App() {
             <Route path="projects/:projectId/edit" element={<EditProject />} />
           </Route>
 
-          <Route path="/:slug" element={<DynamicApp />} />
+          <Route path="/" element={<Layout />}>
+            <Route path="/:slug" element={<DynamicApp />} />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>

@@ -10,13 +10,13 @@ import wsServer from '../ws';
 const router = Router();
 
 /**
- * 核心功能：领取欢迎积分 - 创建 creditGrant
+ * Core function: Claim welcome credits - create creditGrant
  */
 router.post('/credits/grants', auth(), user(), async (req, res) => {
   try {
     const userDid = req.user?.did!!;
 
-    // 确保客户存在
+    // Ensure customer exists
     const customer = await ensureCustomer(userDid);
 
     const meter = await ensureMeter();
@@ -28,11 +28,11 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
     if (count > 0) {
       return res.status(400).json({
         success: false,
-        message: '已经领取过积分',
+        message: 'Credits already claimed',
       });
     }
 
-    // 创建信用额度
+    // Create credit grant
     const creditGrant = await payment.creditGrants.create({
       customer_id: customer.id,
       amount: '5',
@@ -60,7 +60,7 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
     return res.json({
       success: true,
       data: creditGrant,
-      message: '成功领取 5 个欢迎积分',
+      message: 'Successfully claimed 5 welcome credits',
     });
   } catch (error) {
     logger.error('credit grant failed', {
@@ -70,19 +70,19 @@ router.post('/credits/grants', auth(), user(), async (req, res) => {
     return res.status(400).json({
       success: false,
       error: error.message,
-      message: '领取欢迎积分失败',
+      message: 'Failed to claim welcome credits',
     });
   }
 });
 
 /**
- * 查询用户积分余额
+ * Query user credit balance
  */
 router.get('/credits/balance', auth(), user(), async (req, res) => {
   try {
     const userDid = req.user?.did!!;
 
-    // 确保客户存在
+    // Ensure customer exists
     const customer = await ensureCustomer(userDid);
 
     const meter = await ensureMeter();
@@ -102,12 +102,12 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
     });
 
     const paymentCurrency = meter?.paymentCurrency;
-    // 当前Credit 余额
+    // Current credit balance
     let balance = new BN(creditBalance?.[meter.currency_id!]?.remainingAmount || 0);
-    // 未结算 Credit
+    // Unsettled credits
     const pending = new BN(pendingCredit?.[meter.currency_id!] || 0);
     if (pending.gt(balance)) {
-      balance = new BN(0); // 余额不能为负数
+      balance = new BN(0); // Balance cannot be negative
     } else {
       balance = balance.sub(pending);
     }
@@ -123,7 +123,7 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
         paymentCurrency,
         isNewUser: count === 0,
       },
-      message: '信用余额查询成功',
+      message: 'Credit balance query successful',
     });
   } catch (error) {
     logger.error('credit balance get failed', {
@@ -133,7 +133,7 @@ router.get('/credits/balance', auth(), user(), async (req, res) => {
     return res.status(400).json({
       success: false,
       error: error.message,
-      message: '信用余额查询失败',
+      message: 'Credit balance query failed',
     });
   }
 });
@@ -142,12 +142,12 @@ router.post('/credits/checkout', auth(), user(), async (req, res) => {
   try {
     const { quantity = 10 } = req.body;
 
-    // 验证积分数量
+    // Validate credit quantity
     if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
       return res.status(400).json({
         success: false,
-        error: '无效的积分数量',
-        message: '积分数量必须是1到100之间的整数',
+        error: 'Invalid credit quantity',
+        message: 'Credit quantity must be an integer between 1 and 100',
       });
     }
 
@@ -185,9 +185,9 @@ const handleWebhook = async (req: any, res: any) => {
 
     switch (type) {
       case 'checkout.session.completed': {
-        // 处理结账会话完成
+        // Handle checkout session completion
         const session = body.data.object;
-        logger.info('结账会话完成', {
+        logger.info('Checkout session completed', {
           sessionId: session.id,
           customerId: session.customer_id,
           amount: session.amount_total,
@@ -196,7 +196,7 @@ const handleWebhook = async (req: any, res: any) => {
         const meta = body.data.object;
         const { payment_status: paymentStatus } = meta;
         if (paymentStatus === 'paid') {
-          // 1. 通过 key 和 customer 来标识一个用户是否成功参加了规则
+          // 1. Use key and customer to identify if a user has successfully participated in the rules
           const { customer } = meta;
           const userDid = customer.did;
           wsServer.broadcast(userDid, {
@@ -207,15 +207,15 @@ const handleWebhook = async (req: any, res: any) => {
         break;
       }
       case 'customer.subscription.updated':
-        logger.info('用户订阅更新', { body });
+        logger.info('User subscription updated', { body });
         break;
 
       case 'customer.subscription.renewed':
-        logger.info('用户订阅续费', { body });
+        logger.info('User subscription renewed', { body });
         break;
 
       default:
-        logger.info('未处理的 webhook 事件类型', { type });
+        logger.info('Unhandled webhook event type', { type });
     }
 
     return res.status(200).json({ message: 'success' });

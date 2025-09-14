@@ -16,9 +16,9 @@ const createProjectSchema = Joi.object({
     .pattern(/^[a-z0-9-]+$/)
     .required()
     .messages({
-      'string.pattern.base': 'Slug只能包含小写字母、数字和短横线',
-      'string.min': 'Slug至少需要1个字符',
-      'string.max': 'Slug不能超过100个字符',
+      'string.pattern.base': 'Slug can only contain lowercase letters, numbers and dashes',
+      'string.min': 'Slug must be at least 1 character',
+      'string.max': 'Slug cannot exceed 100 characters',
     }),
   name: Joi.object().pattern(Joi.string(), Joi.string()).required(),
   subtitle: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
@@ -94,10 +94,10 @@ router.get('/', async (req, res): Promise<any> => {
       })),
     });
   } catch (error) {
-    logger.error('获取项目列表失败:', error);
+    logger.error('Failed to get project list:', error);
     return res.status(500).json({
-      error: '获取项目列表失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get project list',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -113,8 +113,8 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
 
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在或已被禁用',
+        error: 'Project not found',
+        message: 'Project does not exist or has been disabled',
       });
     }
 
@@ -133,56 +133,10 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('通过slug获取项目失败:', error);
+    logger.error('Failed to get project by slug:', error);
     return res.status(500).json({
-      error: '获取项目失败',
-      message: error instanceof Error ? error.message : '未知错误',
-    });
-  }
-});
-
-/**
- * Get project i18n content by slug (public endpoint)
- * GET /api/projects/by-slug/:slug/i18n/:locale?
- */
-router.get('/by-slug/:slug/i18n/:locale?', async (req, res): Promise<any> => {
-  try {
-    const { slug, locale = 'en' } = req.params;
-
-    // First check if project exists and is active
-    const project = await AIProject.findActiveBySlug(slug);
-    if (!project) {
-      return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在或已被禁用',
-      });
-    }
-
-    // Get i18n content with fallback
-    const i18nContent = await ProjectI18n.getWithFallback(project.id, locale);
-
-    if (!i18nContent) {
-      return res.status(404).json({
-        error: '多语言内容未找到',
-        message: '该项目暂无多语言内容配置',
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: {
-        projectId: i18nContent.projectId,
-        locale: i18nContent.locale,
-        content: i18nContent.content,
-        createdAt: i18nContent.createdAt,
-        updatedAt: i18nContent.updatedAt,
-      },
-    });
-  } catch (error) {
-    logger.error('通过slug获取项目多语言内容失败:', error);
-    return res.status(500).json({
-      error: '获取多语言内容失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get project',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -198,8 +152,8 @@ router.get('/:id', async (req, res): Promise<any> => {
 
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在或已被禁用',
+        error: 'Project not found',
+        message: 'Project does not exist or has been disabled',
       });
     }
 
@@ -229,10 +183,10 @@ router.get('/:id', async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('获取项目详情失败:', error);
+    logger.error('Failed to get project details:', error);
     return res.status(500).json({
-      error: '获取项目详情失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get project details',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -249,8 +203,8 @@ router.get('/:id/i18n/:locale?', async (req, res): Promise<any> => {
     const project = await AIProject.findActiveById(id);
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在或已被禁用',
+        error: 'Project not found',
+        message: 'Project does not exist or has been disabled',
       });
     }
 
@@ -259,8 +213,8 @@ router.get('/:id/i18n/:locale?', async (req, res): Promise<any> => {
 
     if (!i18nContent) {
       return res.status(404).json({
-        error: '多语言内容未找到',
-        message: '该项目暂无多语言内容配置',
+        error: 'Multilingual content not found',
+        message: 'This project has no multilingual content configured',
       });
     }
 
@@ -275,10 +229,10 @@ router.get('/:id/i18n/:locale?', async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('获取项目多语言内容失败:', error);
+    logger.error('Failed to get project multilingual content:', error);
     return res.status(500).json({
-      error: '获取多语言内容失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get multilingual content',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -295,7 +249,7 @@ router.post('/admin', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = createProjectSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
-        error: '请求数据无效',
+        error: 'Invalid request data',
         details: error.details,
       });
     }
@@ -329,7 +283,7 @@ router.post('/admin', auth(), user(), async (req, res): Promise<any> => {
       }
     }
 
-    logger.info('项目创建成功', {
+    logger.info('Project created successfully', {
       projectId: project.id,
       createdBy: req.user?.did,
     });
@@ -350,10 +304,10 @@ router.post('/admin', auth(), user(), async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('创建项目失败:', error);
+    logger.error('Failed to create project:', error);
     return res.status(400).json({
-      error: '创建项目失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to create project',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -370,8 +324,8 @@ router.put('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
     const project = await AIProject.findByPk(id);
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在',
+        error: 'Project not found',
+        message: 'Project does not exist',
       });
     }
 
@@ -379,7 +333,7 @@ router.put('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = createProjectSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
-        error: '请求数据无效',
+        error: 'Invalid request data',
         details: error.details,
       });
     }
@@ -446,7 +400,7 @@ router.put('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
       }
     }
 
-    logger.info('项目更新成功', {
+    logger.info('Project updated successfully', {
       projectId: project.id,
       updatedBy: req.user?.did,
     });
@@ -467,10 +421,10 @@ router.put('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('更新项目失败:', error);
+    logger.error('Failed to update project:', error);
     return res.status(400).json({
-      error: '更新项目失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to update project',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -486,22 +440,22 @@ router.patch('/admin/:id/status', auth(), user(), async (req, res): Promise<any>
 
     if (!['active', 'draft', 'archived'].includes(status)) {
       return res.status(400).json({
-        error: '无效的状态值',
-        message: '状态必须是: active, draft, archived 之一',
+        error: 'Invalid status value',
+        message: 'Status must be one of: active, draft, archived',
       });
     }
 
     const project = await AIProject.findByPk(id);
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在',
+        error: 'Project not found',
+        message: 'Project does not exist',
       });
     }
 
     await project.updateStatus(status);
 
-    logger.info('项目状态更新成功', {
+    logger.info('Project status updated successfully', {
       projectId: project.id,
       newStatus: status,
       updatedBy: req.user?.did,
@@ -516,10 +470,10 @@ router.patch('/admin/:id/status', auth(), user(), async (req, res): Promise<any>
       },
     });
   } catch (error) {
-    logger.error('更新项目状态失败:', error);
+    logger.error('Failed to update project status:', error);
     return res.status(400).json({
-      error: '更新项目状态失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to update project status',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -534,7 +488,7 @@ router.post('/admin/:id/i18n', auth(), user(), async (req, res): Promise<any> =>
 
     if (!id) {
       return res.status(400).json({
-        error: '项目ID不能为空',
+        error: 'Project ID cannot be empty',
       });
     }
 
@@ -542,8 +496,8 @@ router.post('/admin/:id/i18n', auth(), user(), async (req, res): Promise<any> =>
     const project = await AIProject.findByPk(id);
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在',
+        error: 'Project not found',
+        message: 'Project does not exist',
       });
     }
 
@@ -551,7 +505,7 @@ router.post('/admin/:id/i18n', auth(), user(), async (req, res): Promise<any> =>
     const { error, value } = createI18nSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
-        error: '请求数据无效',
+        error: 'Invalid request data',
         details: error.details,
       });
     }
@@ -563,7 +517,7 @@ router.post('/admin/:id/i18n', auth(), user(), async (req, res): Promise<any> =>
       content: value.content,
     });
 
-    logger.info('项目多语言内容更新成功', {
+    logger.info('Project multilingual content updated successfully', {
       projectId: id,
       locale: value.locale,
       updatedBy: req.user?.did,
@@ -580,10 +534,10 @@ router.post('/admin/:id/i18n', auth(), user(), async (req, res): Promise<any> =>
       },
     });
   } catch (error) {
-    logger.error('更新项目多语言内容失败:', error);
+    logger.error('Failed to update project multilingual content:', error);
     return res.status(400).json({
-      error: '更新多语言内容失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to update multilingual content',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -615,10 +569,10 @@ router.get('/admin/all', auth(), user(), async (req, res): Promise<any> => {
       })),
     });
   } catch (error) {
-    logger.error('获取管理项目列表失败:', error);
+    logger.error('Failed to get admin project list:', error);
     return res.status(500).json({
-      error: '获取项目列表失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get project list',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -634,15 +588,15 @@ router.delete('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
     const project = await AIProject.findByPk(id);
     if (!project) {
       return res.status(404).json({
-        error: '项目未找到',
-        message: '项目不存在',
+        error: 'Project not found',
+        message: 'Project does not exist',
       });
     }
 
     // Soft delete by archiving
     await project.updateStatus('archived');
 
-    logger.info('项目删除成功', {
+    logger.info('Project deleted successfully', {
       projectId: project.id,
       deletedBy: req.user?.did,
     });
@@ -650,15 +604,15 @@ router.delete('/admin/:id', auth(), user(), async (req, res): Promise<any> => {
     return res.json({
       success: true,
       data: {
-        message: '项目已归档',
+        message: 'Project has been archived',
         projectId: id,
       },
     });
   } catch (error) {
-    logger.error('删除项目失败:', error);
+    logger.error('Failed to delete project:', error);
     return res.status(400).json({
-      error: '删除项目失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to delete project',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

@@ -9,7 +9,7 @@ export interface LanguageConfig {
 }
 
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
-  { code: 'zh-CN', name: '简体中文', flag: '🇨🇳' },
+  { code: 'zh', name: '简体中文', flag: '🇨🇳' },
   { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'ja', name: '日本語', flag: '🇯🇵' },
