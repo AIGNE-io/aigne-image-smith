@@ -1,7 +1,8 @@
 import AddIcon from '@mui/icons-material/Add';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoSizeSelectActualIcon from '@mui/icons-material/PhotoSizeSelectActual';
-import { Box, Card, Chip, IconButton, Stack, Typography, styled } from '@mui/material';
+import { Box, Button, Card, Chip, IconButton, Stack, Typography, styled } from '@mui/material';
 import { useState } from 'react';
 
 import { getImageUrl } from '../libs/utils';
@@ -21,8 +22,16 @@ function UploadTrigger({ onClick, isSingle, isUploading, description, index }: U
   return (
     <Stack
       alignItems="center"
+      justifyContent="center"
       spacing={isSingle ? 2 : 1.5}
-      sx={{ p: isSingle ? 3 : 2, cursor: 'pointer', width: '100%', height: '100%' }}
+      sx={{
+        p: isSingle ? 3 : 2,
+        cursor: 'pointer',
+        width: '100%',
+        height: '100%',
+        minHeight: '100%',
+        display: 'flex',
+      }}
       onClick={onClick}>
       {isUploading ? (
         <PhotoSizeSelectActualIcon
@@ -39,27 +48,15 @@ function UploadTrigger({ onClick, isSingle, isUploading, description, index }: U
         variant="body2"
         color="text.secondary"
         textAlign="center"
-        sx={{ fontWeight: 500, fontSize: isSingle ? '1rem' : '0.875rem' }}>
-        {isUploading ? 'Uploading...' : `Upload ${index + 1}`}
+        sx={{
+          fontWeight: 500,
+          fontSize: isSingle ? '1rem' : '0.875rem',
+          lineHeight: 1.2,
+          maxWidth: '100%',
+          wordBreak: 'break-word',
+        }}>
+        {isUploading ? 'Uploading...' : description || `Upload ${index + 1}`}
       </Typography>
-      {description && (
-        <Typography
-          variant="caption"
-          color="primary.main"
-          textAlign="center"
-          sx={{
-            fontWeight: 500,
-            fontSize: isSingle ? '0.8rem' : '0.7rem',
-            px: 1,
-            py: 0.5,
-            border: '1px dashed',
-            borderColor: 'primary.main',
-            borderRadius: 1,
-            backgroundColor: (theme) => `${theme.palette.primary.main}08`,
-          }}>
-          {description}
-        </Typography>
-      )}
     </Stack>
   );
 }
@@ -67,48 +64,73 @@ function UploadTrigger({ onClick, isSingle, isUploading, description, index }: U
 const ImagePreviewCard = styled(Card)<{ isSingle?: boolean }>(({ theme, isSingle }) => ({
   position: 'relative',
   aspectRatio: '1',
-  maxWidth: isSingle ? 320 : 200,
-  maxHeight: isSingle ? 320 : 200,
-  width: isSingle ? '100%' : undefined,
+  width: isSingle ? '100%' : 200,
+  height: isSingle ? '100%' : 200,
+  maxWidth: isSingle ? 400 : 200,
+  maxHeight: isSingle ? 400 : 200,
   overflow: 'hidden',
   border: `2px solid ${theme.palette.divider}`,
-  borderRadius: theme.spacing(1),
-  '&:hover .delete-button': {
-    opacity: 1,
+  borderRadius: theme.spacing(1.5),
+  boxShadow: theme.shadows[2],
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[4],
+    '& .delete-button': {
+      opacity: 1,
+    },
   },
 }));
 
 const DeleteButton = styled(IconButton)(({ theme }) => ({
   position: 'absolute',
-  top: 8,
-  right: 8,
-  backgroundColor: `${theme.palette.error.main}E6`,
+  top: 6,
+  right: 6,
+  backgroundColor: `${theme.palette.error.main}CC`,
   color: theme.palette.common.white,
-  width: 28,
-  height: 28,
+  width: 32,
+  height: 32,
   opacity: 0,
-  transition: 'opacity 0.2s ease',
+  transition: 'all 0.2s ease',
+  backdropFilter: 'blur(4px)',
+  boxShadow: theme.shadows[3],
   '&:hover': {
     backgroundColor: theme.palette.error.main,
-    transform: 'scale(1.1)',
+    transform: 'scale(1.05)',
+    boxShadow: theme.shadows[6],
   },
 }));
 
 const UploadSlot = styled(Card)<{ isSingle?: boolean }>(({ theme, isSingle }) => ({
   aspectRatio: '1',
-  maxWidth: isSingle ? 320 : 200,
-  maxHeight: isSingle ? 320 : 200,
-  width: isSingle ? '100%' : undefined,
+  width: isSingle ? '100%' : 200,
+  height: isSingle ? '100%' : 200,
+  maxWidth: isSingle ? 400 : 200,
+  maxHeight: isSingle ? 400 : 200,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   border: `2px dashed ${theme.palette.divider}`,
-  borderRadius: theme.spacing(1),
+  borderRadius: theme.spacing(1.5),
   cursor: 'pointer',
-  transition: 'all 0.3s ease',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: 'inset 0 0 0 1px transparent',
+  position: 'relative',
+  overflow: 'hidden',
   '&:hover': {
     borderColor: theme.palette.primary.main,
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: `${theme.palette.primary.main}08`,
+    transform: 'translateY(-2px)',
+    boxShadow: `${theme.shadows[3]}, inset 0 0 0 1px ${theme.palette.primary.main}20`,
+  },
+  // 确保内部内容完全居中
+  '& > *': {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 }));
 
@@ -144,6 +166,8 @@ interface MultiImageUploaderProps {
   openLoginDialog: () => void;
   disabled?: boolean;
   currentLanguage?: string; // 当前语言，默认为 'zh'
+  onGenerate?: () => void; // 手动触发生成的回调函数
+  showGenerateButton?: boolean; // 是否显示生成按钮
 }
 
 export function MultiImageUploader({
@@ -157,6 +181,8 @@ export function MultiImageUploader({
   openLoginDialog,
   disabled = false,
   currentLanguage = 'zh',
+  onGenerate,
+  showGenerateButton = false,
 }: MultiImageUploaderProps) {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
@@ -188,25 +214,28 @@ export function MultiImageUploader({
     const newImage = res.response.data.filename;
     const newImages = [...images];
 
-    if (targetIndex < newImages.length) {
-      // Replace existing image
-      newImages[targetIndex] = newImage;
-    } else {
-      // Add new image
-      newImages.push(newImage);
+    // 确保数组有足够的长度来设置目标位置
+    while (newImages.length <= targetIndex) {
+      newImages.push(''); // 用空字符串填充空位
     }
+
+    // 直接在目标位置设置图片
+    newImages[targetIndex] = newImage;
 
     onImagesChange(newImages);
     setUploadingIndex(null);
   };
 
   const handleRemoveImage = (index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
+    const newImages = [...images];
+    newImages[index] = ''; // 设置为空字符串而不是删除元素
     onImagesChange(newImages);
   };
 
-  const canAddMore = images.length < maxImages;
-  const slotsNeeded = Math.max(minImages, images.length + (canAddMore ? 1 : 0));
+  // 计算有效图片数量（非空字符串）
+  const validImageCount = images.filter((img) => img && img.trim() !== '').length;
+
+  const slotsNeeded = maxImages;
   const currentRequirements = getCurrentRequirements();
   const currentDescriptions = getCurrentImageDescriptions();
   const isSingleImage = maxImages === 1 && minImages === 1;
@@ -216,7 +245,6 @@ export function MultiImageUploader({
     return (
       <SingleUploadArea elevation={4}>
         <SingleImageUploader
-          image={images[0] || null}
           onImageChange={(image) => onImagesChange(image ? [image] : [])}
           isLoggedIn={isLoggedIn}
           openLoginDialog={openLoginDialog}
@@ -230,22 +258,35 @@ export function MultiImageUploader({
   return (
     <Stack spacing={2}>
       {currentRequirements && (
-        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            fontStyle: 'italic',
+            textAlign: 'center',
+          }}>
           {currentRequirements}
         </Typography>
       )}
 
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: isSingleImage ? 'column' : { xs: 'column', sm: 'row' },
-          gap: 2,
-          flexWrap: 'wrap',
-          alignItems: isSingleImage ? 'center' : 'flex-start',
-          justifyContent: isSingleImage ? 'center' : 'flex-start',
+          display: isSingleImage ? 'flex' : 'grid',
+          flexDirection: isSingleImage ? 'column' : undefined,
+          gridTemplateColumns: isSingleImage
+            ? undefined
+            : {
+                xs: `repeat(${Math.min(2, slotsNeeded)}, 200px)`,
+                sm: `repeat(${Math.min(3, slotsNeeded)}, 200px)`,
+                md: `repeat(${Math.min(3, slotsNeeded)}, 200px)`,
+              },
+          gap: isSingleImage ? 2 : 3,
+          alignItems: isSingleImage ? 'center' : 'start',
+          justifyContent: 'center',
+          justifyItems: isSingleImage ? undefined : 'center',
         }}>
         {Array.from({ length: slotsNeeded }, (_, index) => {
-          const hasImage = index < images.length;
+          const hasImage = index < images.length && images[index] && images[index].trim() !== '';
           const imageUrl = hasImage ? images[index] : null;
           const description = currentDescriptions[index];
           const isUploading = uploadingIndex === index;
@@ -273,11 +314,18 @@ export function MultiImageUploader({
                       size="small"
                       sx={(theme) => ({
                         position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        background: `${theme.palette.primary.main}E6`,
+                        top: 6,
+                        left: 6,
+                        background: `${theme.palette.primary.main}DD`,
                         color: theme.palette.common.white,
                         fontWeight: 'bold',
+                        fontSize: '0.75rem',
+                        height: 28,
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: theme.shadows[2],
+                        '& .MuiChip-label': {
+                          paddingX: 1,
+                        },
                       })}
                     />
                   )}
@@ -285,13 +333,18 @@ export function MultiImageUploader({
                 {description && (
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    color="primary.main"
                     sx={{
-                      mt: 0.5,
+                      mt: 1,
                       display: 'block',
                       textAlign: 'center',
-                      fontWeight: 500,
-                      px: 1,
+                      fontWeight: 600,
+                      px: 1.5,
+                      py: 0.5,
+                      backgroundColor: (theme) => `${theme.palette.primary.main}10`,
+                      borderRadius: 1,
+                      fontSize: '0.75rem',
+                      border: (theme) => `1px solid ${theme.palette.primary.main}30`,
                     }}>
                     {description}
                   </Typography>
@@ -304,10 +357,10 @@ export function MultiImageUploader({
           if (index < maxImages) {
             return (
               <Box key={index}>
-                <UploadSlot isSingle={isSingleImage} sx={description ? { minHeight: '220px' } : {}}>
+                <UploadSlot isSingle={isSingleImage}>
                   <UploaderButton
                     isLoggedIn={isLoggedIn}
-                    onChange={(res) => handleImageUpload(res, index)}
+                    onChange={(res: any) => handleImageUpload(res, index)}
                     openLoginDialog={openLoginDialog}
                     disabled={disabled || isUploading}
                     // eslint-disable-next-line react/no-unstable-nested-components
@@ -322,14 +375,6 @@ export function MultiImageUploader({
                     )}
                   />
                 </UploadSlot>
-                {!description && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mt: 0.5, display: 'block', textAlign: 'center' }}>
-                    Click to upload image {index + 1}
-                  </Typography>
-                )}
               </Box>
             );
           }
@@ -340,26 +385,110 @@ export function MultiImageUploader({
 
       {/* Status chips - only show for multi-image case */}
       {!isSingleImage && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          <Chip
-            size="small"
-            label={`${images.length} / ${maxImages} images`}
-            color={images.length >= minImages ? 'success' : 'warning'}
-          />
-          {minImages > 1 && images.length < minImages && (
-            <Chip size="small" label={`${minImages - images.length} more required`} color="warning" />
-          )}
-        </Stack>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            mt: 2,
+          }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Chip
+              size="small"
+              label={`${validImageCount} / ${maxImages} 张图片`}
+              color={validImageCount >= minImages ? 'success' : 'default'}
+              variant="filled"
+              sx={(theme) => ({
+                fontWeight: 500,
+                fontSize: '0.8rem',
+                backgroundColor:
+                  validImageCount >= minImages ? theme.palette.success.main : theme.palette.action.selected,
+                color: validImageCount >= minImages ? theme.palette.success.contrastText : theme.palette.text.primary,
+                '& .MuiChip-label': {
+                  px: 1.5,
+                },
+              })}
+            />
+            {minImages > 1 && validImageCount < minImages && (
+              <Chip
+                size="small"
+                label={`还需上传 ${minImages - validImageCount} 张`}
+                color="warning"
+                variant="outlined"
+                sx={{
+                  fontWeight: 400,
+                  fontSize: '0.8rem',
+                  '& .MuiChip-label': {
+                    px: 1.5,
+                  },
+                }}
+              />
+            )}
+          </Stack>
+        </Box>
       )}
       {/* Single image status */}
       {isSingleImage && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1, justifyContent: 'center' }}>
+        <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'center' }}>
           <Chip
             size="small"
-            label={images.length === 0 ? '0 / 1 images' : '1 / 1 images'}
-            color={images.length >= minImages ? 'success' : 'default'}
+            label={validImageCount === 0 ? '0 / 1 张图片' : '1 / 1 张图片'}
+            color={validImageCount >= minImages ? 'success' : 'default'}
+            variant="filled"
+            sx={(theme) => ({
+              fontWeight: 500,
+              fontSize: '0.8rem',
+              backgroundColor:
+                validImageCount >= minImages ? theme.palette.success.main : theme.palette.action.selected,
+              color: validImageCount >= minImages ? theme.palette.success.contrastText : theme.palette.text.primary,
+              '& .MuiChip-label': {
+                px: 1.5,
+              },
+            })}
           />
         </Stack>
+      )}
+
+      {/* 生成按钮 - 多图模式下始终显示 */}
+      {showGenerateButton && !isSingleImage && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<AutoFixHighIcon />}
+            onClick={onGenerate}
+            disabled={disabled || validImageCount < minImages}
+            sx={(theme) => ({
+              backgroundColor:
+                validImageCount >= minImages ? theme.palette.primary.main : theme.palette.action.disabledBackground,
+              color: validImageCount >= minImages ? theme.palette.primary.contrastText : theme.palette.action.disabled,
+              fontWeight: 600,
+              fontSize: '1.1rem',
+              padding: '12px 32px',
+              borderRadius: '50px',
+              textTransform: 'none',
+              boxShadow: validImageCount >= minImages ? theme.shadows[4] : 'none',
+              transition: 'all 0.3s ease',
+              '&:hover':
+                validImageCount >= minImages
+                  ? {
+                      backgroundColor: theme.palette.primary.dark,
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.shadows[8],
+                    }
+                  : {},
+              '&:active': {
+                transform: validImageCount >= minImages ? 'translateY(0)' : 'none',
+              },
+              '&:disabled': {
+                backgroundColor: theme.palette.action.disabledBackground,
+                color: theme.palette.action.disabled,
+                transform: 'none',
+                boxShadow: 'none',
+              },
+            })}>
+            开始生成
+          </Button>
+        </Box>
       )}
     </Stack>
   );

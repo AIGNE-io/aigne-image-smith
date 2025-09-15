@@ -417,14 +417,26 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       setGeneratedImage(null);
       setError(null);
 
-      // 如果有足够的图片，自动开始处理
+      // 判断是否需要手动确认生成
       const minImages = config.controlsConfig?.inputConfig.minImages || 1;
-      if (images.length >= minImages) {
+      const maxImages = config.controlsConfig?.inputConfig.maxImages || 1;
+      const isMultiImage = maxImages > 1 && minImages > 1;
+
+      // 对于单图或者只需要一张图片的场景，自动开始处理
+      // 对于多图场景，需要用户手动确认
+      if (!isMultiImage && images.length >= minImages) {
         await processImages(images);
       }
     },
-    [config.controlsConfig?.inputConfig.minImages, creditInfo],
+    [config.controlsConfig?.inputConfig.minImages, config.controlsConfig?.inputConfig.maxImages, creditInfo],
   );
+
+  // 手动触发生成
+  const handleManualGenerate = useCallback(async () => {
+    if (originalImages.length > 0) {
+      await processImages(originalImages);
+    }
+  }, [originalImages]);
 
   // 真实AI图片生成处理
   const processImages = async (images: string[]) => {
@@ -1150,6 +1162,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   }}
                   disabled={processing.isProcessing}
                   currentLanguage={locale}
+                  onGenerate={handleManualGenerate}
+                  showGenerateButton={
+                    (config.controlsConfig?.inputConfig.maxImages || 1) > 1 &&
+                    (config.controlsConfig?.inputConfig.minImages || 1) > 1
+                  }
                 />
               )}
             </VintageCard>
@@ -1353,14 +1370,16 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         ) : (
                           // 单图模式：只显示生成的图片或原图（如果还没有生成结果）
                           // 严格限制高度以适应第一屏，确保图片完整显示
-                          <CompareImage
-                            src={getImageUrl(generatedImage || originalImages[0])}
-                            alt={generatedImage ? t('home.image.restoredImage') : t('home.image.originalImage')}
-                            style={{
-                              position: 'absolute',
-                              zIndex: 1,
-                            }}
-                          />
+                          generatedImage && (
+                            <CompareImage
+                              src={getImageUrl(generatedImage)}
+                              alt={t('home.image.restoredImage')}
+                              style={{
+                                position: 'absolute',
+                                zIndex: 1,
+                              }}
+                            />
+                          )
                         )}
                       </ImageWrapper>
                     </ImageCompareContainer>
