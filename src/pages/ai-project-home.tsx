@@ -1628,7 +1628,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                 <Box
                   key={item.id}
                   onClick={() => {
-                    if (!processing.isProcessing) {
+                    // 只有在支持对比滑块时才允许选中历史记录
+                    if (!processing.isProcessing && config.uiConfig?.features?.showComparisonSlider !== false) {
                       setOriginalImages([item.originalImg]);
                       setGeneratedImage(item.generatedImg);
                       setCompareSlider(50);
@@ -1640,21 +1641,28 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     aspectRatio: '1/1',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    cursor: 'pointer',
+                    cursor: config.uiConfig?.features?.showComparisonSlider !== false ? 'pointer' : 'default',
                     border: `2px solid ${theme.palette.primary.main}30`,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
                     background: `${theme.palette.background.paper}E6`,
                     boxShadow: `0 2px 8px ${theme.palette.divider}`,
                     opacity: 1,
-                    '&:hover': {
-                      border: `2px solid ${theme.palette.primary.main}`,
-                      transform: 'translateY(-2px) scale(1.02)',
-                      boxShadow: `0 4px 16px ${theme.palette.primary.main}50`,
-                      '& .hover-overlay': {
-                        opacity: 1,
-                      },
-                    },
+                    '&:hover':
+                      config.uiConfig?.features?.showComparisonSlider !== false
+                        ? {
+                            border: `2px solid ${theme.palette.primary.main}`,
+                            transform: 'translateY(-2px) scale(1.02)',
+                            boxShadow: `0 4px 16px ${theme.palette.primary.main}50`,
+                            '& .hover-overlay': {
+                              opacity: 1,
+                            },
+                          }
+                        : {
+                            '& .hover-overlay': {
+                              opacity: 1,
+                            },
+                          },
                   })}>
                   <img
                     src={getImageUrl(item.generatedImg)}
