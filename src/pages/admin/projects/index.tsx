@@ -156,7 +156,7 @@ export default function ProjectsManagement() {
                 <TableCell>
                   <Typography variant="subtitle2">{getLocalizedText(project.name)}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    ID: {project.id}
+                    Slug: {project.slug}
                   </Typography>
                 </TableCell>
                 <TableCell>

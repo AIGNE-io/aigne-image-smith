@@ -71,7 +71,7 @@ const defaultFormData: ProjectFormData = {
     inputConfig: {
       inputType: 'image',
       imageSize: 1,
-      requirements: '',
+      requirements: createEmptyLanguageObject(),
     },
     controlsConfig: [],
   },
@@ -210,7 +210,8 @@ function CreateProjectContent() {
                   })
                 }
                 disabled={loading}
-                helperText="这将作为AI处理图片时的基础提示词"
+                helperText="这将作为AI处理图片时的基础提示词，至少需要10个字符"
+                error={formData.promptTemplate.length > 0 && formData.promptTemplate.length < 10}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     fontSize: '0.95rem',

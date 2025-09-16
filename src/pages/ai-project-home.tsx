@@ -2228,7 +2228,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               }}>
               <TwitterShareButton
                 url={getShareUrl()}
-                title={t('home.title')}
+                title={config.title || t('home.title')}
                 style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: '100%' }}>
                   <XIcon size={24} round />

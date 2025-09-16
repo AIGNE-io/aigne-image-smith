@@ -236,11 +236,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
           />
         </Box>
 
-        {/* 项目描述 */}
+        {/* 项目使用指南 */}
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              项目描述 <span style={{ color: '#f44336' }}>*</span>
+              使用指南 <span style={{ color: '#f44336' }}>*</span>
             </Typography>
             {getAvailableCopyLanguages('description').length > 0 && (
               <Tooltip title="从其他语言复制">
@@ -261,7 +261,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             value={values.description[currentLanguage.code] || ''}
             onChange={(e) => handleFieldChange('description', e.target.value)}
             disabled={disabled}
-            placeholder="输入项目描述..."
+            placeholder="输入使用指南..."
             helperText="详细描述项目的功能和用途"
             error={!values.description[currentLanguage.code]?.trim()}
             sx={{
