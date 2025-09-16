@@ -83,8 +83,7 @@ const controlConfigSchema = Joi.alternatives().try(
 
 const controlsConfigSchema = Joi.object({
   inputConfig: Joi.object({
-    maxImages: Joi.number().integer().min(1).max(10).required(),
-    minImages: Joi.number().integer().min(1).optional(),
+    imageSize: Joi.number().integer().min(1).max(10).required(),
     imageDescriptions: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string())).optional(),
     allowedTypes: Joi.array().items(Joi.string()).optional(),
     maxSize: Joi.number().optional(),

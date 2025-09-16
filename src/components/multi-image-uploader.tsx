@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import AddIcon from '@mui/icons-material/Add';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -158,8 +159,7 @@ const SingleUploadArea = styled(Card)(({ theme }) => ({
 interface MultiImageUploaderProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
-  maxImages: number;
-  minImages?: number;
+  imageSize: number;
   imageDescriptions?: Record<string, string[]> | string[]; // 支持多语言或单语言
   requirements?: Record<string, string> | string; // 支持多语言或单语言
   isLoggedIn: boolean;
@@ -173,8 +173,7 @@ interface MultiImageUploaderProps {
 export function MultiImageUploader({
   images,
   onImagesChange,
-  maxImages,
-  minImages = 1,
+  imageSize,
   imageDescriptions = [],
   requirements,
   isLoggedIn,
@@ -184,6 +183,7 @@ export function MultiImageUploader({
   onGenerate,
   showGenerateButton = false,
 }: MultiImageUploaderProps) {
+  const { t } = useLocaleContext();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   // 获取当前语言的requirements描述
@@ -235,10 +235,10 @@ export function MultiImageUploader({
   // 计算有效图片数量（非空字符串）
   const validImageCount = images.filter((img) => img && img.trim() !== '').length;
 
-  const slotsNeeded = maxImages;
+  const slotsNeeded = imageSize;
   const currentRequirements = getCurrentRequirements();
   const currentDescriptions = getCurrentImageDescriptions();
-  const isSingleImage = maxImages === 1 && minImages === 1;
+  const isSingleImage = imageSize === 1;
 
   // 如果是单图片模式，使用专门的单图片上传组件，但保持与多图片模式相同的布局结构
   if (isSingleImage) {
@@ -286,7 +286,7 @@ export function MultiImageUploader({
           justifyItems: isSingleImage ? undefined : 'center',
         }}>
         {Array.from({ length: slotsNeeded }, (_, index) => {
-          const hasImage = index < images.length && images[index] && images[index].trim() !== '';
+          const hasImage = index < images.length && images[index] && images[index]?.trim() !== '';
           const imageUrl = hasImage ? images[index] : null;
           const description = currentDescriptions[index];
           const isUploading = uploadingIndex === index;
@@ -353,8 +353,8 @@ export function MultiImageUploader({
             );
           }
 
-          // Show upload slot for empty slots (up to maxImages)
-          if (index < maxImages) {
+          // Show upload slot for empty slots (up to imageSize)
+          if (index < imageSize) {
             return (
               <Box key={index}>
                 <UploadSlot isSingle={isSingleImage}>
@@ -394,35 +394,20 @@ export function MultiImageUploader({
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Chip
               size="small"
-              label={`${validImageCount} / ${maxImages} 张图片`}
-              color={validImageCount >= minImages ? 'success' : 'default'}
+              label={t('home.uploader.imageCount', { current: validImageCount, total: imageSize })}
+              color={validImageCount >= imageSize ? 'success' : 'default'}
               variant="filled"
               sx={(theme) => ({
                 fontWeight: 500,
                 fontSize: '0.8rem',
                 backgroundColor:
-                  validImageCount >= minImages ? theme.palette.success.main : theme.palette.action.selected,
-                color: validImageCount >= minImages ? theme.palette.success.contrastText : theme.palette.text.primary,
+                  validImageCount >= imageSize ? theme.palette.success.main : theme.palette.action.selected,
+                color: validImageCount >= imageSize ? theme.palette.success.contrastText : theme.palette.text.primary,
                 '& .MuiChip-label': {
                   px: 1.5,
                 },
               })}
             />
-            {minImages > 1 && validImageCount < minImages && (
-              <Chip
-                size="small"
-                label={`还需上传 ${minImages - validImageCount} 张`}
-                color="warning"
-                variant="outlined"
-                sx={{
-                  fontWeight: 400,
-                  fontSize: '0.8rem',
-                  '& .MuiChip-label': {
-                    px: 1.5,
-                  },
-                }}
-              />
-            )}
           </Stack>
         </Box>
       )}
@@ -431,15 +416,15 @@ export function MultiImageUploader({
         <Stack direction="row" spacing={1} sx={{ mt: 2, justifyContent: 'center' }}>
           <Chip
             size="small"
-            label={validImageCount === 0 ? '0 / 1 张图片' : '1 / 1 张图片'}
-            color={validImageCount >= minImages ? 'success' : 'default'}
+            label={t('home.uploader.imageCount', { current: validImageCount, total: 1 })}
+            color={validImageCount >= imageSize ? 'success' : 'default'}
             variant="filled"
             sx={(theme) => ({
               fontWeight: 500,
               fontSize: '0.8rem',
               backgroundColor:
-                validImageCount >= minImages ? theme.palette.success.main : theme.palette.action.selected,
-              color: validImageCount >= minImages ? theme.palette.success.contrastText : theme.palette.text.primary,
+                validImageCount >= imageSize ? theme.palette.success.main : theme.palette.action.selected,
+              color: validImageCount >= imageSize ? theme.palette.success.contrastText : theme.palette.text.primary,
               '& .MuiChip-label': {
                 px: 1.5,
               },
@@ -456,20 +441,20 @@ export function MultiImageUploader({
             size="large"
             startIcon={<AutoFixHighIcon />}
             onClick={onGenerate}
-            disabled={disabled || validImageCount < minImages}
+            disabled={disabled || validImageCount < imageSize}
             sx={(theme) => ({
               backgroundColor:
-                validImageCount >= minImages ? theme.palette.primary.main : theme.palette.action.disabledBackground,
-              color: validImageCount >= minImages ? theme.palette.primary.contrastText : theme.palette.action.disabled,
+                validImageCount >= imageSize ? theme.palette.primary.main : theme.palette.action.disabledBackground,
+              color: validImageCount >= imageSize ? theme.palette.primary.contrastText : theme.palette.action.disabled,
               fontWeight: 600,
               fontSize: '1.1rem',
-              padding: '12px 32px',
+              padding: '6px 32px',
               borderRadius: '50px',
               textTransform: 'none',
-              boxShadow: validImageCount >= minImages ? theme.shadows[4] : 'none',
+              boxShadow: validImageCount >= imageSize ? theme.shadows[4] : 'none',
               transition: 'all 0.3s ease',
               '&:hover':
-                validImageCount >= minImages
+                validImageCount >= imageSize
                   ? {
                       backgroundColor: theme.palette.primary.dark,
                       transform: 'translateY(-2px)',
@@ -477,7 +462,7 @@ export function MultiImageUploader({
                     }
                   : {},
               '&:active': {
-                transform: validImageCount >= minImages ? 'translateY(0)' : 'none',
+                transform: validImageCount >= imageSize ? 'translateY(0)' : 'none',
               },
               '&:disabled': {
                 backgroundColor: theme.palette.action.disabledBackground,
@@ -486,7 +471,7 @@ export function MultiImageUploader({
                 boxShadow: 'none',
               },
             })}>
-            开始生成
+            {t('home.uploader.startGenerate')}
           </Button>
         </Box>
       )}

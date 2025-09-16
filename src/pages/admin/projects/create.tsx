@@ -65,7 +65,7 @@ const defaultFormData: ProjectFormData = {
   },
   controlsConfig: {
     inputConfig: {
-      maxImages: 1,
+      imageSize: 1,
       requirements: '',
     },
     controlsConfig: [],

@@ -418,17 +418,16 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       setError(null);
 
       // 判断是否需要手动确认生成
-      const minImages = config.controlsConfig?.inputConfig.minImages || 1;
-      const maxImages = config.controlsConfig?.inputConfig.maxImages || 1;
-      const isMultiImage = maxImages > 1 && minImages > 1;
+      const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
+      const isMultiImage = imageSize > 1;
 
-      // 对于单图或者只需要一张图片的场景，自动开始处理
+      // 对于单图场景，自动开始处理
       // 对于多图场景，需要用户手动确认
-      if (!isMultiImage && images.length >= minImages) {
+      if (!isMultiImage && images.length >= imageSize) {
         await processImages(images);
       }
     },
-    [config.controlsConfig?.inputConfig.minImages, config.controlsConfig?.inputConfig.maxImages, creditInfo],
+    [config.controlsConfig?.inputConfig.imageSize, creditInfo],
   );
 
   // 手动触发生成
@@ -459,9 +458,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     }
 
     // 验证图片数量
-    const minImages = config.controlsConfig?.inputConfig.minImages || 1;
-    if (images.length < minImages) {
-      setError(`At least ${minImages} image(s) required`);
+    const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
+    if (images.length < imageSize) {
+      setError(`Exactly ${imageSize} image(s) required`);
       return;
     }
 
@@ -1152,8 +1151,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                 <MultiImageUploader
                   images={originalImages}
                   onImagesChange={handleImagesChange}
-                  maxImages={config.controlsConfig?.inputConfig.maxImages || 1}
-                  minImages={config.controlsConfig?.inputConfig.minImages || 1}
+                  imageSize={config.controlsConfig?.inputConfig.imageSize || 1}
                   imageDescriptions={config.controlsConfig?.inputConfig.imageDescriptions}
                   requirements={config.controlsConfig?.inputConfig.requirements}
                   isLoggedIn={isLoggedIn}
@@ -1163,10 +1161,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   disabled={processing.isProcessing}
                   currentLanguage={locale}
                   onGenerate={handleManualGenerate}
-                  showGenerateButton={
-                    (config.controlsConfig?.inputConfig.maxImages || 1) > 1 &&
-                    (config.controlsConfig?.inputConfig.minImages || 1) > 1
-                  }
+                  showGenerateButton={(config.controlsConfig?.inputConfig.imageSize || 1) > 1}
                 />
               )}
             </VintageCard>

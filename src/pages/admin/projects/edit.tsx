@@ -80,7 +80,7 @@ const defaultFormData: ProjectFormData = {
   },
   controlsConfig: {
     inputConfig: {
-      maxImages: 1,
+      imageSize: 1,
       requirements: '',
     },
     controlsConfig: [],
@@ -148,13 +148,34 @@ function EditProjectContent() {
                 showComparisonSlider: projectData.uiConfig?.features?.showComparisonSlider !== false,
               },
             },
-            controlsConfig: projectData.controlsConfig || {
-              inputConfig: {
-                maxImages: 1,
-                requirements: '',
-              },
-              controlsConfig: [],
-            },
+            controlsConfig: (() => {
+              const existingConfig = projectData.controlsConfig;
+              if (!existingConfig) {
+                return {
+                  inputConfig: {
+                    imageSize: 1,
+                    requirements: '',
+                  },
+                  controlsConfig: [],
+                };
+              }
+
+              // Handle legacy maxImages/minImages conversion to imageSize
+              const inputConfig = existingConfig.inputConfig || {};
+              const legacyMaxImages = inputConfig.maxImages;
+              const legacyMinImages = inputConfig.minImages;
+
+              return {
+                inputConfig: {
+                  imageSize: inputConfig.imageSize || legacyMaxImages || legacyMinImages || 1,
+                  imageDescriptions: inputConfig.imageDescriptions,
+                  allowedTypes: inputConfig.allowedTypes,
+                  maxSize: inputConfig.maxSize,
+                  requirements: inputConfig.requirements,
+                },
+                controlsConfig: existingConfig.controlsConfig || [],
+              };
+            })(),
           });
         } else {
           setError('项目不存在或已被禁用');

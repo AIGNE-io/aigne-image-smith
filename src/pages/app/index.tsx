@@ -106,8 +106,7 @@ export default function DynamicApp() {
     },
     controlsConfig: project.controlsConfig || {
       inputConfig: {
-        maxImages: 1,
-        minImages: 1,
+        imageSize: 1,
         requirements: '',
       },
       controlsConfig: [],

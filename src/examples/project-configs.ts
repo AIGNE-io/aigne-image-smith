@@ -3,8 +3,7 @@ import type { ProjectControlsConfig } from '../components/project-controls/types
 // 基础单图项目配置（类似原来的 pix-loom 功能）
 export const basicImageEnhanceConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 1,
-    minImages: 1,
+    imageSize: 1,
     requirements: 'Upload a photo for AI enhancement and restoration',
   },
   controlsConfig: [],
@@ -16,8 +15,7 @@ export const basicImageEnhancePrompt =
 // ID 照片制作配置（类似 id-photo-maker 功能）
 export const idPhotoMakerConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 1,
-    minImages: 1,
+    imageSize: 1,
     requirements: 'Upload a clear portrait photo. The face should be well-lit and visible.',
   },
   controlsConfig: [
@@ -67,15 +65,14 @@ Source image: {{image1}}`;
 // 多图拼贴配置
 export const collageConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 4,
-    minImages: 2,
+    imageSize: 4,
     imageDescriptions: [
       'Main image (center focus)',
       'Secondary image',
       'Optional third image',
       'Optional fourth image',
     ],
-    requirements: 'Upload 2-4 images to create a beautiful collage. Images will be arranged artistically.',
+    requirements: 'Upload up to 4 images to create a beautiful collage. Images will be arranged artistically.',
   },
   controlsConfig: [
     {
@@ -136,8 +133,7 @@ Make sure all images are well-integrated and the composition is visually pleasin
 // 艺术风格转换配置
 export const artStyleConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 2,
-    minImages: 1,
+    imageSize: 2,
     imageDescriptions: ['Source image to transform', 'Style reference (optional)'],
     requirements: 'Upload your photo and optionally a style reference image for artistic transformation.',
   },
@@ -217,8 +213,7 @@ Create a beautiful artistic rendering that:
 // 老照片修复配置
 export const photoRestorationConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 2,
-    minImages: 1,
+    imageSize: 2,
     imageDescriptions: ['Old photo to restore', 'Reference photo for color matching (optional)'],
     requirements: 'Upload old, damaged, or faded photos for professional AI restoration.',
   },
@@ -298,8 +293,7 @@ Produce a museum-quality restored photograph that honors the original while maki
 // 产品照片优化配置
 export const productPhotoConfig: ProjectControlsConfig = {
   inputConfig: {
-    maxImages: 1,
-    minImages: 1,
+    imageSize: 1,
     requirements: 'Upload product photos for professional e-commerce optimization.',
   },
   controlsConfig: [

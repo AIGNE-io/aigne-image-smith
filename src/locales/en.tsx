@@ -96,6 +96,8 @@ export default flat({
       clickToSelect: 'Click the button below to select image',
       description: 'AI Image Generation & Creation',
       selectButton: 'Select Image to Start Generation',
+      imageCount: '{current} / {total} images',
+      startGenerate: 'Start Generate',
     },
 
     // User Guide

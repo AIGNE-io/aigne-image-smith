@@ -96,6 +96,8 @@ export default flat({
       clickToSelect: '點擊下方按鈕選擇圖片',
       description: 'AI圖像生成・創作',
       selectButton: '選擇圖片開始生成',
+      imageCount: '{current} / {total} 張圖片',
+      startGenerate: '開始生成',
     },
 
     // 使用指南

@@ -463,25 +463,16 @@ export function ControlsConfigEditor({ config, onChange, disabled = false }: Con
             Input Configuration
           </Typography>
           <Stack spacing={2}>
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Maximum Images"
-                type="number"
-                value={config.inputConfig.maxImages}
-                onChange={(e) => updateInputConfig({ maxImages: Number(e.target.value) })}
-                disabled={disabled}
-                inputProps={{ min: 1, max: 10 }}
-                helperText="How many images can be uploaded"
-              />
-              <TextField
-                label="Minimum Images (optional)"
-                type="number"
-                value={config.inputConfig.minImages || ''}
-                onChange={(e) => updateInputConfig({ minImages: e.target.value ? Number(e.target.value) : undefined })}
-                disabled={disabled}
-                inputProps={{ min: 1 }}
-              />
-            </Stack>
+            <TextField
+              label="Image Size"
+              type="number"
+              value={config.inputConfig.imageSize}
+              onChange={(e) => updateInputConfig({ imageSize: Number(e.target.value) })}
+              disabled={disabled}
+              inputProps={{ min: 1, max: 10 }}
+              helperText="Number of images required for this AI application"
+              sx={{ maxWidth: 300 }}
+            />
 
             {/* Requirements Description - Multi-language */}
             <MultiLanguageEditor
@@ -507,7 +498,7 @@ export function ControlsConfigEditor({ config, onChange, disabled = false }: Con
                 const hasDescriptions = Object.values(values).some((descriptions) => descriptions.length > 0);
                 updateInputConfig({ imageDescriptions: hasDescriptions ? values : undefined });
               }}
-              maxImages={config.inputConfig.maxImages}
+              maxImages={config.inputConfig.imageSize}
               disabled={disabled}
             />
           </Stack>

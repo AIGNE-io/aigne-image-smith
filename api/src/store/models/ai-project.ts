@@ -17,8 +17,7 @@ export interface ProjectUIConfig {
 
 export interface ProjectControlsConfig {
   inputConfig: {
-    maxImages: number;
-    minImages?: number;
+    imageSize: number;
     imageDescriptions?: Record<string, string[]>;
     allowedTypes?: string[];
     maxSize?: number;
@@ -74,8 +73,7 @@ export const AIProjectSchema = Joi.object<AIProjectInput>({
   }).optional(),
   controlsConfig: Joi.object({
     inputConfig: Joi.object({
-      maxImages: Joi.number().integer().min(1).required(),
-      minImages: Joi.number().integer().min(0).optional(),
+      imageSize: Joi.number().integer().min(1).required(),
       imageDescriptions: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string())).optional(),
       allowedTypes: Joi.array().items(Joi.string()).optional(),
       maxSize: Joi.number().positive().optional(),

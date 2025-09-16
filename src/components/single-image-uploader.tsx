@@ -24,30 +24,6 @@ export function SingleImageUploader({
     onImageChange(newImage);
   };
 
-  // 如果有图片，显示图片预览
-  // if (image) {
-  //   return (
-  //     <ImagePreviewCard>
-  //       <img
-  //         src={getImageUrl(image)}
-  //         alt="Uploaded image"
-  //         style={{
-  //           width: '100%',
-  //           height: '100%',
-  //           objectFit: 'cover',
-  //         }}
-  //       />
-  //       <DeleteButton
-  //         className="delete-button"
-  //         onClick={handleRemoveImage}
-  //         disabled={disabled}
-  //       >
-  //         <DeleteIcon sx={{ fontSize: 20 }} />
-  //       </DeleteButton>
-  //     </ImagePreviewCard>
-  //   );
-  // }
-
   // 如果没有图片，显示上传区域
   return (
     <UploaderButton
