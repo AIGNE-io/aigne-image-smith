@@ -21,7 +21,7 @@ interface ImageGenerationInput {
 
 export const ImageGenerationSchema = Joi.object<ImageGenerationInput>({
   userDid: Joi.string().required(),
-  originalImg: Joi.string().required(),
+  originalImg: Joi.string().optional().allow(''), // Allow empty for text-only projects
   generatedImg: Joi.string().optional().allow(''),
   clientId: Joi.string().required(),
   status: Joi.string().valid('pending', 'processing', 'completed', 'failed').default('pending'),

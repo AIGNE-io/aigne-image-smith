@@ -65,6 +65,7 @@ export type ControlConfig =
   | BackgroundSelectorControlConfig;
 
 export interface InputConfig {
+  inputType?: 'image' | 'text';
   imageSize: number;
   imageDescriptions?: Record<string, string[]>; // 多语言支持的图片描述
   allowedTypes?: string[];

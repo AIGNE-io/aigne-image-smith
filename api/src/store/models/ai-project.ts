@@ -17,6 +17,7 @@ export interface ProjectUIConfig {
 
 export interface ProjectControlsConfig {
   inputConfig: {
+    inputType?: 'image' | 'text';
     imageSize: number;
     imageDescriptions?: Record<string, string[]>;
     allowedTypes?: string[];
@@ -73,6 +74,7 @@ export const AIProjectSchema = Joi.object<AIProjectInput>({
   }).optional(),
   controlsConfig: Joi.object({
     inputConfig: Joi.object({
+      inputType: Joi.string().valid('image', 'text').optional(),
       imageSize: Joi.number().integer().min(1).required(),
       imageDescriptions: Joi.object().pattern(Joi.string(), Joi.array().items(Joi.string())).optional(),
       allowedTypes: Joi.array().items(Joi.string()).optional(),

@@ -7,8 +7,12 @@ import {
   Card,
   CardContent,
   Container,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Switch,
   TextField,
   Typography,
@@ -65,6 +69,7 @@ const defaultFormData: ProjectFormData = {
   },
   controlsConfig: {
     inputConfig: {
+      inputType: 'image',
       imageSize: 1,
       requirements: '',
     },
@@ -226,6 +231,38 @@ function CreateProjectContent() {
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
                 输入与控制配置
               </Typography>
+
+              {/* 输入类型选择 */}
+              <Box sx={{ mb: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>输入类型</InputLabel>
+                  <Select
+                    value={formData.controlsConfig.inputConfig.inputType || 'image'}
+                    label="输入类型"
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        controlsConfig: {
+                          ...formData.controlsConfig,
+                          inputConfig: {
+                            ...formData.controlsConfig.inputConfig,
+                            inputType: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                    disabled={loading}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        fontSize: '0.95rem',
+                      },
+                    }}>
+                    <MenuItem value="image">图片输入</MenuItem>
+                    <MenuItem value="text">文本输入</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
               <ControlsConfigEditor
                 config={formData.controlsConfig}
                 onChange={(controlsConfig) => setFormData({ ...formData, controlsConfig })}

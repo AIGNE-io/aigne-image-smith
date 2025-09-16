@@ -8,6 +8,8 @@ export interface PromptVariables extends ControlValues {
   image4?: string;
   image5?: string;
   [key: `image${number}`]: string | undefined;
+  // Text input placeholder
+  text?: string;
 }
 
 /**
@@ -113,11 +115,14 @@ export function createImagePlaceholders(images: string[]): PromptVariables {
  * Build complete prompt variables from control values and images
  * @param controlValues - Values from control components
  * @param images - Array of image URLs
+ * @param textInput - Optional text input for text-based generation
  * @returns Combined variables object
  */
-export function buildPromptVariables(controlValues: ControlValues, images: string[]): PromptVariables {
-  return {
+export function buildPromptVariables(controlValues: ControlValues, images: string[] = []): PromptVariables {
+  const variables: PromptVariables = {
     ...controlValues,
     ...createImagePlaceholders(images),
   };
+
+  return variables;
 }

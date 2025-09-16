@@ -38,6 +38,7 @@ import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 're
 
 import { MultiImageUploader } from '../components/multi-image-uploader';
 import { ControlValues, ProjectControls, ProjectControlsConfig } from '../components/project-controls';
+import { TextInput } from '../components/text-input';
 import UploaderProvider from '../components/uploader';
 import { useSessionContext } from '../contexts/session';
 import api from '../libs/api';
@@ -189,6 +190,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const { session } = useSessionContext();
   const theme = useTheme();
   const [originalImages, setOriginalImages] = useState<string[]>([]);
+  const [textInput, setTextInput] = useState<string>('');
+  const [processingText, setProcessingText] = useState<string>(''); // 存储正在处理的文本内容
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [controlValues, setControlValues] = useState<ControlValues>({});
   const [creatingCheckout, setCreatingCheckout] = useState(false);
@@ -227,6 +230,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const shareMenuOpen = Boolean(shareAnchorEl);
   const isLoggedIn = session?.user;
+
+  // 获取输入类型
+  const inputType = config.controlsConfig?.inputConfig?.inputType || 'image';
 
   // 假进度条计时器引用
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -432,10 +438,133 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
   // 手动触发生成
   const handleManualGenerate = useCallback(async () => {
-    if (originalImages.length > 0) {
+    if (inputType === 'text') {
+      if (textInput.trim()) {
+        await processText(textInput);
+      }
+    } else if (originalImages.length > 0) {
       await processImages(originalImages);
     }
-  }, [originalImages]);
+  }, [originalImages, textInput, inputType]);
+
+  // 真实AI文本生成处理
+  const processText = async (text: string) => {
+    // 检查用户是否已认证
+    if (!isLoggedIn) {
+      setError(t('home.error.loginRequired'));
+      return;
+    }
+
+    // 检查Credit余额是否充足
+    const requiredCredits = 1;
+    if (creditInfo.balance < requiredCredits) {
+      setError(t('home.error.insufficientCredits'));
+      return;
+    }
+
+    if (!text.trim()) {
+      setError('请输入文本内容');
+      return;
+    }
+
+    // 保存正在处理的文本内容
+    setProcessingText(text);
+
+    // 开始处理动画
+    setProcessing({
+      isProcessing: true,
+      progress: 1,
+      message: t('home.processing.analyzing'),
+    });
+
+    // 启动假进度条
+    startFakeProgress();
+
+    try {
+      // 构建动态 prompt
+      const promptVariables = buildPromptVariables(controlValues, []);
+      const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
+
+      const { data } = await api.post('/api/ai/generate', {
+        prompt: finalPrompt,
+        textInput: text,
+        originalImages: [],
+        clientId: config.clientId,
+        metadata: {
+          controlValues,
+          inputType: 'text',
+        },
+      });
+
+      if (!data.success) {
+        throw new Error(data.message || data.error || t('home.error.aiFailed'));
+      }
+
+      const result = data.data;
+
+      // 停止假进度条并设置完成状态
+      stopFakeProgress();
+      setProcessing((prev) => ({ ...prev, progress: 100, message: t('home.processing.complete') }));
+
+      // 设置生成后的图片
+      setGeneratedImage(result.generatedImg);
+      setCompareSlider(50);
+
+      // 刷新历史记录数据
+      if (result.generationId) {
+        fetchHistoryData();
+      }
+
+      // 更新Credit余额
+      if (typeof result.newBalance === 'number') {
+        setCreditInfo((prev) => ({
+          ...prev,
+          balance: Number(formatBalance(result.newBalance, decimal)),
+        }));
+      }
+
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        message: '',
+      });
+      setProcessingText(''); // 清除处理文本
+    } catch (err: any) {
+      console.error('AI processing error:', err);
+
+      let errorMessage = t('home.error.processingFailed');
+
+      if (err?.response?.data) {
+        const apiError = err.response.data;
+        errorMessage = apiError.message || apiError.error || errorMessage;
+
+        if (apiError.error === '积分不足' || apiError.message?.includes('积分不足')) {
+          checkUserCredits();
+        }
+      } else if (err instanceof Error) {
+        if (err.message.includes('Network Error') || err.message.includes('timeout')) {
+          errorMessage = t('home.error.networkError');
+        } else if (err.message.includes('401') || err.message.includes('未认证')) {
+          errorMessage = t('home.error.authError');
+        } else if (err.message.includes('500')) {
+          errorMessage = t('home.error.serviceUnavailable');
+        } else {
+          errorMessage = `处理失败：${err.message}`;
+        }
+      }
+
+      // 停止假进度条
+      setTextInput('');
+      stopFakeProgress();
+      setError(errorMessage);
+      setProcessing({
+        isProcessing: false,
+        progress: 0,
+        message: '',
+      });
+      setProcessingText(''); // 清除处理文本
+    }
+  };
 
   // 真实AI图片生成处理
   const processImages = async (images: string[]) => {
@@ -525,6 +654,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         progress: 0,
         message: '',
       });
+      setProcessingText(''); // 清除处理文本
     } catch (err: any) {
       console.error('AI processing error:', err);
 
@@ -562,6 +692,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         progress: 0,
         message: '',
       });
+      setProcessingText(''); // 清除处理文本
     }
   };
 
@@ -587,7 +718,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
   // 重试生成功能
   const handleRetry = async () => {
-    if (originalImages.length === 0 || processing.isProcessing) return;
+    const hasContent = inputType === 'text' ? textInput.trim() : originalImages.length > 0;
+    if (!hasContent || processing.isProcessing) return;
 
     // 检查Credit余额
     const requiredCredits = 1;
@@ -602,7 +734,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     setError(null);
 
     // 重新调用AI处理
-    await processImages(originalImages);
+    if (inputType === 'text') {
+      await processText(textInput);
+    } else {
+      await processImages(originalImages);
+    }
   };
 
   // 复制图片到剪贴板
@@ -1118,7 +1254,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </VintageCard>
             )}
 
-            {/* 上传区域 - 多图支持 */}
+            {/* 上传区域 - 根据输入类型选择 */}
             <VintageCard elevation={4} style={{ flex: 1 }}>
               {processing.isProcessing ? (
                 <Box sx={{ py: { xs: 3, sm: 4 } }}>
@@ -1147,6 +1283,23 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     </Typography>
                   </Stack>
                 </Box>
+              ) : inputType === 'text' ? (
+                <TextInput
+                  value={textInput}
+                  onChange={setTextInput}
+                  requirements={
+                    config.controlsConfig?.inputConfig.requirements?.zh ||
+                    config.controlsConfig?.inputConfig.requirements?.en ||
+                    '请输入您的内容...'
+                  }
+                  disabled={processing.isProcessing}
+                  isLoggedIn={isLoggedIn}
+                  openLoginDialog={() => {
+                    session?.login();
+                  }}
+                  onGenerate={handleManualGenerate}
+                  showGenerateButton
+                />
               ) : (
                 <MultiImageUploader
                   images={originalImages}
@@ -1239,17 +1392,44 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        maxWidth: '300px',
-                        mb: 3,
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        border: (theme) => `2px solid ${theme.palette.divider}`,
-                      }}>
-                      <CompareImage src={getImageUrl(originalImages[0] || '')} alt={t('home.image.processing')} />
-                    </Box>
+                    {inputType === 'text' ? (
+                      // 文本模式：显示输入的文本内容
+                      <Box
+                        sx={{
+                          width: '100%',
+                          maxWidth: '400px',
+                          mb: 3,
+                          borderRadius: '16px',
+                          border: (theme) => `2px solid ${theme.palette.divider}`,
+                          backgroundColor: (theme) => theme.palette.background.paper,
+                          p: 3,
+                        }}>
+                        <Typography
+                          variant="body1"
+                          sx={(theme) => ({
+                            color: theme.palette.text.primary,
+                            lineHeight: 1.6,
+                            whiteSpace: 'pre-wrap',
+                            maxHeight: '200px',
+                            overflow: 'auto',
+                          })}>
+                          {processingText || '正在处理文本内容...'}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      // 图片模式：显示原图
+                      <Box
+                        sx={{
+                          width: '100%',
+                          maxWidth: '300px',
+                          mb: 3,
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          border: (theme) => `2px solid ${theme.palette.divider}`,
+                        }}>
+                        <CompareImage src={getImageUrl(originalImages[0] || '')} alt={t('home.image.processing')} />
+                      </Box>
+                    )}
 
                     <Stack spacing={2} alignItems="center" sx={{ width: '100%', maxWidth: '250px' }}>
                       <AutoFixHighIcon
@@ -1291,7 +1471,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       </Box>
                     </Stack>
                   </Box>
-                ) : originalImages.length > 0 ? (
+                ) : (inputType === 'text' ? generatedImage : originalImages.length > 0) ? (
                   // 有图片时的展示 - 根据配置决定是否显示对比
                   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ImageCompareContainer sx={{ flex: 1, maxWidth: 'none', display: 'flex', alignItems: 'center' }}>
@@ -1300,8 +1480,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                           // 对比模式：显示原图和生成图的对比
                           <>
                             <CompareImage
-                              src={getImageUrl(originalImages[0])}
-                              alt={t('home.image.originalImage')}
+                              src={getImageUrl(originalImages[0] || '')}
+                              alt="原图"
                               style={{
                                 position: generatedImage ? 'absolute' : 'relative',
                                 clipPath: generatedImage ? `inset(0 ${100 - compareSlider}% 0 0)` : 'none',
@@ -1476,7 +1656,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </Box>
 
               {/* 操作按钮区域 - 生成后才显示 */}
-              {originalImages.length > 0 && generatedImage && (
+              {(inputType === 'text' ? textInput.trim() : originalImages.length > 0) && generatedImage && (
                 <>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}

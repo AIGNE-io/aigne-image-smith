@@ -65,6 +65,9 @@ const generateImageSchema = Joi.object({
   originalImg: Joi.string().optional(),
   originalImages: Joi.array().items(Joi.string()).max(10).optional(),
 
+  // Support text input for text-based projects
+  textInput: Joi.string().min(1).max(5000).optional(),
+
   clientId: Joi.string().required(),
   metadata: Joi.object().optional(),
 }).or('prompt', 'promptTemplate'); // At least one prompt method must be provided
@@ -93,7 +96,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
-    const { prompt, promptTemplate, controlValues, originalImages, clientId, metadata } = value;
+    const { prompt, promptTemplate, controlValues, originalImages, textInput, clientId, metadata } = value;
 
     // Build final prompt - support both old and new systems
     let finalPrompt: string;
@@ -105,9 +108,9 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       imageUrls = originalImages;
     } else if (promptTemplate) {
       // New mode: build prompt from template and control values
-      imageUrls = originalImages;
+      imageUrls = originalImages || [];
       try {
-        const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, originalImages);
+        const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, imageUrls);
         finalPrompt = promptUtils.replacePromptVariables(promptTemplate, promptVariables);
       } catch (promptError) {
         return res.status(400).json({
@@ -148,6 +151,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         startTime: new Date().toISOString(),
         prompt: finalPrompt,
         originalImages: imageUrls, // Store all original images
+        textInput: textInput || undefined, // Store text input for text-based projects
         promptTemplate: promptTemplate || undefined,
         controlValues: controlValues || undefined,
         ...metadata,
@@ -210,6 +214,13 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       // Prepare message content with the final prompt
       const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
 
+      if (textInput) {
+        messageContent.push({
+          type: 'text',
+          text: textInput,
+        });
+      }
+
       // Add all original images if provided
       if (imageUrls.length > 0) {
         const getMimeType = async (imgUrl: string) => {
@@ -239,6 +250,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         prompt: finalPrompt,
         imageCount: imageUrls.length,
         originalImages: imageUrls.map((url) => getImageUrl(url)),
+        messages: [
+          {
+            role: 'user',
+            content: messageContent,
+          },
+        ],
       });
 
       const result = await model.invoke({
@@ -248,6 +265,10 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
             content: messageContent,
           },
         ],
+      });
+
+      logger.info('Finish AIGNE Hub API call', {
+        result,
       });
 
       if (!result.files || result.files.length === 0) {
@@ -361,6 +382,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         generationId: generation.id,
         originalImg: imageUrls.length > 0 ? imageUrls[0] : '', // First image for backward compatibility
         originalImages: imageUrls, // All original images
+        textInput: textInput || undefined, // Include text input for text-based projects
         generatedImg,
         processingTimeMs: processingTime,
         creditsConsumed: requiredCredits,
