@@ -39,6 +39,7 @@ interface ControlsConfigEditorProps {
   config: ProjectControlsConfig;
   onChange: (config: ProjectControlsConfig) => void;
   disabled?: boolean;
+  showOnlyRequirements?: boolean;
 }
 
 const CONTROL_TYPES = [
@@ -415,7 +416,12 @@ function ControlConfigEditor({
   );
 }
 
-export function ControlsConfigEditor({ config, onChange, disabled = false }: ControlsConfigEditorProps) {
+export function ControlsConfigEditor({
+  config,
+  onChange,
+  disabled = false,
+  showOnlyRequirements = false,
+}: ControlsConfigEditorProps) {
   const [newControlType, setNewControlType] = useState('select');
 
   const updateInputConfig = (updates: Partial<typeof config.inputConfig>) => {
@@ -463,16 +469,18 @@ export function ControlsConfigEditor({ config, onChange, disabled = false }: Con
             Input Configuration
           </Typography>
           <Stack spacing={2}>
-            <TextField
-              label="Image Size"
-              type="number"
-              value={config.inputConfig.imageSize}
-              onChange={(e) => updateInputConfig({ imageSize: Number(e.target.value) })}
-              disabled={disabled}
-              inputProps={{ min: 1, max: 10 }}
-              helperText="Number of images required for this AI application"
-              sx={{ maxWidth: 300 }}
-            />
+            {!showOnlyRequirements && (
+              <TextField
+                label="Image Size"
+                type="number"
+                value={config.inputConfig.imageSize}
+                onChange={(e) => updateInputConfig({ imageSize: Number(e.target.value) })}
+                disabled={disabled}
+                inputProps={{ min: 1, max: 10 }}
+                helperText="Number of images required for this AI application"
+                sx={{ maxWidth: 300 }}
+              />
+            )}
 
             {/* Requirements Description - Multi-language */}
             <MultiLanguageEditor
@@ -486,64 +494,79 @@ export function ControlsConfigEditor({ config, onChange, disabled = false }: Con
               disabled={disabled}
               multiline
               rows={2}
-              placeholder="Describe image requirements to users..."
-              helperText="Describe image requirements to users in different languages"
+              placeholder={
+                showOnlyRequirements
+                  ? 'Describe text input requirements to users...'
+                  : 'Describe image requirements to users...'
+              }
+              helperText={
+                showOnlyRequirements
+                  ? 'Describe text input requirements to users in different languages'
+                  : 'Describe image requirements to users in different languages'
+              }
             />
 
-            {/* Image Descriptions Configuration - Multi-language */}
-            <MultiLanguageImageDescriptionsEditor
-              values={config.inputConfig.imageDescriptions || createEmptyImageDescriptionsObject()}
-              onChange={(values) => {
-                // Check if any language has descriptions (even empty ones), if not set to undefined
-                const hasDescriptions = Object.values(values).some((descriptions) => descriptions.length > 0);
-                updateInputConfig({ imageDescriptions: hasDescriptions ? values : undefined });
-              }}
-              maxImages={config.inputConfig.imageSize}
-              disabled={disabled}
-            />
+            {!showOnlyRequirements && (
+              /* Image Descriptions Configuration - Multi-language */
+              <MultiLanguageImageDescriptionsEditor
+                values={config.inputConfig.imageDescriptions || createEmptyImageDescriptionsObject()}
+                onChange={(values) => {
+                  // Check if any language has descriptions (even empty ones), if not set to undefined
+                  const hasDescriptions = Object.values(values).some((descriptions) => descriptions.length > 0);
+                  updateInputConfig({ imageDescriptions: hasDescriptions ? values : undefined });
+                }}
+                maxImages={config.inputConfig.imageSize}
+                disabled={disabled}
+              />
+            )}
           </Stack>
         </CardContent>
       </Card>
 
       {/* Controls Configuration */}
-      <Card>
-        <CardContent>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-            <Typography variant="h6">Control Components</Typography>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <Select value={newControlType} onChange={(e) => setNewControlType(e.target.value)} disabled={disabled}>
-                  {CONTROL_TYPES.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      {type.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={addControl} disabled={disabled}>
-                Add Control
-              </Button>
+      {!showOnlyRequirements && (
+        <Card>
+          <CardContent>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+              <Typography variant="h6">Control Components</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <Select
+                    value={newControlType}
+                    onChange={(e) => setNewControlType(e.target.value)}
+                    disabled={disabled}>
+                    {CONTROL_TYPES.map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button variant="outlined" startIcon={<AddIcon />} onClick={addControl} disabled={disabled}>
+                  Add Control
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
 
-          {config.controlsConfig.length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-              No control components configured. Add some to provide users with customization options.
-            </Typography>
-          ) : (
-            <Stack spacing={1}>
-              {config.controlsConfig.map((controlConfig, index) => (
-                <ControlConfigEditor
-                  key={`control-${controlConfig.key || 'empty'}-${controlConfig.type || 'unknown'}`}
-                  controlConfig={controlConfig}
-                  onChange={(newConfig) => updateControl(index, newConfig)}
-                  onDelete={() => removeControl(index)}
-                />
-              ))}
-            </Stack>
-          )}
-        </CardContent>
-      </Card>
+            {config.controlsConfig.length === 0 ? (
+              <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                No control components configured. Add some to provide users with customization options.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {config.controlsConfig.map((controlConfig, index) => (
+                  <ControlConfigEditor
+                    key={`control-${controlConfig.key || 'empty'}-${controlConfig.type || 'unknown'}`}
+                    controlConfig={controlConfig}
+                    onChange={(newConfig) => updateControl(index, newConfig)}
+                    onDelete={() => removeControl(index)}
+                  />
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </Stack>
   );
 }

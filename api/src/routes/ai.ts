@@ -49,6 +49,7 @@ const router = Router();
 // Initialize AI model
 const model = new AIGNEHubChatModel({
   model: 'google/gemini-2.5-flash-image-preview',
+  // model: 'doubao/doubao-seedream-4-0-250828',
   modelOptions: {
     modalities: ['text', 'image'],
   },
@@ -272,11 +273,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
 
       if (!result.files || result.files.length === 0) {
-        return res.status(400).json({
-          error: 'Image generation failed',
-          message: 'Image generation failed',
-          generationId: generation.id,
-        });
+        throw new Error('Image generation failed');
       }
 
       const { path: filePath, mimeType } = result.files[0]! as LocalContent;

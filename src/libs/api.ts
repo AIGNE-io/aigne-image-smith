@@ -4,7 +4,7 @@ const api = createAxios({});
 
 api.interceptors.request.use(
   (config) => {
-    config.timeout = 60000;
+    config.timeout = 180000;
     return config;
   },
   (error) => Promise.reject(error),

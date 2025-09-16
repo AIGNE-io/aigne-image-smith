@@ -267,6 +267,7 @@ function CreateProjectContent() {
                 config={formData.controlsConfig}
                 onChange={(controlsConfig) => setFormData({ ...formData, controlsConfig })}
                 disabled={loading}
+                showOnlyRequirements={formData.controlsConfig.inputConfig.inputType === 'text'}
               />
             </CardContent>
           </Card>
