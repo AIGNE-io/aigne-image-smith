@@ -3,7 +3,6 @@ import { joinURL } from 'ufo';
 
 const componentMap = {
   imageBin: 'z8ia1mAXo8ZE7ytGF36L5uBf9kD2kenhqFGp9',
-  pixLoom: 'z2qaJJC9zbsHpCjZW2XTT7StPFY3MvTumVoXY',
   paymentKit: 'z2qaCNvKMv5GjouKdcDWexv6WqtHbpNPQDnAk',
 };
 
@@ -27,14 +26,6 @@ export function getImageBinFilePath(fileName: string): string {
   const imageBin = componentMountPoints.find((x: any) => x.did === componentMap.imageBin);
   return joinURL(window.location.origin, imageBin?.mountPoint || '/', '/uploads', fileName);
 }
-
-export const getPixLoomPrefix = () => {
-  const { blocklet = {} } = window;
-  // @ts-ignore
-  const { componentMountPoints = [] } = blocklet;
-  const pixLoom = componentMountPoints.find((x: any) => x.did === componentMap.pixLoom);
-  return pixLoom?.mountPoint || '/';
-};
 
 export function getCreditPage(): string {
   const { blocklet = {} } = window;

@@ -1,3 +1,8 @@
+## 0.0.5 (2025-9-17)
+
+- remove unused files and rename some fields
+- rename db config key
+
 ## 0.0.4 (2025-9-17)
 
 - update readme

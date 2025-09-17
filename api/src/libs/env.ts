@@ -15,7 +15,7 @@ function parseDatabaseConfiguration(value: object) {
       min?: number;
     };
   }>({
-    url: Joi.string().empty([null, '']).default(`sqlite:${env.dataDir}/pix_loom.db`),
+    url: Joi.string().empty([null, '']).default(`sqlite:${env.dataDir}/aigne_image_smith.db`),
     logging: Joi.boolean().default(false),
     pool: Joi.object({
       max: Joi.number().integer().min(1).empty([null, '']),
@@ -43,13 +43,13 @@ function parseConfigFromPreferences() {
     _database: undefined as ReturnType<typeof parseDatabaseConfiguration> | undefined,
     get database() {
       this._database ??= parseDatabaseConfiguration({
-        url: preferences.pix_loom_database_url
-          ?.replace('{password}', preferences.pix_loom_database_password || '')
+        url: preferences.aigne_image_smith_database_url
+          ?.replace('{password}', preferences.aigne_image_smith_database_password || '')
           .replace('{env.dataDir}', env.dataDir),
-        logging: preferences.database_logging === undefined ? false : preferences.pix_loom_database_logging,
+        logging: preferences.database_logging === undefined ? false : preferences.aigne_image_smith_database_logging,
         pool: {
-          min: preferences.pix_loom_database_pool_min,
-          max: preferences.pix_loom_database_pool_max,
+          min: preferences.aigne_image_smith_database_pool_min,
+          max: preferences.aigne_image_smith_database_pool_max,
         },
       });
 

@@ -22,7 +22,7 @@
             "x-designable-id": "p0r0s1qs00u",
             "x-index": 0,
             "properties": {
-              "pix_loom_database_url": {
+              "aigne_image_smith_database_url": {
                 "type": "string",
                 "title": "URL",
                 "x-decorator": "FormItem",
@@ -30,23 +30,23 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "pix_loom_database_url",
+                "name": "aigne_image_smith_database_url",
                 "description": "\nUse {password} instead of real password",
                 "x-designable-id": "irgxznm5krc",
                 "x-index": 0
               },
-              "pix_loom_database_password": {
+              "aigne_image_smith_database_password": {
                 "title": "Password",
                 "x-decorator": "FormItem",
                 "x-component": "Password",
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "pix_loom_database_password",
+                "name": "aigne_image_smith_database_password",
                 "x-designable-id": "jn8q25xidiv",
                 "x-index": 1
               },
-              "pix_loom_database_logging": {
+              "aigne_image_smith_database_logging": {
                 "type": "boolean",
                 "title": "Logging",
                 "x-decorator": "FormItem",
@@ -54,11 +54,11 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "pix_loom_database_logging",
+                "name": "aigne_image_smith_database_logging",
                 "x-designable-id": "xxii8v27l7z",
                 "x-index": 2
               },
-              "pix_loom_database_pool_min": {
+              "aigne_image_smith_database_pool_min": {
                 "type": "string",
                 "title": "Min(pool)",
                 "x-decorator": "FormItem",
@@ -66,11 +66,11 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "pix_loom_database_pool_min",
+                "name": "aigne_image_smith_database_pool_min",
                 "x-designable-id": "hk13ynz1enw",
                 "x-index": 3
               },
-              "pix_loom_database_pool_max": {
+              "aigne_image_smith_database_pool_max": {
                 "type": "string",
                 "title": "Max(pool)",
                 "x-decorator": "FormItem",
@@ -78,7 +78,7 @@
                 "x-validator": [],
                 "x-component-props": {},
                 "x-decorator-props": {},
-                "name": "pix_loom_database_pool_max",
+                "name": "aigne_image_smith_database_pool_max",
                 "x-designable-id": "x9s9vfsmw4o",
                 "x-index": 4
               }

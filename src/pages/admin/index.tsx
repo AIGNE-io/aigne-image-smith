@@ -7,7 +7,7 @@ export default function AdminDashboard() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box mb={4}>
         <Typography variant="h4" component="h1" gutterBottom>
-          PixLoom 管理后台
+          ImageSmith 管理后台
         </Typography>
         <Typography variant="body1" color="text.secondary">
           管理您的 AI 图片应用项目
