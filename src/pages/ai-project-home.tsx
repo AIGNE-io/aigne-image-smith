@@ -371,6 +371,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     }
   }, [checkUserCredits, fetchHistoryData, isLoggedIn]);
 
+  // 组件挂载时滚动到页面顶部，避免从其他页面跳转时保留滚动位置
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 组件卸载时清理计时器
   useEffect(() => {
     return () => {

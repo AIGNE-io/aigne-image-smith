@@ -3,7 +3,6 @@ import {
   Archive as ArchiveIcon,
   Edit as EditIcon,
   Unarchive as UnarchiveIcon,
-  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -144,7 +143,7 @@ export default function ProjectsManagement() {
           <TableHead>
             <TableRow>
               <TableCell>项目名称</TableCell>
-              <TableCell>描述</TableCell>
+              <TableCell>Slug</TableCell>
               <TableCell>状态</TableCell>
               <TableCell>创建时间</TableCell>
               <TableCell align="right">操作</TableCell>
@@ -155,13 +154,24 @@ export default function ProjectsManagement() {
               <TableRow key={project.id} hover>
                 <TableCell>
                   <Typography variant="subtitle2">{getLocalizedText(project.name)}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Slug: {project.slug}
-                  </Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
-                    {getLocalizedText(project.description)}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'primary.main',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      '&:hover': {
+                        color: 'primary.dark',
+                      },
+                    }}
+                    onClick={() => {
+                      const basename = window?.blocklet?.prefix || '/';
+                      const previewUrl = basename === '/' ? `/${project.slug}` : `${basename}${project.slug}`;
+                      window.open(previewUrl, '_blank');
+                    }}>
+                    {project.slug}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -179,20 +189,6 @@ export default function ProjectsManagement() {
                         </IconButton>
                       </Tooltip>
                     )}
-
-                    <Tooltip title="预览应用">
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          // 获取当前应用的base路径
-                          const basename = window?.blocklet?.prefix || '/';
-                          const previewUrl = basename === '/' ? `/${project.slug}` : `${basename}${project.slug}`;
-                          // console.log('Preview URL:', previewUrl, 'Project slug:', project.slug, 'Basename:', basename);
-                          window.open(previewUrl, '_blank');
-                        }}>
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
 
                     {project.status === 'archived' ? (
                       <Tooltip title="恢复项目">
