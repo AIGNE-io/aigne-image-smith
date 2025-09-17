@@ -164,20 +164,35 @@ const createI18nSchema = Joi.object({
  */
 router.get('/', async (req, res): Promise<any> => {
   try {
+    // Get locale from query parameters, default to 'en'
+    const locale = (req.query.locale as string) || 'en';
+
     const projects = await AIProject.findActiveProjects();
+
+    // Get i18n data and SEO imageUrl for each project
+    const projectsWithI18n = await Promise.all(
+      projects.map(async (project) => {
+        // Get i18n content with fallback
+        const i18nContent = await ProjectI18n.getWithFallback(project.id, locale);
+
+        return {
+          id: project.id,
+          slug: project.slug,
+          name: project.name,
+          subtitle: project.subtitle,
+          description: project.description,
+          uiConfig: project.uiConfig,
+          metadata: project.metadata,
+          // Add SEO imageUrl if available
+          seoImageUrl: i18nContent?.content?.seo?.imageUrl || null,
+          createdAt: project.createdAt,
+        };
+      }),
+    );
 
     return res.json({
       success: true,
-      data: projects.map((project) => ({
-        id: project.id,
-        slug: project.slug,
-        name: project.name,
-        subtitle: project.subtitle,
-        description: project.description,
-        uiConfig: project.uiConfig,
-        metadata: project.metadata,
-        createdAt: project.createdAt,
-      })),
+      data: projectsWithI18n,
     });
   } catch (error) {
     logger.error('Failed to get project list:', error);

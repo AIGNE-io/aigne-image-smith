@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import { Outlet } from 'react-router-dom';
 
-function Layout({ ...rest }: { [key: string]: any }) {
+function LayoutFullFooterWidth({ ...rest }: { [key: string]: any }) {
   return (
     <Root {...rest}>
       <Header
@@ -27,7 +27,18 @@ function Layout({ ...rest }: { [key: string]: any }) {
           <Outlet />
         </main>
       </Container>
-      <Footer meta={undefined} theme={undefined} />
+      <Footer
+        meta={undefined}
+        theme={undefined}
+        sx={{
+          maxWidth: '100%',
+          px: 1,
+          '& .MuiContainer-root': {
+            margin: 0,
+            maxWidth: '100%',
+          },
+        }}
+      />
     </Root>
   );
 }
@@ -56,4 +67,4 @@ const Root = styled(Box)`
   }
 `;
 
-export default Layout;
+export default LayoutFullFooterWidth;

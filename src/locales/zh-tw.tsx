@@ -117,4 +117,14 @@ export default flat({
       failed: '刪除失敗，請重試',
     },
   },
+
+  // 專案列表頁面
+  projects: {
+    title: '探索所有功能',
+    subtitle: '運用AI技術的力量，讓圖像處理變得簡單高效',
+    loading: '載入中...',
+    noProjects: '暫無可用功能',
+    comingSoon: '敬請期待更多精彩功能',
+    launchApp: '開始使用',
+  },
 });

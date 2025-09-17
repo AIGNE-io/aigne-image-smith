@@ -117,4 +117,14 @@ export default flat({
       failed: 'Delete failed, please try again',
     },
   },
+
+  // Projects list page
+  projects: {
+    title: 'Explore All Features',
+    subtitle: 'Harness the power of AI technology to make image processing simple and efficient',
+    loading: 'Loading...',
+    noProjects: 'No available features',
+    comingSoon: 'Stay tuned for more exciting features',
+    launchApp: 'Get Started',
+  },
 });

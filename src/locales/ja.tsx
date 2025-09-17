@@ -117,4 +117,14 @@ export default flat({
       failed: '削除に失敗しました。再度お試しください',
     },
   },
+
+  // プロジェクト一覧ページ
+  projects: {
+    title: 'すべての機能を探索',
+    subtitle: 'AI技術の力を活用して、画像処理をシンプルで効率的に',
+    loading: '読み込み中...',
+    noProjects: '利用可能な機能がありません',
+    comingSoon: 'より多くのエキサイティングな機能にご期待ください',
+    launchApp: '開始する',
+  },
 });

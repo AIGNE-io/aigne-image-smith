@@ -8,6 +8,7 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 
 import AdminLayout from './components/layout/admin-layout';
 import Layout from './components/layout/layout';
+import LayoutFullFooterWidth from './components/layout/layout-full-footer-width';
 import PrivateRoute from './components/private-route';
 import { SessionProvider } from './contexts/session';
 import { appThemeOptions } from './libs/theme';
@@ -43,7 +44,6 @@ function App() {
       <ErrorBoundary FallbackComponent={ErrorFallback} onReset={window.location.reload}>
         <CssBaseline />
         <Routes>
-          <Route path="/" element={<Projects />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/admin"
@@ -58,8 +58,12 @@ function App() {
             <Route path="projects/:projectId/edit" element={<EditProject />} />
           </Route>
 
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<LayoutFullFooterWidth />}>
             <Route path="/:slug" element={<DynamicApp />} />
+          </Route>
+
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Projects />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
