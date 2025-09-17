@@ -1,0 +1,17 @@
+<svg width="902" height="902" viewBox="0 0 902 902" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="902" height="902" rx="212" fill="url(#paint0_linear_3783_1258)" style=""></rect>
+<rect x="166" y="247" width="569" height="409" rx="80" stroke="white" style="stroke:white;stroke-opacity:1;" stroke-width="40"></rect>
+<ellipse cx="371" cy="452" rx="37" ry="65" fill="white" style="fill:white;fill-opacity:1;"></ellipse>
+<ellipse cx="531" cy="452" rx="37" ry="65" fill="white" style="fill:white;fill-opacity:1;"></ellipse>
+<defs>
+<linearGradient id="paint0_linear_3783_1258" x1="84" y1="78.5" x2="811.5" y2="850.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="#AAF4EF" style="stop-color:#AAF4EF;stop-color:color(display-p3 0.6667 0.9569 0.9373);stop-opacity:1;"></stop>
+<stop offset="0.180804" stop-color="#C7F37F" style="stop-color:#C7F37F;stop-color:color(display-p3 0.7798 0.9512 0.4996);stop-opacity:1;"></stop>
+<stop offset="0.361299" stop-color="#FFD071" style="stop-color:#FFD071;stop-color:color(display-p3 1.0000 0.8141 0.4422);stop-opacity:1;"></stop>
+<stop offset="0.546216" stop-color="#FF9898" style="stop-color:#FF9898;stop-color:color(display-p3 1.0000 0.5960 0.5960);stop-opacity:1;"></stop>
+<stop offset="0.72214" stop-color="#FF89E0" style="stop-color:#FF89E0;stop-color:color(display-p3 1.0000 0.5360 0.8769);stop-opacity:1;"></stop>
+<stop offset="0.898804" stop-color="#B695FE" style="stop-color:#B695FE;stop-color:color(display-p3 0.7137 0.5843 0.9961);stop-opacity:1;"></stop>
+<stop offset="1" stop-color="#7C8EED" style="stop-color:#7C8EED;stop-color:color(display-p3 0.4863 0.5569 0.9294);stop-opacity:1;"></stop>
+</linearGradient>
+</defs>
+</svg>

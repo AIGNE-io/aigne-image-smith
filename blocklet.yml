@@ -1,4 +1,4 @@
-title: PixLoom
+title: ImageSmith
 description: a base ai image service for create ai image apps
 keywords:
   - blocklet
@@ -13,14 +13,14 @@ repository:
   type: git
   url: git+https://github.com/blocklet/create-blocklet.git
 specVersion: 1.2.8
-version: 0.0.2
-logo: logo.png
+version: 0.0.3
+logo: logo.svg
 files:
   - dist
-  - logo.png
   - screenshots
   - api/hooks/pre-start.js
   - api/dist/store/migrations/*.js
+  - logo.svg
 interfaces:
   - type: web
     name: publicUrl
@@ -51,5 +51,28 @@ capabilities:
 screenshots:
   - f45aa844d2aff0447810a4bf58f2a235.png
 components: []
+navigation:
+  - id: pixLoomAdmin
+    title:
+      en: Dashboard
+      zh: 管理后台
+    icon: ic:outline-dashboard
+    link: /admin
+    section:
+      - dashboard
+    role:
+      - owner
+      - admin
+  - id: pixLoomProjects
+    title:
+      en: Projects
+      zh: 项目管理
+    icon: ic:outline-folder-special
+    link: /admin/projects
+    section:
+      - dashboard
+    role:
+      - owner
+      - admin
 name: z2qaJJC9zbsHpCjZW2XTT7StPFY3MvTumVoXY
 egress: true

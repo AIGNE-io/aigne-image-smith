@@ -20,5 +20,6 @@ module.exports = {
     'no-return-assign': 'off',
     'no-continue': 'off',
     'react-hooks/exhaustive-deps': 'off',
+    'react/no-array-index-key': 'off',
   },
 };

@@ -6,6 +6,9 @@ import { uploadToMediaKit } from '@blocklet/uploader-server';
 import axios from 'axios';
 import { Router } from 'express';
 import Joi from 'joi';
+// Import prompt processing utilities for dynamic prompt building
+// Note: These utilities are in the frontend src directory, so we need proper path resolution
+import path from 'path';
 import { Op } from 'sequelize';
 
 import logger from '../libs/logger';
@@ -13,11 +16,40 @@ import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/paymen
 import { getImageUrl } from '../libs/utils';
 import ImageGeneration from '../store/models/image-generation';
 
+const promptUtilsPath = path.resolve(__dirname, '../../../src/libs/promptUtils.ts');
+
+// Dynamic import for prompt utilities since they're TypeScript modules
+let promptUtils: any = null;
+try {
+  // eslint-disable-next-line import/no-dynamic-require, global-require
+  promptUtils = require(promptUtilsPath);
+} catch (error) {
+  // Fallback: implement basic prompt processing inline
+  promptUtils = {
+    replacePromptVariables: (template: string, variables: Record<string, any>) => {
+      let result = template;
+      Object.entries(variables).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        result = result.replace(regex, String(value));
+      });
+      return result;
+    },
+    buildPromptVariables: (controlValues: Record<string, any>, images: string[]) => {
+      const variables = { ...controlValues };
+      images.forEach((image, index) => {
+        variables[`image${index + 1}`] = image;
+      });
+      return variables;
+    },
+  };
+}
+
 const router = Router();
 
 // Initialize AI model
 const model = new AIGNEHubChatModel({
   model: 'google/gemini-2.5-flash-image-preview',
+  // model: 'doubao/doubao-seedream-4-0-250828',
   modelOptions: {
     modalities: ['text', 'image'],
   },
@@ -25,11 +57,21 @@ const model = new AIGNEHubChatModel({
 
 // Validation schemas
 const generateImageSchema = Joi.object({
-  prompt: Joi.string().min(1).max(1000).required(),
+  // Support both old single prompt and new dynamic prompt building
+  prompt: Joi.string().min(1).max(1000).optional(),
+  promptTemplate: Joi.string().min(1).max(1000).optional(),
+  controlValues: Joi.object().optional(),
+
+  // Support both single image (legacy) and multiple images (new)
   originalImg: Joi.string().optional(),
+  originalImages: Joi.array().items(Joi.string()).max(10).optional(),
+
+  // Support text input for text-based projects
+  textInput: Joi.string().min(0).max(5000).allow('').optional(),
+
   clientId: Joi.string().required(),
   metadata: Joi.object().optional(),
-});
+}).or('prompt', 'promptTemplate'); // At least one prompt method must be provided
 
 const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
@@ -50,12 +92,39 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = generateImageSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
-        error: '请求数据无效',
+        error: 'Invalid request data',
         details: error.details,
       });
     }
 
-    const { prompt, originalImg, clientId, metadata } = value;
+    const { prompt, promptTemplate, controlValues, originalImages, textInput, clientId, metadata } = value;
+
+    // Build final prompt - support both old and new systems
+    let finalPrompt: string;
+    let imageUrls: string[] = [];
+
+    if (prompt) {
+      // Legacy mode: use provided prompt directly
+      finalPrompt = prompt;
+      imageUrls = originalImages;
+    } else if (promptTemplate) {
+      // New mode: build prompt from template and control values
+      imageUrls = originalImages || [];
+      try {
+        const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, imageUrls);
+        finalPrompt = promptUtils.replacePromptVariables(promptTemplate, promptVariables);
+      } catch (promptError) {
+        return res.status(400).json({
+          error: 'Invalid prompt template or variables',
+          message: promptError instanceof Error ? promptError.message : 'Prompt building failed',
+        });
+      }
+    } else {
+      return res.status(400).json({
+        error: 'Missing prompt data',
+        message: 'Either prompt or promptTemplate must be provided',
+      });
+    }
 
     // Check credit balance first
     const balanceInfo = await getUserCreditBalance(userDid);
@@ -64,8 +133,8 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     if (currentBalance < requiredCredits) {
       return res.status(400).json({
-        error: '积分不足',
-        message: `需要: ${requiredCredits} 积分，可用: ${currentBalance} 积分`,
+        error: 'Insufficient credits',
+        message: `Required: ${requiredCredits} credits, Available: ${currentBalance} credits`,
         currentBalance,
       });
     }
@@ -73,7 +142,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Create initial record in database
     const generation = await ImageGeneration.validateAndCreate({
       userDid,
-      originalImg,
+      originalImg: imageUrls.length > 0 ? imageUrls[0] : '', // Store first image for backward compatibility
       generatedImg: '', // Will be updated when processing completes
       clientId,
       status: 'pending',
@@ -81,7 +150,11 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       metadata: {
         requestIp: req.ip,
         startTime: new Date().toISOString(),
-        prompt,
+        prompt: finalPrompt,
+        originalImages: imageUrls, // Store all original images
+        textInput: textInput || undefined, // Store text input for text-based projects
+        promptTemplate: promptTemplate || undefined,
+        controlValues: controlValues || undefined,
         ...metadata,
       },
     });
@@ -89,17 +162,17 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     // Update status to processing
     await generation.updateStatus('processing');
 
-    // Consume credits during processing - 直接集成消耗上报逻辑
+    // Consume credits during processing - directly integrate consumption reporting logic
     let meterEvent: any = null;
     const sessionId = `gen_${generation.id}_${Date.now()}`;
     let customer = null;
     try {
-      // 确保客户存在
+      // Ensure customer exists
       customer = await ensureCustomer(userDid);
 
-      // 直接上报图像处理消耗量
+      // Report image processing consumption directly
       meterEvent = await payment.meterEvents.create({
-        event_name: METER_NAME, // 保持与 meter 名称一致
+        event_name: METER_NAME, // Keep consistent with meter name
         timestamp: Math.floor(Date.now() / 1000),
         payload: {
           customer_id: userDid,
@@ -108,11 +181,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         identifier: `${userDid}_${sessionId}_${Date.now()}`,
         metadata: {
           generation_id: generation.id,
-          original_image_url: originalImg,
+          original_image_url: imageUrls.length > 0 ? imageUrls[0] : '',
+          original_images_count: imageUrls.length,
         },
       });
 
-      logger.info('settled processing session', {
+      logger.info('Settled processing session', {
         customerId: userDid,
         billedCredits: requiredCredits,
         sessionId,
@@ -121,12 +195,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     } catch (creditError) {
       // If credit consumption fails, mark generation as failed
       await generation.updateStatus('failed', {
-        errorMessage: `积分消费失败: ${creditError instanceof Error ? creditError.message : '未知错误'}`,
+        errorMessage: `Credit consumption failed: ${creditError instanceof Error ? creditError.message : 'Unknown error'}`,
       });
 
       return res.status(400).json({
-        error: '积分消费失败',
-        message: creditError instanceof Error ? creditError.message : '未知错误',
+        error: 'Credit consumption failed',
+        message: creditError instanceof Error ? creditError.message : 'Unknown error',
         generationId: generation.id,
       });
     }
@@ -138,14 +212,18 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const processingStartTime = Date.now();
 
     try {
-      const fullPrompt = prompt;
+      // Prepare message content with the final prompt
+      const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
 
-      // Prepare message content
-      const messageContent: any[] = [{ type: 'text', text: fullPrompt }];
+      if (textInput) {
+        messageContent.push({
+          type: 'text',
+          text: textInput,
+        });
+      }
 
-      // Add original image if provided
-      if (originalImg) {
-        const imgUrl = getImageUrl(originalImg);
+      // Add all original images if provided
+      if (imageUrls.length > 0) {
         const getMimeType = async (imgUrl: string) => {
           try {
             const { data } = await axios.get(`${imgUrl}.json`);
@@ -154,19 +232,31 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
             return 'image/jpeg';
           }
         };
-        const mimeType = await getMimeType(imgUrl);
-        messageContent.push({
-          type: 'url',
-          url: imgUrl,
-          mimeType,
-        });
+
+        // Process each image and add to message content
+        for (const imageUrl of imageUrls) {
+          const imgUrl = getImageUrl(imageUrl);
+          const mimeType = await getMimeType(imgUrl);
+          messageContent.push({
+            type: 'url',
+            url: imgUrl,
+            mimeType,
+          });
+        }
       }
 
       // Call AIGNE Hub API
-      logger.info('开始调用 AIGNE Hub API', {
+      logger.info('Starting AIGNE Hub API call', {
         generationId: generation.id,
-        prompt: fullPrompt,
-        hasOriginalImage: getImageUrl(originalImg),
+        prompt: finalPrompt,
+        imageCount: imageUrls.length,
+        originalImages: imageUrls.map((url) => getImageUrl(url)),
+        messages: [
+          {
+            role: 'user',
+            content: messageContent,
+          },
+        ],
       });
 
       const result = await model.invoke({
@@ -178,12 +268,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         ],
       });
 
+      logger.info('Finish AIGNE Hub API call', {
+        result,
+      });
+
       if (!result.files || result.files.length === 0) {
-        return res.status(400).json({
-          error: '图片生成失败',
-          message: '图片生成失败',
-          generationId: generation.id,
-        });
+        throw new Error('Image generation failed');
       }
 
       const { path: filePath, mimeType } = result.files[0]! as LocalContent;
@@ -223,16 +313,16 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       processingTime = Date.now() - processingStartTime;
 
       if (!generatedImg) {
-        throw new Error('AI 模型未返回有效的图片结果');
+        throw new Error('AI model did not return valid image result');
       }
 
-      logger.info('AIGNE Hub API 调用成功', {
+      logger.info('AIGNE Hub API call successful', {
         generationId: generation.id,
         processingTime,
         resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
     } catch (aiError) {
-      // 创建信用额度
+      // Create credit grant
       const meter = await payment.meters.retrieve(METER_NAME);
       if (meter && customer) {
         await payment.creditGrants.create({
@@ -245,7 +335,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
             },
           },
           category: 'promotional',
-          name: '图片生成失败，Credit 退回',
+          name: 'Image generation failed, credit refunded',
           metadata: {
             granted_at: new Date().toISOString(),
             service_type: METER_NAME,
@@ -254,7 +344,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         });
       }
       console.error(aiError);
-      logger.error('AI 处理失败', {
+      logger.error('AI processing failed', {
         generationId: generation.id,
         error: aiError instanceof Error ? aiError.message : '未知错误',
         processingTime: Date.now() - processingStartTime,
@@ -263,12 +353,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       // Update generation record with failure
       await generation.updateStatus('failed', {
         processingTimeMs: Date.now() - processingStartTime,
-        errorMessage: `AI 处理失败: ${aiError instanceof Error ? aiError.message : '未知错误'}`,
+        errorMessage: `AI processing failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`,
       });
 
       return res.status(400).json({
-        error: 'AI 处理失败',
-        message: aiError instanceof Error ? aiError.message : '未知错误',
+        error: 'AI processing failed',
+        message: 'AI processing failed',
         generationId: generation.id,
       });
     }
@@ -287,19 +377,22 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       success: true,
       data: {
         generationId: generation.id,
-        originalImg,
+        originalImg: imageUrls.length > 0 ? imageUrls[0] : '', // First image for backward compatibility
+        originalImages: imageUrls, // All original images
+        textInput: textInput || undefined, // Include text input for text-based projects
         generatedImg,
         processingTimeMs: processingTime,
         creditsConsumed: requiredCredits,
         fileName,
         newBalance,
         status: 'completed',
-        message: '处理完成',
+        message: 'Processing completed',
+        prompt: finalPrompt,
       },
     });
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    logger.error('AI 生成失败:', error);
+    logger.error('AI generation failed:', error);
 
     // Try to update generation record if it exists
     try {
@@ -313,17 +406,17 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         if (failedGeneration && failedGeneration.status !== 'completed') {
           await failedGeneration.updateStatus('failed', {
             processingTimeMs: processingTime,
-            errorMessage: error instanceof Error ? error.message : '未知处理错误',
+            errorMessage: error instanceof Error ? error.message : 'Unknown processing error',
           });
         }
       }
     } catch (updateError) {
-      logger.error('更新生成状态失败:', updateError);
+      logger.error('Failed to update generation status:', updateError);
     }
 
     return res.status(400).json({
-      error: 'AI 生成失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'AI generation failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -336,7 +429,7 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
   try {
     const userDid = req.user?.did;
     if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
     const { id } = req.params;
@@ -346,8 +439,8 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
 
     if (!generation) {
       return res.status(404).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
@@ -367,10 +460,10 @@ router.get('/generation/:id', auth(), user(), async (req, res): Promise<any> => 
       },
     });
   } catch (error) {
-    logger.error('获取生成状态失败:', error);
+    logger.error('Failed to get generation status:', error);
     return res.status(400).json({
-      error: '获取生成状态失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation status',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -387,7 +480,7 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
     const { error, value } = getHistorySchema.validate(req.query);
     if (error) {
       return res.status(400).json({
-        error: '查询参数无效',
+        error: 'Invalid query parameters',
         details: error.details,
       });
     }
@@ -433,10 +526,10 @@ router.get('/history', auth(), user(), async (req, res): Promise<any> => {
       },
     });
   } catch (error) {
-    logger.error('获取生成历史失败:', error);
+    logger.error('Failed to get generation history:', error);
     return res.status(400).json({
-      error: '获取生成历史失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation history',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -456,15 +549,15 @@ router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> 
 
     if (!generation) {
       return res.status(404).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
     if (userDid !== generation.userDid) {
       return res.status(403).json({
-        error: '生成记录未找到',
-        message: '生成记录未找到或访问被拒绝',
+        error: 'Generation record not found',
+        message: 'Generation record not found or access denied',
       });
     }
 
@@ -473,15 +566,15 @@ router.delete('/generation/:id', auth(), user(), async (req, res): Promise<any> 
     return res.json({
       success: true,
       data: {
-        message: '生成记录删除成功',
+        message: 'Generation record deleted successfully',
         deletedId: id,
       },
     });
   } catch (error) {
-    logger.error('删除生成记录失败:', error);
+    logger.error('Failed to delete generation record:', error);
     return res.status(400).json({
-      error: '删除生成记录失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to delete generation record',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
@@ -494,7 +587,7 @@ router.get('/stats', auth(), user(), async (req, res): Promise<any> => {
   try {
     const userDid = req.user?.did;
     if (!userDid) {
-      return res.status(401).json({ error: '用户未认证' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
     const stats = await ImageGeneration.getUserStats(userDid);
@@ -517,14 +610,14 @@ router.get('/stats', auth(), user(), async (req, res): Promise<any> => {
       data: {
         ...stats,
         recentActivity,
-        period: '30 天',
+        period: '30 days',
       },
     });
   } catch (error) {
-    logger.error('获取生成统计失败:', error);
+    logger.error('Failed to get generation statistics:', error);
     return res.status(400).json({
-      error: '获取生成统计失败',
-      message: error instanceof Error ? error.message : '未知错误',
+      error: 'Failed to get generation statistics',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });
