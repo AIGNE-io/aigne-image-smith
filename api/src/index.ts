@@ -10,7 +10,10 @@ import 'express-async-errors';
 import path from 'path';
 
 import logger from './libs/logger';
+import { getImageUrl } from './libs/utils';
 import routes from './routes';
+import AIProject from './store/models/ai-project';
+import ProjectI18n from './store/models/project-i18n';
 import wsServer from './ws';
 
 dotenv.config();
@@ -38,7 +41,52 @@ const isProduction = process.env.NODE_ENV === 'production' || process.env.ABT_NO
 if (isProduction) {
   const staticDir = path.resolve(process.env.BLOCKLET_APP_DIR!, 'dist');
   app.use(express.static(staticDir, { maxAge: '30d', index: false }));
-  app.use(fallback('index.html', { root: staticDir }));
+  app.use(
+    fallback('index.html', {
+      root: staticDir,
+      getPageData: async (req) => {
+        const [slug] = req.path.split('/').filter(Boolean);
+        if (slug) {
+          const project = await AIProject.findOne({
+            where: { slug },
+          });
+          if (project) {
+            // Extract locale from Accept-Language header or use 'en' as fallback
+            const acceptLanguage = req.headers['accept-language'] || 'en';
+            const locale = acceptLanguage.split(',')[0]?.split('-')[0] || 'en';
+
+            // Get i18n content with fallback logic
+            const projectI18n = await ProjectI18n.getWithFallback(project.id, locale);
+
+            // Priority order for title and description:
+            const defaultTitle = 'AIGNE ImageSmith';
+            const defaultDescription =
+              'Discover powerful AI-driven image applications that transform your creative workflow';
+
+            const og: any = {
+              title: project.getLocalizedName(locale) || defaultTitle,
+              description: project.getLocalizedSubtitle(locale) || defaultDescription,
+            };
+
+            // Override with SEO data if available in ProjectI18n
+            if (projectI18n?.content?.seo) {
+              const { seo } = projectI18n.content;
+              if (seo.imageUrl) {
+                og.ogImage = getImageUrl(seo.imageUrl);
+              }
+            }
+
+            return og;
+          }
+        }
+
+        return {
+          title: 'AIGNE ImageSmith',
+          description: 'Discover powerful AI-driven image applications that transform your creative workflow',
+        };
+      },
+    }),
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use(((err, _req, res, _next) => {

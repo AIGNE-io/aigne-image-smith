@@ -171,6 +171,13 @@ export default class AIProject extends Model<InferAttributes<AIProject>, InferCr
   }
 
   /**
+   * Get localized name
+   */
+  getLocalizedSubtitle(locale: string = 'en'): string {
+    return this.subtitle[locale] || this.subtitle.en || this.subtitle[Object.keys(this.name)[0] || 'en'] || '';
+  }
+
+  /**
    * Get localized description
    */
   getLocalizedDescription(locale: string = 'en'): string {
