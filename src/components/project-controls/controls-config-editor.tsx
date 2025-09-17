@@ -108,7 +108,7 @@ function ControlConfigEditor({
   onDelete: () => void;
 }) {
   const updateConfig = (updates: Partial<ControlConfig>) => {
-    onChange({ ...controlConfig, ...updates });
+    onChange({ ...controlConfig, ...updates } as ControlConfig);
   };
 
   const renderTypeSpecificFields = () => {
@@ -144,11 +144,7 @@ function ControlConfigEditor({
               </Stack>
               <Stack spacing={1}>
                 {(selectConfig.options || []).map((option, index) => (
-                  <Stack
-                    key={`option-${option.value || 'empty'}-${option.label || 'empty'}`}
-                    direction="row"
-                    spacing={1}
-                    alignItems="center">
+                  <Stack key={`option-${index}`} direction="row" spacing={1} alignItems="center">
                     <TextField
                       size="small"
                       label="Value"
@@ -291,11 +287,7 @@ function ControlConfigEditor({
             </Stack>
             <Stack spacing={1}>
               {(bgConfig.backgrounds || []).map((bg, index) => (
-                <Stack
-                  key={`bg-${bg.value || 'empty'}-${bg.color || 'empty'}`}
-                  direction="row"
-                  spacing={1}
-                  alignItems="center">
+                <Stack key={`bg-${index}`} direction="row" spacing={1} alignItems="center">
                   <TextField
                     size="small"
                     label="Value"
@@ -556,7 +548,7 @@ export function ControlsConfigEditor({
               <Stack spacing={1}>
                 {config.controlsConfig.map((controlConfig, index) => (
                   <ControlConfigEditor
-                    key={`control-${controlConfig.key || 'empty'}-${controlConfig.type || 'unknown'}`}
+                    key={`control-${index}-${controlConfig.type || 'unknown'}`}
                     controlConfig={controlConfig}
                     onChange={(newConfig) => updateControl(index, newConfig)}
                     onDelete={() => removeControl(index)}

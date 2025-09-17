@@ -28,7 +28,7 @@ import type {
 const ControlCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: '12px',
-  border: `1px solid ${theme.palette.divider}`,
+  // border: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,
 }));
 
@@ -160,6 +160,7 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
         return (
           <BackgroundSelector
             selectedBackground={value || bgConfig.defaultValue || bgConfig.backgrounds[0]?.value || ''}
+            showTitle={false}
             onBackgroundChange={handleChange}
             backgrounds={bgConfig.backgrounds}
           />

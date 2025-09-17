@@ -20,7 +20,7 @@ const baseControlConfigSchema = Joi.object({
   type: Joi.string().required(),
   key: Joi.string().required(),
   label: Joi.string().required(),
-  description: Joi.string().optional(),
+  description: Joi.string().allow('').optional(),
   required: Joi.boolean().optional(),
   defaultValue: Joi.any().optional(),
 });

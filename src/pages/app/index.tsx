@@ -3,6 +3,7 @@ import { Alert, Box, CircularProgress, Container } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import type { ProjectControlsConfig } from '../../components/project-controls/types';
 import api from '../../libs/api';
 import AIProjectHome from '../ai-project-home';
 
@@ -14,7 +15,7 @@ interface AIProject {
   description: Record<string, string>;
   promptTemplate: string;
   uiConfig?: Record<string, any>;
-  controlsConfig?: Record<string, any>;
+  controlsConfig?: ProjectControlsConfig;
   status: 'active' | 'draft' | 'archived';
   metadata?: Record<string, any>;
   createdAt: string;
@@ -107,7 +108,6 @@ export default function DynamicApp() {
     controlsConfig: project.controlsConfig || {
       inputConfig: {
         imageSize: 1,
-        requirements: '',
       },
       controlsConfig: [],
     },

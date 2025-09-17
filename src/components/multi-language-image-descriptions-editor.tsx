@@ -186,11 +186,7 @@ export default function MultiLanguageImageDescriptionsEditor({
       {currentDescriptions.length > 0 ? (
         <Stack spacing={1}>
           {currentDescriptions.map((description, index) => (
-            <Stack
-              key={`${currentLanguage.code}-field-${description?.slice(0, 20) || 'empty'}-len-${description?.length || 0}`}
-              direction="row"
-              spacing={1}
-              alignItems="center">
+            <Stack key={`${currentLanguage.code}-field-${index}`} direction="row" spacing={1} alignItems="center">
               <Typography variant="body2" sx={{ minWidth: 80 }}>
                 Image {index + 1}:
               </Typography>

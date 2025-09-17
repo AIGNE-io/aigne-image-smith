@@ -67,7 +67,7 @@ const generateImageSchema = Joi.object({
   originalImages: Joi.array().items(Joi.string()).max(10).optional(),
 
   // Support text input for text-based projects
-  textInput: Joi.string().min(1).max(5000).optional(),
+  textInput: Joi.string().min(0).max(5000).allow('').optional(),
 
   clientId: Joi.string().required(),
   metadata: Joi.object().optional(),
@@ -358,7 +358,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
       return res.status(400).json({
         error: 'AI processing failed',
-        message: aiError instanceof Error ? aiError.message : 'Unknown error',
+        message: 'AI processing failed',
         generationId: generation.id,
       });
     }

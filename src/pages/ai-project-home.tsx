@@ -37,7 +37,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 'react-share';
 
 import { MultiImageUploader } from '../components/multi-image-uploader';
-import { ControlValues, ProjectControls, ProjectControlsConfig } from '../components/project-controls';
+import {
+  BackgroundSelectorControlConfig,
+  ControlValues,
+  ProjectControls,
+  ProjectControlsConfig,
+} from '../components/project-controls';
 import { TextInput } from '../components/text-input';
 import UploaderProvider from '../components/uploader';
 import { useSessionContext } from '../contexts/session';
@@ -371,6 +376,25 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     }
   }, [checkUserCredits, fetchHistoryData, isLoggedIn]);
 
+  // 初始化控件默认值
+  useEffect(() => {
+    if (config.controlsConfig?.controlsConfig && config.controlsConfig.controlsConfig.length > 0) {
+      const defaultValues: ControlValues = {};
+      config.controlsConfig.controlsConfig.forEach((control) => {
+        if (control.defaultValue !== undefined) {
+          defaultValues[control.key] = control.defaultValue;
+        } else if (control.type === 'backgroundSelector') {
+          // 特殊处理 backgroundSelector，如果没有默认值则使用第一个选项
+          const bgControl = control as BackgroundSelectorControlConfig;
+          if (bgControl.backgrounds && bgControl.backgrounds.length > 0) {
+            defaultValues[control.key] = bgControl.backgrounds[0]?.value;
+          }
+        }
+      });
+      setControlValues(defaultValues);
+    }
+  }, [config.controlsConfig?.controlsConfig]);
+
   // 组件挂载时滚动到页面顶部，避免从其他页面跳转时保留滚动位置
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -421,6 +445,162 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     }
   };
 
+  // 统一的生成方法
+  const generate = useCallback(
+    async (options: { text?: string; images?: string[] } = {}) => {
+      const { text, images = [] } = options;
+
+      // 检查用户是否已认证
+      if (!isLoggedIn) {
+        setError(t('home.error.loginRequired'));
+        return;
+      }
+
+      // 检查Credit余额是否充足
+      const requiredCredits = 1;
+      if (creditInfo.balance < requiredCredits) {
+        setError(t('home.error.insufficientCredits'));
+        return;
+      }
+
+      // 根据输入类型验证
+      if (inputType === 'text') {
+        if (!text || !text.trim()) {
+          setError('请输入文本内容');
+          return;
+        }
+        // 保存正在处理的文本内容
+        setProcessingText(text);
+      } else {
+        if (images.length === 0) {
+          setError(t('home.error.noImage'));
+          return;
+        }
+        // 验证图片数量
+        const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
+        if (images.length < imageSize) {
+          setError(`Exactly ${imageSize} image(s) required`);
+          return;
+        }
+      }
+
+      // 开始处理动画
+      setProcessing({
+        isProcessing: true,
+        progress: 1,
+        message: inputType === 'text' ? t('home.processing.analyzing') : t('home.processing.uploading'),
+      });
+
+      // 启动假进度条
+      startFakeProgress();
+
+      try {
+        // 构建动态 prompt
+        const promptVariables = buildPromptVariables(controlValues, images);
+        const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
+
+        const { data } = await api.post('/api/ai/generate', {
+          prompt: finalPrompt,
+          textInput: text || '',
+          originalImages: images,
+          clientId: config.clientId,
+          metadata: {
+            controlValues,
+            inputType,
+            imageCount: images.length,
+          },
+        });
+
+        if (!data.success) {
+          throw new Error(data.message || data.error || t('home.error.aiFailed'));
+        }
+
+        const result = data.data;
+
+        // 停止假进度条并设置完成状态
+        stopFakeProgress();
+        setProcessing((prev) => ({ ...prev, progress: 100, message: t('home.processing.complete') }));
+
+        // 设置生成后的图片
+        setGeneratedImage(result.generatedImg);
+        setCompareSlider(50);
+
+        // 刷新历史记录数据
+        if (result.generationId) {
+          fetchHistoryData();
+        }
+
+        // 更新Credit余额
+        if (typeof result.newBalance === 'number') {
+          setCreditInfo((prev) => ({
+            ...prev,
+            balance: Number(formatBalance(result.newBalance, decimal)),
+          }));
+        }
+
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          message: '',
+        });
+        setProcessingText(''); // 清除处理文本
+      } catch (err: any) {
+        console.error('AI processing error:', err);
+
+        let errorMessage = t('home.error.processingFailed');
+
+        if (err?.response?.data) {
+          const apiError = err.response.data;
+          errorMessage = apiError.message || apiError.error || errorMessage;
+
+          if (apiError.error === '积分不足' || apiError.message?.includes('积分不足')) {
+            checkUserCredits();
+          }
+        } else if (err instanceof Error) {
+          if (err.message.includes('Network Error') || err.message.includes('timeout')) {
+            errorMessage = t('home.error.networkError');
+          } else if (err.message.includes('401') || err.message.includes('未认证')) {
+            errorMessage = t('home.error.authError');
+          } else if (err.message.includes('500')) {
+            errorMessage = t('home.error.serviceUnavailable');
+          } else {
+            errorMessage = `处理失败：${err.message}`;
+          }
+        }
+
+        // 停止假进度条
+        if (inputType === 'text') {
+          setTextInput('');
+        } else {
+          setOriginalImages([]);
+        }
+        stopFakeProgress();
+        setError(errorMessage);
+        setProcessing({
+          isProcessing: false,
+          progress: 0,
+          message: '',
+        });
+        setProcessingText(''); // 清除处理文本
+      }
+    },
+    [
+      isLoggedIn,
+      creditInfo.balance,
+      inputType,
+      config.controlsConfig?.inputConfig.imageSize,
+      t,
+      startFakeProgress,
+      controlValues,
+      config.prompt,
+      config.clientId,
+      stopFakeProgress,
+      fetchHistoryData,
+      decimal,
+      checkUserCredits,
+    ],
+  );
+
   // 处理图片变更
   const handleImagesChange = useCallback(
     async (images: string[]) => {
@@ -435,271 +615,22 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       // 对于单图场景，自动开始处理
       // 对于多图场景，需要用户手动确认
       if (!isMultiImage && images.length >= imageSize) {
-        await processImages(images);
+        await generate({ images });
       }
     },
-    [config.controlsConfig?.inputConfig.imageSize, creditInfo],
+    [config.controlsConfig?.inputConfig.imageSize, generate],
   );
 
   // 手动触发生成
   const handleManualGenerate = useCallback(async () => {
     if (inputType === 'text') {
       if (textInput.trim()) {
-        await processText(textInput);
+        await generate({ text: textInput });
       }
     } else if (originalImages.length > 0) {
-      await processImages(originalImages);
+      await generate({ images: originalImages });
     }
-  }, [originalImages, textInput, inputType]);
-
-  // 真实AI文本生成处理
-  const processText = async (text: string) => {
-    // 检查用户是否已认证
-    if (!isLoggedIn) {
-      setError(t('home.error.loginRequired'));
-      return;
-    }
-
-    // 检查Credit余额是否充足
-    const requiredCredits = 1;
-    if (creditInfo.balance < requiredCredits) {
-      setError(t('home.error.insufficientCredits'));
-      return;
-    }
-
-    if (!text.trim()) {
-      setError('请输入文本内容');
-      return;
-    }
-
-    // 保存正在处理的文本内容
-    setProcessingText(text);
-
-    // 开始处理动画
-    setProcessing({
-      isProcessing: true,
-      progress: 1,
-      message: t('home.processing.analyzing'),
-    });
-
-    // 启动假进度条
-    startFakeProgress();
-
-    try {
-      // 构建动态 prompt
-      const promptVariables = buildPromptVariables(controlValues, []);
-      const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
-
-      const { data } = await api.post('/api/ai/generate', {
-        prompt: finalPrompt,
-        textInput: text,
-        originalImages: [],
-        clientId: config.clientId,
-        metadata: {
-          controlValues,
-          inputType: 'text',
-        },
-      });
-
-      if (!data.success) {
-        throw new Error(data.message || data.error || t('home.error.aiFailed'));
-      }
-
-      const result = data.data;
-
-      // 停止假进度条并设置完成状态
-      stopFakeProgress();
-      setProcessing((prev) => ({ ...prev, progress: 100, message: t('home.processing.complete') }));
-
-      // 设置生成后的图片
-      setGeneratedImage(result.generatedImg);
-      setCompareSlider(50);
-
-      // 刷新历史记录数据
-      if (result.generationId) {
-        fetchHistoryData();
-      }
-
-      // 更新Credit余额
-      if (typeof result.newBalance === 'number') {
-        setCreditInfo((prev) => ({
-          ...prev,
-          balance: Number(formatBalance(result.newBalance, decimal)),
-        }));
-      }
-
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        message: '',
-      });
-      setProcessingText(''); // 清除处理文本
-    } catch (err: any) {
-      console.error('AI processing error:', err);
-
-      let errorMessage = t('home.error.processingFailed');
-
-      if (err?.response?.data) {
-        const apiError = err.response.data;
-        errorMessage = apiError.message || apiError.error || errorMessage;
-
-        if (apiError.error === '积分不足' || apiError.message?.includes('积分不足')) {
-          checkUserCredits();
-        }
-      } else if (err instanceof Error) {
-        if (err.message.includes('Network Error') || err.message.includes('timeout')) {
-          errorMessage = t('home.error.networkError');
-        } else if (err.message.includes('401') || err.message.includes('未认证')) {
-          errorMessage = t('home.error.authError');
-        } else if (err.message.includes('500')) {
-          errorMessage = t('home.error.serviceUnavailable');
-        } else {
-          errorMessage = `处理失败：${err.message}`;
-        }
-      }
-
-      // 停止假进度条
-      setTextInput('');
-      stopFakeProgress();
-      setError(errorMessage);
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        message: '',
-      });
-      setProcessingText(''); // 清除处理文本
-    }
-  };
-
-  // 真实AI图片生成处理
-  const processImages = async (images: string[]) => {
-    // 检查用户是否已认证
-    if (!isLoggedIn) {
-      setError(t('home.error.loginRequired'));
-      return;
-    }
-
-    // 检查Credit余额是否充足 (假设生成一张图片需要1个Credit)
-    const requiredCredits = 1;
-    if (creditInfo.balance < requiredCredits) {
-      setError(t('home.error.insufficientCredits'));
-      return;
-    }
-
-    if (images.length === 0) {
-      setError(t('home.error.noImage'));
-      return;
-    }
-
-    // 验证图片数量
-    const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
-    if (images.length < imageSize) {
-      setError(`Exactly ${imageSize} image(s) required`);
-      return;
-    }
-
-    // 开始处理动画
-    setProcessing({
-      isProcessing: true,
-      progress: 1,
-      message: t('home.processing.uploading'),
-    });
-
-    // 启动假进度条
-    startFakeProgress();
-
-    try {
-      // 调用真实的AI生成API
-      setProcessing((prev) => ({ ...prev, message: t('home.processing.analyzing') }));
-
-      // 构建动态 prompt
-      const promptVariables = buildPromptVariables(controlValues, images);
-      const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
-
-      const { data } = await api.post('/api/ai/generate', {
-        prompt: finalPrompt,
-        originalImages: images, // 所有图片
-        clientId: config.clientId,
-        metadata: {
-          controlValues,
-          imageCount: images.length,
-        },
-      });
-
-      if (!data.success) {
-        throw new Error(data.message || data.error || t('home.error.aiFailed'));
-      }
-
-      const result = data.data;
-
-      // 停止假进度条并设置完成状态
-      stopFakeProgress();
-      setProcessing((prev) => ({ ...prev, progress: 100, message: t('home.processing.complete') }));
-
-      // 设置生成后的图片
-      setGeneratedImage(result.generatedImg);
-      setCompareSlider(50);
-
-      // 刷新历史记录数据
-      if (result.generationId) {
-        // 重新获取历史记录以包含最新的生成结果
-        fetchHistoryData();
-      }
-
-      // 更新Credit余额 - 使用API返回的新余额
-      if (typeof result.newBalance === 'number') {
-        setCreditInfo((prev) => ({
-          ...prev,
-          balance: Number(formatBalance(result.newBalance, decimal)),
-        }));
-      }
-
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        message: '',
-      });
-      setProcessingText(''); // 清除处理文本
-    } catch (err: any) {
-      console.error('AI processing error:', err);
-
-      let errorMessage = t('home.error.processingFailed');
-
-      if (err?.response?.data) {
-        // API返回的错误信息
-        const apiError = err.response.data;
-        errorMessage = apiError.message || apiError.error || errorMessage;
-
-        // 特殊错误处理
-        if (apiError.error === '积分不足' || apiError.message?.includes('积分不足')) {
-          // 刷新余额信息
-          checkUserCredits();
-        }
-      } else if (err instanceof Error) {
-        // 网络错误或其他错误
-        if (err.message.includes('Network Error') || err.message.includes('timeout')) {
-          errorMessage = t('home.error.networkError');
-        } else if (err.message.includes('401') || err.message.includes('未认证')) {
-          errorMessage = t('home.error.authError');
-        } else if (err.message.includes('500')) {
-          errorMessage = t('home.error.serviceUnavailable');
-        } else {
-          errorMessage = `处理失败：${err.message}`;
-        }
-      }
-
-      // 停止假进度条
-      setOriginalImages([]);
-      stopFakeProgress();
-      setError(errorMessage);
-      setProcessing({
-        isProcessing: false,
-        progress: 0,
-        message: '',
-      });
-      setProcessingText(''); // 清除处理文本
-    }
-  };
+  }, [originalImages, textInput, inputType, generate]);
 
   // 下载生成后的图片
   const handleDownload = async () => {
@@ -740,9 +671,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
     // 重新调用AI处理
     if (inputType === 'text') {
-      await processText(textInput);
+      await generate({ text: textInput });
     } else {
-      await processImages(originalImages);
+      await generate({ images: originalImages });
     }
   };
 
@@ -1327,17 +1258,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
             {/* 动态控制组件 */}
             {config.controlsConfig?.controlsConfig && config.controlsConfig.controlsConfig.length > 0 && (
               <VintageCard elevation={2} sx={{ py: 2, px: 3 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={(theme) => ({
-                    color: theme.palette.text.primary,
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    mb: 2,
-                    fontSize: '0.875rem',
-                  })}>
-                  Customization Options
-                </Typography>
                 <ProjectControls
                   controlsConfig={config.controlsConfig.controlsConfig}
                   values={controlValues}
@@ -1476,7 +1396,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       </Box>
                     </Stack>
                   </Box>
-                ) : (inputType === 'text' ? generatedImage : originalImages.length > 0) ? (
+                ) : generatedImage ? (
                   // 有图片时的展示 - 根据配置决定是否显示对比
                   <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ImageCompareContainer sx={{ flex: 1, maxWidth: 'none', display: 'flex', alignItems: 'center' }}>
