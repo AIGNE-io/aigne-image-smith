@@ -120,8 +120,8 @@ export default flat({
 
   // 项目列表页面
   projects: {
-    title: '探索所有功能',
-    subtitle: '利用强大的 AI 技术，让图像处理变得简单高效',
+    title: '探索 AI 图像应用',
+    subtitle: '发现强大的 AI 驱动图像应用，提升您的创意工作流程',
     loading: '加载中...',
     noProjects: '暂无可用功能',
     comingSoon: '敬请期待更多精彩功能',

@@ -120,8 +120,8 @@ export default flat({
 
   // プロジェクト一覧ページ
   projects: {
-    title: 'すべての機能を探索',
-    subtitle: 'AI技術の力を活用して、画像処理をシンプルで効率的に',
+    title: 'AI画像アプリを探索',
+    subtitle: '強力なAI駆動の画像アプリケーションを発見し、クリエイティブワークフローを向上させましょう',
     loading: '読み込み中...',
     noProjects: '利用可能な機能がありません',
     comingSoon: 'より多くのエキサイティングな機能にご期待ください',

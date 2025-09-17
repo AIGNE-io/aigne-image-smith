@@ -128,27 +128,51 @@ export default function Projects() {
                     height: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
-                    borderRadius: 2,
-                    border: 1,
-                    borderColor: 'grey.300',
-                    boxShadow: 1,
+                    borderRadius: 3,
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease-in-out',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflow: 'hidden',
                     backgroundColor: 'background.paper',
+                    position: 'relative',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 3,
-                      borderColor: 'grey.400',
+                      transform: 'translateY(-4px) scale(1.02)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                    },
+                    '&:before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '3px',
+                      background: (theme) =>
+                        `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                    },
+                    '&:hover:before': {
+                      opacity: 1,
                     },
                   }}>
                   {/* Image */}
                   <Box
                     sx={{
                       height: 160,
-                      bgcolor: 'grey.100',
+                      bgcolor: 'grey.50',
                       position: 'relative',
                       overflow: 'hidden',
+                      '&:after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '40px',
+                        background: 'linear-gradient(transparent, rgba(0,0,0,0.05))',
+                        pointerEvents: 'none',
+                      },
                     }}>
                     {project.seoImageUrl || project.coverUrl || project.logoUrl ? (
                       <CardMedia
@@ -189,11 +213,15 @@ export default function Projects() {
 
                   <CardContent
                     sx={{
-                      p: 2,
+                      px: 3,
+                      pt: 3,
+                      pb: 4,
                       display: 'flex',
                       flexDirection: 'column',
                       flexGrow: 1,
-                      height: '120px', // Fixed content area height
+                      minHeight: '140px', // Increased minimum height to accommodate padding
+                      background: (theme) =>
+                        `linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[50]} 100%)`,
                     }}>
                     <Typography
                       variant="h6"

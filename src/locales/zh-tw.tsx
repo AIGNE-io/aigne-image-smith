@@ -120,8 +120,8 @@ export default flat({
 
   // 專案列表頁面
   projects: {
-    title: '探索所有功能',
-    subtitle: '運用AI技術的力量，讓圖像處理變得簡單高效',
+    title: '探索 AI 圖像應用',
+    subtitle: '發現強大的 AI 驅動圖像應用，提升您的創意工作流程',
     loading: '載入中...',
     noProjects: '暫無可用功能',
     comingSoon: '敬請期待更多精彩功能',

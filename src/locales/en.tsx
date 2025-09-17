@@ -120,8 +120,8 @@ export default flat({
 
   // Projects list page
   projects: {
-    title: 'Explore All Features',
-    subtitle: 'Harness the power of AI technology to make image processing simple and efficient',
+    title: 'Explore AI Image Apps',
+    subtitle: 'Discover powerful AI-driven image applications that transform your creative workflow',
     loading: 'Loading...',
     noProjects: 'No available features',
     comingSoon: 'Stay tuned for more exciting features',
