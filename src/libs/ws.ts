@@ -2,13 +2,12 @@ import { WsClient } from '@arcblock/ws';
 import { useEffect } from 'react';
 
 import { useSessionContext } from '../contexts/session';
-import { getPixLoomPrefix } from './utils';
 
 let client: any;
 
 function create() {
-  const pixLoomPrefix = getPixLoomPrefix();
-  const url = `//${window.location.host}${pixLoomPrefix.replace(/\/$/, '')}`;
+  const pathPrefix = window.blocklet?.prefix || '/';
+  const url = `//${window.location.host}${pathPrefix.replace(/\/$/, '')}`;
 
   return new WsClient(url, {
     heartbeatIntervalMs: 10 * 1000,

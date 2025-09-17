@@ -52,7 +52,7 @@ screenshots:
   - f45aa844d2aff0447810a4bf58f2a235.png
 components: []
 navigation:
-  - id: pixLoomAdmin
+  - id: imageSmithAdmin
     title:
       en: Dashboard
       zh: 管理后台
@@ -63,7 +63,7 @@ navigation:
     role:
       - owner
       - admin
-  - id: pixLoomProjects
+  - id: imageSmithProjects
     title:
       en: Projects
       zh: 项目管理
