@@ -1,3 +1,7 @@
+## 0.0.4 (2025-9-17)
+
+- update readme
+
 ## 0.0.3 (2025-9-17)
 
 - support create ai project
