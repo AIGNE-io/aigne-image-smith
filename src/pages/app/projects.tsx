@@ -35,7 +35,7 @@ export default function Projects() {
           params: { locale },
         });
         if (response.data.success) {
-          setProjects([...response.data.data, ...response.data.data, ...response.data.data, ...response.data.data]);
+          setProjects(response.data.data);
         }
       } catch (error) {
         console.error('Load projects error:', error);
