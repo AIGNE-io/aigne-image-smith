@@ -417,7 +417,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         // 跳转到支付页面
         const url = new URL(data.data.url);
         url.host = window.location.host;
-        url.searchParams.set('redirect', encodeURIComponent(window.location.href));
+        url.searchParams.set('redirect', window.location.href);
         window.location.href = url.toString();
         return { success: true, url: url.toString() };
       }

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import payment, { TCreditGrantExpanded } from '@blocklet/payment-js';
-import { component } from '@blocklet/sdk';
 import { BN } from '@ocap/util';
 
 import logger from './logger';
@@ -118,8 +117,6 @@ export const ensureCreditCheckoutSession = async (quantity: number = 1) => {
           },
         },
       ],
-      success_url: component.getUrl('/payment/success'),
-      cancel_url: component.getUrl('/payment/cancel'),
     });
     return checkoutSession;
   } catch (error) {
