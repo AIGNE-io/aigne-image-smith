@@ -3,9 +3,9 @@ import { Alert, Box, CircularProgress, Container } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import AIProjectHome from '../../components/ai-project-home';
 import type { ProjectControlsConfig } from '../../components/project-controls/types';
 import api from '../../libs/api';
-import AIProjectHome from '../ai-project-home';
 
 interface AIProject {
   id: string;

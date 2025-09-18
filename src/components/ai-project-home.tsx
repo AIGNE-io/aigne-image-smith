@@ -36,20 +36,20 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 'react-share';
 
-import { MultiImageUploader } from '../components/multi-image-uploader';
-import {
-  BackgroundSelectorControlConfig,
-  ControlValues,
-  ProjectControls,
-  ProjectControlsConfig,
-} from '../components/project-controls';
-import { TextInput } from '../components/text-input';
-import UploaderProvider from '../components/uploader';
 import { useSessionContext } from '../contexts/session';
 import api from '../libs/api';
 import { buildPromptVariables, replacePromptVariables } from '../libs/prompt-utils';
 import { formatBalance, getCreditPage, getImageUrl } from '../libs/utils';
 import { useSubscription } from '../libs/ws';
+import { MultiImageUploader } from './multi-image-uploader';
+import {
+  BackgroundSelectorControlConfig,
+  ControlValues,
+  ProjectControls,
+  ProjectControlsConfig,
+} from './project-controls';
+import { TextInput } from './text-input';
+import UploaderProvider from './uploader';
 
 // 动画效果
 const sparkleAnimation = keyframes`
@@ -417,7 +417,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         // 跳转到支付页面
         const url = new URL(data.data.url);
         url.host = window.location.host;
-        window.open(url.toString(), '_blank');
+        url.searchParams.set('redirect', encodeURIComponent(window.location.href));
+        window.location.href = url.toString();
         return { success: true, url: url.toString() };
       }
       const errorMsg = data.error || t('home.error.createOrderFailed');
