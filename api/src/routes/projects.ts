@@ -669,6 +669,7 @@ router.get('/admin/all', auth(), user(), async (req, res): Promise<any> => {
         metadata: project.metadata,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
+        usageCount: project.usageCount,
       })),
     });
   } catch (error) {

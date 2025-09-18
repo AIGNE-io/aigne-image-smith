@@ -36,6 +36,7 @@ interface AIProject {
   promptTemplate: string;
   uiConfig?: Record<string, any>;
   status: 'active' | 'draft' | 'archived';
+  usageCount?: number;
   logoUrl?: string;
   metadata?: Record<string, any>;
   createdAt: string;
@@ -148,6 +149,7 @@ export default function ProjectsManagement() {
               <TableCell>{t('admin.projects.table.name')}</TableCell>
               <TableCell>{t('admin.projects.table.slug')}</TableCell>
               <TableCell>{t('admin.projects.table.status')}</TableCell>
+              <TableCell align="center">{t('admin.projects.table.usageCount')}</TableCell>
               <TableCell>{t('admin.projects.table.createdAt')}</TableCell>
               <TableCell align="right">{t('admin.projects.table.actions')}</TableCell>
             </TableRow>
@@ -179,6 +181,11 @@ export default function ProjectsManagement() {
                 </TableCell>
                 <TableCell>
                   <Chip label={statusLabels[project.status]} color={statusColors[project.status]} size="small" />
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                    {project.usageCount || 0}
+                  </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">{new Date(project.createdAt).toLocaleDateString('zh-CN')}</Typography>

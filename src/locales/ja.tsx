@@ -165,6 +165,7 @@ export default flat({
         name: 'プロジェクト名',
         slug: 'スラッグ',
         status: 'ステータス',
+        usageCount: '使用回数',
         createdAt: '作成日',
         actions: '操作',
       },

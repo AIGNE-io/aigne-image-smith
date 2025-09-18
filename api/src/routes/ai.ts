@@ -14,6 +14,7 @@ import { Op } from 'sequelize';
 import logger from '../libs/logger';
 import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import { getImageUrl } from '../libs/utils';
+import AIProject from '../store/models/ai-project';
 import ImageGeneration from '../store/models/image-generation';
 
 const promptUtilsPath = path.resolve(__dirname, '../../../src/libs/promptUtils.ts');
@@ -369,6 +370,26 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       status: 'completed',
       processingTimeMs: processingTime,
     });
+
+    // Increment usage count for the AI project
+    try {
+      const aiProject = await AIProject.findByPk(clientId);
+      if (aiProject) {
+        await aiProject.incrementUsage();
+        logger.info('AI project usage count incremented', {
+          projectSlug: clientId,
+          newUsageCount: aiProject.usageCount,
+          generationId: generation.id,
+        });
+      }
+    } catch (usageError) {
+      // Log error but don't fail the request
+      logger.error('Failed to increment AI project usage count', {
+        projectSlug: clientId,
+        generationId: generation.id,
+        error: usageError instanceof Error ? usageError.message : 'Unknown error',
+      });
+    }
 
     const newBalanceInfo = await getUserCreditBalance(userDid);
     const newBalance = parseFloat(newBalanceInfo.balance);

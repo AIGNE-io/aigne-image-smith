@@ -165,6 +165,7 @@ export default flat({
         name: '项目名称',
         slug: 'Slug',
         status: '状态',
+        usageCount: '使用次数',
         createdAt: '创建时间',
         actions: '操作',
       },

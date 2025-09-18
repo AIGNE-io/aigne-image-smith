@@ -165,6 +165,7 @@ export default flat({
         name: 'Project Name',
         slug: 'Slug',
         status: 'Status',
+        usageCount: 'Usage Count',
         createdAt: 'Created At',
         actions: 'Actions',
       },

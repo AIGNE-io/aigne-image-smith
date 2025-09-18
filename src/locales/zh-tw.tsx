@@ -165,6 +165,7 @@ export default flat({
         name: '專案名稱',
         slug: 'Slug',
         status: '狀態',
+        usageCount: '使用次數',
         createdAt: '創建時間',
         actions: '操作',
       },
