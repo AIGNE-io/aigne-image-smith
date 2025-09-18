@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import {
   Alert,
@@ -78,6 +79,7 @@ const defaultFormData: ProjectFormData = {
 };
 
 function CreateProjectContent() {
+  const { t } = useLocaleContext();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<ProjectFormData>(defaultFormData);
   const [loading, setLoading] = useState(false);
@@ -97,9 +99,7 @@ function CreateProjectContent() {
     });
 
     if (!formData.slug.trim() || !hasCompleteLanguage || !formData.promptTemplate.trim()) {
-      setError(
-        '请填写项目slug、至少完整填写一种语言的所有信息（项目名称、副标题、描述、OpenGraph图片URL）和AI提示词模板',
-      );
+      setError(t('admin.create.validation.missingRequired'));
       return;
     }
 
@@ -121,11 +121,11 @@ function CreateProjectContent() {
       if (response.data.success) {
         navigate('/admin/projects');
       } else {
-        setError('创建项目失败');
+        setError(t('admin.create.validation.createFailed'));
       }
     } catch (err) {
       console.error('Create project error:', err);
-      setError(err instanceof Error ? err.message : '创建项目失败');
+      setError(err instanceof Error ? err.message : t('admin.create.validation.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,7 @@ function CreateProjectContent() {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
-          创建新项目
+          {t('admin.create.title')}
         </Typography>
       </Box>
 
@@ -149,12 +149,12 @@ function CreateProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                项目URL路径 <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
+                {t('admin.create.sections.urlPath.title')} <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
               </Typography>
               <TextField
                 fullWidth
                 required
-                placeholder="my-awesome-project"
+                placeholder={t('admin.create.sections.urlPath.placeholder')}
                 value={formData.slug}
                 onChange={(e) =>
                   setFormData({
@@ -163,7 +163,7 @@ function CreateProjectContent() {
                   })
                 }
                 disabled={loading}
-                helperText="项目的URL路径标识符，只能包含小写字母、数字和短横线"
+                helperText={t('admin.create.sections.urlPath.helperText')}
                 error={!formData.slug.trim()}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -194,14 +194,15 @@ function CreateProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                AI 提示词模板 <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
+                {t('admin.create.sections.promptTemplate.title')}{' '}
+                <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
               </Typography>
               <TextField
                 fullWidth
                 multiline
                 rows={6}
                 required
-                placeholder="请输入用于AI图片处理的提示词模板，支持变量替换..."
+                placeholder={t('admin.create.sections.promptTemplate.placeholder')}
                 value={formData.promptTemplate}
                 onChange={(e) =>
                   setFormData({
@@ -210,7 +211,7 @@ function CreateProjectContent() {
                   })
                 }
                 disabled={loading}
-                helperText="这将作为AI处理图片时的基础提示词，至少需要10个字符"
+                helperText={t('admin.create.sections.promptTemplate.helperText')}
                 error={formData.promptTemplate.length > 0 && formData.promptTemplate.length < 10}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -230,16 +231,16 @@ function CreateProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                输入与控制配置
+                {t('admin.create.sections.controlsConfig.title')}
               </Typography>
 
               {/* 输入类型选择 */}
               <Box sx={{ mb: 3 }}>
                 <FormControl fullWidth>
-                  <InputLabel>输入类型</InputLabel>
+                  <InputLabel>{t('admin.create.sections.controlsConfig.inputType.label')}</InputLabel>
                   <Select
                     value={formData.controlsConfig.inputConfig.inputType || 'image'}
-                    label="输入类型"
+                    label={t('admin.create.sections.controlsConfig.inputType.label')}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -258,8 +259,8 @@ function CreateProjectContent() {
                         fontSize: '0.95rem',
                       },
                     }}>
-                    <MenuItem value="image">图片输入</MenuItem>
-                    <MenuItem value="text">文本输入</MenuItem>
+                    <MenuItem value="image">{t('admin.create.sections.controlsConfig.inputType.image')}</MenuItem>
+                    <MenuItem value="text">{t('admin.create.sections.controlsConfig.inputType.text')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -277,7 +278,7 @@ function CreateProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                UI 功能配置
+                {t('admin.create.sections.uiConfig.title')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
@@ -303,10 +304,10 @@ function CreateProjectContent() {
                     label={
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                          显示对比滑块
+                          {t('admin.create.sections.uiConfig.showComparisonSlider.title')}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          在处理结果页面显示前后对比滑块
+                          {t('admin.create.sections.uiConfig.showComparisonSlider.description')}
                         </Typography>
                       </Box>
                     }
@@ -333,7 +334,7 @@ function CreateProjectContent() {
                   variant="outlined"
                   size="large"
                   sx={{ px: 4, py: 1.5, fontSize: '1rem' }}>
-                  取消
+                  {t('admin.create.actions.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -341,7 +342,7 @@ function CreateProjectContent() {
                   disabled={loading}
                   size="large"
                   sx={{ px: 4, py: 1.5, fontSize: '1rem' }}>
-                  {loading ? '创建中...' : '创建项目'}
+                  {loading ? t('admin.create.actions.creating') : t('admin.create.actions.create')}
                 </Button>
               </Box>
             </CardContent>

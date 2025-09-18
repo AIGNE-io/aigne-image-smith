@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import {
   Add as AddIcon,
   Archive as ArchiveIcon,
@@ -47,17 +48,19 @@ const statusColors = {
   archived: 'default',
 } as const;
 
-const statusLabels = {
-  active: '活跃',
-  draft: '草稿',
-  archived: '已归档',
-} as const;
+const getStatusLabels = (t: any) => ({
+  active: t('admin.projects.status.active'),
+  draft: t('admin.projects.status.draft'),
+  archived: t('admin.projects.status.archived'),
+});
 
 export default function ProjectsManagement() {
+  const { t } = useLocaleContext();
   const { session } = useSessionContext();
   const [projects, setProjects] = useState<AIProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const statusLabels = getStatusLabels(t);
 
   const loadProjects = async () => {
     try {
@@ -68,11 +71,11 @@ export default function ProjectsManagement() {
       if (response.data.success) {
         setProjects(response.data.data);
       } else {
-        setError('获取项目列表失败');
+        setError(t('admin.projects.error.loadFailed'));
       }
     } catch (err) {
       console.error('Load projects error:', err);
-      setError(err instanceof Error ? err.message : '获取项目列表失败');
+      setError(err instanceof Error ? err.message : t('admin.projects.error.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -93,11 +96,11 @@ export default function ProjectsManagement() {
       if (response.data.success) {
         await loadProjects(); // Reload projects
       } else {
-        setError('更新项目状态失败');
+        setError(t('admin.projects.error.updateStatusFailed'));
       }
     } catch (err) {
       console.error('Update status error:', err);
-      setError(err instanceof Error ? err.message : '更新项目状态失败');
+      setError(err instanceof Error ? err.message : t('admin.projects.error.updateStatusFailed'));
     }
   };
 
@@ -108,7 +111,7 @@ export default function ProjectsManagement() {
   if (!session?.user) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="warning">请先登录以访问管理后台</Alert>
+        <Alert severity="warning">{t('admin.projects.error.loginRequired')}</Alert>
       </Container>
     );
   }
@@ -116,7 +119,7 @@ export default function ProjectsManagement() {
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography>加载中...</Typography>
+        <Typography>{t('admin.projects.loading')}</Typography>
       </Container>
     );
   }
@@ -125,10 +128,10 @@ export default function ProjectsManagement() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1">
-          项目管理
+          {t('admin.projects.title')}
         </Typography>
         <Button variant="contained" startIcon={<AddIcon />} component={Link} to="/admin/projects/create">
-          创建项目
+          {t('admin.projects.createProject')}
         </Button>
       </Box>
 
@@ -142,11 +145,11 @@ export default function ProjectsManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>项目名称</TableCell>
-              <TableCell>Slug</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>创建时间</TableCell>
-              <TableCell align="right">操作</TableCell>
+              <TableCell>{t('admin.projects.table.name')}</TableCell>
+              <TableCell>{t('admin.projects.table.slug')}</TableCell>
+              <TableCell>{t('admin.projects.table.status')}</TableCell>
+              <TableCell>{t('admin.projects.table.createdAt')}</TableCell>
+              <TableCell align="right">{t('admin.projects.table.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -183,7 +186,7 @@ export default function ProjectsManagement() {
                 <TableCell align="right">
                   <Box display="flex" gap={1} justifyContent="flex-end">
                     {project.status !== 'archived' && (
-                      <Tooltip title="编辑项目">
+                      <Tooltip title={t('admin.projects.actions.edit')}>
                         <IconButton size="small" component={Link} to={`/admin/projects/${project.id}/edit`}>
                           <EditIcon />
                         </IconButton>
@@ -191,13 +194,13 @@ export default function ProjectsManagement() {
                     )}
 
                     {project.status === 'archived' ? (
-                      <Tooltip title="恢复项目">
+                      <Tooltip title={t('admin.projects.actions.restore')}>
                         <IconButton size="small" onClick={() => handleStatusChange(project.id, 'active')}>
                           <UnarchiveIcon />
                         </IconButton>
                       </Tooltip>
                     ) : (
-                      <Tooltip title="归档项目">
+                      <Tooltip title={t('admin.projects.actions.archive')}>
                         <IconButton size="small" onClick={() => handleStatusChange(project.id, 'archived')}>
                           <ArchiveIcon />
                         </IconButton>
@@ -214,10 +217,10 @@ export default function ProjectsManagement() {
       {projects.length === 0 && (
         <Box textAlign="center" py={8}>
           <Typography variant="h6" color="text.secondary" mb={2}>
-            暂无项目
+            {t('admin.projects.empty.title')}
           </Typography>
           <Button variant="contained" startIcon={<AddIcon />} component={Link} to="/admin/projects/create">
-            创建第一个项目
+            {t('admin.projects.empty.description')}
           </Button>
         </Box>
       )}

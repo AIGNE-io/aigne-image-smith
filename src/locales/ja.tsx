@@ -127,4 +127,244 @@ export default flat({
     comingSoon: 'より多くのエキサイティングな機能にご期待ください',
     launchApp: '開始する',
   },
+
+  // 管理画面
+  admin: {
+    // ダッシュボード
+    dashboard: {
+      title: 'ImageSmith 管理画面',
+      subtitle: 'AI画像アプリケーションプロジェクトの管理',
+      projectManagement: {
+        title: 'プロジェクト管理',
+        description: 'AI画像アプリケーションプロジェクトの作成、編集、管理',
+        action: '管理画面へ',
+      },
+      quickCreate: {
+        title: 'クイック作成',
+        description: '新しいAI画像アプリケーションプロジェクトを素早く作成',
+        action: 'プロジェクト作成',
+      },
+      previewApp: {
+        title: 'アプリプレビュー',
+        description: 'ユーザーが見るアプリケーション一覧ページを確認',
+        action: 'アプリを見る',
+      },
+    },
+
+    // プロジェクト管理
+    projects: {
+      title: 'プロジェクト管理',
+      createProject: 'プロジェクト作成',
+      loading: '読み込み中...',
+      error: {
+        loadFailed: 'プロジェクト一覧の取得に失敗しました',
+        updateStatusFailed: 'プロジェクトステータスの更新に失敗しました',
+        loginRequired: '管理画面にアクセスするにはログインしてください',
+      },
+      table: {
+        name: 'プロジェクト名',
+        slug: 'スラッグ',
+        status: 'ステータス',
+        createdAt: '作成日',
+        actions: '操作',
+      },
+      status: {
+        active: 'アクティブ',
+        draft: '下書き',
+        archived: 'アーカイブ済み',
+      },
+      actions: {
+        edit: 'プロジェクト編集',
+        archive: 'プロジェクトをアーカイブ',
+        restore: 'プロジェクトを復元',
+      },
+      empty: {
+        title: 'プロジェクトがありません',
+        description: '最初のプロジェクトを作成',
+      },
+    },
+
+    // プロジェクト作成
+    create: {
+      title: '新しいプロジェクトを作成',
+      sections: {
+        urlPath: {
+          title: 'プロジェクトURLパス',
+          required: true,
+          placeholder: 'my-awesome-project',
+          helperText: 'プロジェクトのURLパス識別子、小文字、数字、ハイフンのみ使用可能',
+        },
+        content: {
+          title: 'プロジェクト基本情報',
+        },
+        promptTemplate: {
+          title: 'AIプロンプトテンプレート',
+          required: true,
+          placeholder: 'AI画像処理用のプロンプトテンプレートを入力、変数置換に対応...',
+          helperText: 'AI画像処理時のベースプロンプトとして使用、最低10文字必要',
+        },
+        controlsConfig: {
+          title: '入力・制御設定',
+          inputType: {
+            label: '入力タイプ',
+            image: '画像入力',
+            text: 'テキスト入力',
+          },
+        },
+        uiConfig: {
+          title: 'UI機能設定',
+          showComparisonSlider: {
+            title: '比較スライダーを表示',
+            description: '結果ページでビフォー・アフター比較スライダーを表示',
+          },
+        },
+      },
+      validation: {
+        missingRequired:
+          'プロジェクトスラッグ、少なくとも1つの言語の完全な情報（プロジェクト名、サブタイトル、説明、OpenGraph画像URL）、AIプロンプトテンプレートを入力してください',
+        createFailed: 'プロジェクトの作成に失敗しました',
+      },
+      actions: {
+        cancel: 'キャンセル',
+        create: 'プロジェクト作成',
+        creating: '作成中...',
+      },
+    },
+
+    // プロジェクト編集
+    edit: {
+      title: 'プロジェクト編集',
+      loading: '読み込み中...',
+      error: {
+        projectNotFound: 'プロジェクトが存在しないか無効化されています',
+        loadFailed: 'プロジェクトの読み込みに失敗しました',
+        projectIdRequired: 'プロジェクトIDが空です',
+      },
+      validation: {
+        missingRequired:
+          'プロジェクトスラッグ、少なくとも1つの言語の完全な情報（プロジェクト名、サブタイトル、説明、OpenGraph画像URL）、AIプロンプトテンプレートを入力してください',
+        updateFailed: 'プロジェクトの更新に失敗しました',
+      },
+      actions: {
+        cancel: 'キャンセル',
+        save: '変更を保存',
+        saving: '保存中...',
+      },
+    },
+  },
+
+  // コンポーネント
+  components: {
+    // プロジェクトコンテンツエディター
+    projectContentEditor: {
+      title: 'プロジェクト基本情報',
+      name: {
+        label: 'プロジェクト名',
+        placeholder: 'プロジェクト名を入力...',
+        copyTooltip: '他の言語からコピー',
+      },
+      subtitle: {
+        label: 'プロジェクトサブタイトル',
+        placeholder: 'プロジェクトサブタイトルを入力...',
+      },
+      description: {
+        label: 'ユーザーガイド',
+        placeholder: 'ユーザーガイドを入力...',
+        helperText: 'プロジェクトの機能と目的を詳細に説明してください',
+      },
+      seoImageUrl: {
+        label: 'OpenGraph画像',
+        uploadTitle: 'OpenGraph画像をアップロード',
+        uploadDescription: 'ソーシャルメディア共有用のプレビュー画像を選択',
+        uploadButton: '画像を選択',
+        previewAlt: 'OpenGraphプレビュー画像',
+        helperText: 'ソーシャルメディア共有用のプレビュー画像',
+        supportText: 'JPG、PNG形式に対応、推奨サイズ 1200x630 ピクセル',
+      },
+      copyMenu: {
+        title: '以下の言語からコピー:',
+      },
+      required: '*',
+    },
+
+    // コントロール設定エディター
+    controlsConfigEditor: {
+      inputConfiguration: {
+        title: '入力設定',
+        imageSize: {
+          label: '画像数',
+          helperText: 'このAIアプリケーションに必要な画像数',
+        },
+        requirements: {
+          label: '要件説明',
+          placeholderImage: 'ユーザーに画像要件を説明...',
+          placeholderText: 'ユーザーにテキスト入力要件を説明...',
+          helperTextImage: '異なる言語でユーザーに画像要件を説明',
+          helperTextText: '異なる言語でユーザーにテキスト入力要件を説明',
+        },
+      },
+      controlComponents: {
+        title: 'コントロールコンポーネント',
+        addControl: 'コントロール追加',
+        noControls:
+          'コントロールコンポーネントが設定されていません。ユーザーにカスタマイズオプションを提供するために追加してください。',
+        types: {
+          select: 'セレクトドロップダウン',
+          slider: 'スライダー',
+          number: '数値入力',
+          text: 'テキスト入力',
+          backgroundSelector: '背景セレクター',
+        },
+      },
+      controlConfig: {
+        untitled: '無題のコントロール',
+        key: {
+          label: 'コントロールキー',
+          helperText: 'プロンプトテンプレートで {{key}} として使用',
+        },
+        label: {
+          label: 'ラベル',
+        },
+        description: {
+          label: '説明（オプション）',
+        },
+        required: '必須フィールド',
+        removeControl: 'コントロールを削除',
+        // Selectコントロール
+        select: {
+          allowMultiple: '複数選択を許可',
+          options: 'オプション:',
+          addOption: 'オプションを追加',
+          optionValue: '値',
+          optionLabel: 'ラベル',
+          optionColor: '色（オプション）',
+        },
+        // Sliderコントロール
+        slider: {
+          minValue: '最小値',
+          maxValue: '最大値',
+          step: 'ステップ',
+        },
+        // Numberコントロール
+        number: {
+          minValue: '最小値（オプション）',
+          maxValue: '最大値（オプション）',
+          unit: '単位（オプション）',
+        },
+        // Textコントロール
+        text: {
+          placeholder: 'プレースホルダー',
+          maxLength: '最大長（オプション）',
+        },
+        // Background Selectorコントロール
+        backgroundSelector: {
+          options: '背景オプション:',
+          addBackground: '背景を追加',
+          value: '値',
+          label: 'ラベル',
+          color: '色',
+        },
+      },
+    },
+  },
 });

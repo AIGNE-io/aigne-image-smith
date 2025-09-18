@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { ContentCopy as ContentCopyIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import {
   Badge,
@@ -47,6 +48,7 @@ interface ProjectContentEditorProps {
 }
 
 export default function ProjectContentEditor({ values, onChange, disabled = false }: ProjectContentEditorProps) {
+  const { t } = useLocaleContext();
   const [activeTab, setActiveTab] = useState(0);
   const [copyMenuAnchor, setCopyMenuAnchor] = useState<null | HTMLElement>(null);
   const [copyField, setCopyField] = useState<string>('');
@@ -111,7 +113,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
       {/* 标题和状态栏 */}
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
         <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
-          项目基本信息
+          {t('components.projectContentEditor.title')}
         </Typography>
         <Chip
           size="small"
@@ -172,10 +174,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              项目名称 <span style={{ color: '#f44336' }}>*</span>
+              {t('components.projectContentEditor.name.label')}{' '}
+              <span style={{ color: '#f44336' }}>{t('components.projectContentEditor.required')}</span>
             </Typography>
             {getAvailableCopyLanguages('name').length > 0 && (
-              <Tooltip title="从其他语言复制">
+              <Tooltip title={t('components.projectContentEditor.name.copyTooltip')}>
                 <IconButton
                   size="small"
                   onClick={(e) => openCopyMenu('name', e)}
@@ -191,7 +194,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             value={values.name[currentLanguage.code] || ''}
             onChange={(e) => handleFieldChange('name', e.target.value)}
             disabled={disabled}
-            placeholder="输入项目名称..."
+            placeholder={t('components.projectContentEditor.name.placeholder')}
             error={!values.name[currentLanguage.code]?.trim()}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -206,10 +209,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              项目副标题 <span style={{ color: '#f44336' }}>*</span>
+              {t('components.projectContentEditor.subtitle.label')}{' '}
+              <span style={{ color: '#f44336' }}>{t('components.projectContentEditor.required')}</span>
             </Typography>
             {getAvailableCopyLanguages('subtitle').length > 0 && (
-              <Tooltip title="从其他语言复制">
+              <Tooltip title={t('components.projectContentEditor.name.copyTooltip')}>
                 <IconButton
                   size="small"
                   onClick={(e) => openCopyMenu('subtitle', e)}
@@ -225,7 +229,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             value={values.subtitle[currentLanguage.code] || ''}
             onChange={(e) => handleFieldChange('subtitle', e.target.value)}
             disabled={disabled}
-            placeholder="输入项目副标题..."
+            placeholder={t('components.projectContentEditor.subtitle.placeholder')}
             error={!values.subtitle[currentLanguage.code]?.trim()}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -240,10 +244,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              使用指南 <span style={{ color: '#f44336' }}>*</span>
+              {t('components.projectContentEditor.description.label')}{' '}
+              <span style={{ color: '#f44336' }}>{t('components.projectContentEditor.required')}</span>
             </Typography>
             {getAvailableCopyLanguages('description').length > 0 && (
-              <Tooltip title="从其他语言复制">
+              <Tooltip title={t('components.projectContentEditor.name.copyTooltip')}>
                 <IconButton
                   size="small"
                   onClick={(e) => openCopyMenu('description', e)}
@@ -261,8 +266,8 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
             value={values.description[currentLanguage.code] || ''}
             onChange={(e) => handleFieldChange('description', e.target.value)}
             disabled={disabled}
-            placeholder="输入使用指南..."
-            helperText="详细描述项目的功能和用途"
+            placeholder={t('components.projectContentEditor.description.placeholder')}
+            helperText={t('components.projectContentEditor.description.helperText')}
             error={!values.description[currentLanguage.code]?.trim()}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -281,10 +286,11 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
         <Box>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
             <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-              OpenGraph 图片 <span style={{ color: '#f44336' }}>*</span>
+              {t('components.projectContentEditor.seoImageUrl.label')}{' '}
+              <span style={{ color: '#f44336' }}>{t('components.projectContentEditor.required')}</span>
             </Typography>
             {getAvailableCopyLanguages('seoImageUrl').length > 0 && (
-              <Tooltip title="从其他语言复制">
+              <Tooltip title={t('components.projectContentEditor.name.copyTooltip')}>
                 <IconButton
                   size="small"
                   onClick={(e) => openCopyMenu('seoImageUrl', e)}
@@ -312,7 +318,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
                   component="img"
                   height="150"
                   image={getImageUrl(values.seoImageUrl[currentLanguage.code]!!)}
-                  alt="OpenGraph 预览图片"
+                  alt={t('components.projectContentEditor.seoImageUrl.previewAlt')}
                   sx={{ objectFit: 'cover' }}
                   onError={(e) => {
                     // 如果图片加载失败，显示占位符
@@ -345,7 +351,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
                 variant="caption"
                 color="text.secondary"
                 sx={{ display: 'block', mt: 1, fontSize: '0.75rem' }}>
-                用于社交媒体分享的预览图片
+                {t('components.projectContentEditor.seoImageUrl.helperText')}
               </Typography>
             </Box>
           ) : (
@@ -370,9 +376,9 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
                 <UploaderButton
                   isLoggedIn
                   compact={false}
-                  title="上传 OpenGraph 图片"
-                  description="选择用于社交媒体分享的预览图片"
-                  buttonText="选择图片"
+                  title={t('components.projectContentEditor.seoImageUrl.uploadTitle')}
+                  description={t('components.projectContentEditor.seoImageUrl.uploadDescription')}
+                  buttonText={t('components.projectContentEditor.seoImageUrl.uploadButton')}
                   openLoginDialog={() => {}}
                   onChange={(res: any) => {
                     if (res?.response?.data?.filename) {
@@ -385,7 +391,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
                   color={!values.seoImageUrl[currentLanguage.code]?.trim() ? 'error' : 'text.secondary'}
                   className="upload-text"
                   sx={{ fontSize: '0.75rem', transition: 'color 0.2s ease' }}>
-                  支持 JPG、PNG 格式，建议尺寸 1200x630 像素
+                  {t('components.projectContentEditor.seoImageUrl.supportText')}
                 </Typography>
               </Stack>
             </Box>
@@ -404,7 +410,7 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
           sx: { mt: 1, minWidth: 200 },
         }}>
         <MenuItem disabled sx={{ fontSize: '0.875rem', color: 'text.secondary', py: 1 }}>
-          从以下语言复制:
+          {t('components.projectContentEditor.copyMenu.title')}
         </MenuItem>
         {copyField &&
           getAvailableCopyLanguages(copyField as keyof ProjectContentData).map((lang) => (
