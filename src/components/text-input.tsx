@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import ClearIcon from '@mui/icons-material/Clear';
 import CreateIcon from '@mui/icons-material/Create';
 import { Box, Button, Card, CardContent, Fade, TextField, Typography, useTheme } from '@mui/material';
@@ -26,6 +27,7 @@ export function TextInput({
   onGenerate,
   showGenerateButton = false,
 }: TextInputProps) {
+  const { t } = useLocaleContext();
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
 
@@ -82,7 +84,7 @@ export function TextInput({
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             onKeyDown={handleKeyDown}
-            placeholder={requirements || placeholder || '请输入您的内容...'}
+            placeholder={requirements || placeholder || t('textInput.placeholder')}
             disabled={disabled}
             sx={{
               flex: 1,
@@ -125,7 +127,7 @@ export function TextInput({
                   color: theme.palette.text.secondary,
                   fontSize: '0.75rem',
                 }}>
-                Ctrl/Cmd + Enter 快速生成
+                {t('textInput.shortcut')}
               </Typography>
               <Typography
                 variant="caption"
@@ -134,7 +136,7 @@ export function TextInput({
                   fontSize: '0.75rem',
                   fontWeight: 500,
                 }}>
-                {value.trim().length} 字符
+                {value.trim().length} {t('textInput.characterCount')}
               </Typography>
             </Box>
           </Fade>
@@ -170,7 +172,7 @@ export function TextInput({
             },
             transition: 'all 0.3s ease',
           }}>
-          清除
+          {t('textInput.clear')}
         </Button>
 
         {/* 生成按钮 */}
@@ -200,7 +202,7 @@ export function TextInput({
               },
               transition: 'all 0.3s ease',
             }}>
-            {!isLoggedIn ? '登录以开始生成' : '开始生成'}
+            {!isLoggedIn ? t('textInput.loginToGenerate') : t('textInput.startGenerate')}
           </Button>
         )}
       </Box>

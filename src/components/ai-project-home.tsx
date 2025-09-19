@@ -1228,9 +1228,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   value={textInput}
                   onChange={setTextInput}
                   requirements={
-                    config.controlsConfig?.inputConfig.requirements?.zh ||
+                    config.controlsConfig?.inputConfig.requirements?.[locale] ||
                     config.controlsConfig?.inputConfig.requirements?.en ||
-                    '请输入您的内容...'
+                    t('textInput.placeholder')
                   }
                   disabled={processing.isProcessing}
                   isLoggedIn={isLoggedIn}

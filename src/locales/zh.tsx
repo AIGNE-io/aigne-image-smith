@@ -254,6 +254,16 @@ export default flat({
     },
   },
 
+  // 文本输入组件
+  textInput: {
+    placeholder: '请输入您的内容...',
+    shortcut: 'Ctrl/Cmd + Enter 快速生成',
+    characterCount: '字符',
+    clear: '清除',
+    loginToGenerate: '登录以开始生成',
+    startGenerate: '开始生成',
+  },
+
   // 组件
   components: {
     // 项目内容编辑器

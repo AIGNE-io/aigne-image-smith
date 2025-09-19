@@ -254,6 +254,16 @@ export default flat({
     },
   },
 
+  // Text Input Component
+  textInput: {
+    placeholder: 'Please enter your content...',
+    shortcut: 'Ctrl/Cmd + Enter to generate quickly',
+    characterCount: 'characters',
+    clear: 'Clear',
+    loginToGenerate: 'Login to start generation',
+    startGenerate: 'Start Generation',
+  },
+
   // Components
   components: {
     // Project Content Editor

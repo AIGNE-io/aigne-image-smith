@@ -254,6 +254,16 @@ export default flat({
     },
   },
 
+  // テキスト入力コンポーネント
+  textInput: {
+    placeholder: 'コンテンツを入力してください...',
+    shortcut: 'Ctrl/Cmd + Enter で高速生成',
+    characterCount: '文字',
+    clear: 'クリア',
+    loginToGenerate: 'ログインして生成開始',
+    startGenerate: '生成開始',
+  },
+
   // コンポーネント
   components: {
     // プロジェクトコンテンツエディター
