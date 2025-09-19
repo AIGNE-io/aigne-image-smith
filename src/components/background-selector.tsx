@@ -6,7 +6,7 @@ const SelectorCard = styled(Box)(({ theme }) => ({
   borderRadius: '16px',
   padding: theme.spacing(2),
   // border: `1px solid ${theme.palette.divider}`,
-  boxShadow: theme.shadows[2],
+  // boxShadow: theme.shadows[2],
   minHeight: '120px',
 }));
 
