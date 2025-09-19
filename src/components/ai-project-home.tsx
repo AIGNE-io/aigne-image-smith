@@ -571,11 +571,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         }
 
         // 停止假进度条
-        if (inputType === 'text') {
-          setTextInput('');
-        } else {
-          setOriginalImages([]);
-        }
         stopFakeProgress();
         setError(errorMessage);
         setProcessing({
