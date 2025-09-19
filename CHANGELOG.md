@@ -1,3 +1,20 @@
+## 0.0.7 (2025-9-19)
+
+- optimize single uploader button text
+- update control input border
+- fix payment web-hook setup and let control inputs support i18n
+- optimize image generate with controls
+- remove prompt builder process from front side
+- fix retry button display logic
+- do not reset input area when error happened
+- fix text input i18n
+- fix websocket
+- fix page title
+- fix payment success callback link
+- fix open pay link in safari browser
+- support display ai project use age count
+- admin pages support i18n
+
 ## 0.0.6 (2025-9-17)
 
 - remove home list test codes
