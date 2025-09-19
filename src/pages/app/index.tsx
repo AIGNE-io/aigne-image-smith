@@ -13,7 +13,6 @@ interface AIProject {
   name: Record<string, string>;
   subtitle: Record<string, string>;
   description: Record<string, string>;
-  promptTemplate: string;
   uiConfig?: Record<string, any>;
   controlsConfig?: ProjectControlsConfig;
   status: 'active' | 'draft' | 'archived';
@@ -97,7 +96,6 @@ export default function DynamicApp() {
     title: getLocalizedText(project.name, '') || '',
     subtitle: getLocalizedText(project.subtitle, '') || '',
     description: getLocalizedText(project.description, '') || '',
-    prompt: project.promptTemplate || '',
     uiConfig: project.uiConfig || {
       layout: 'card',
       features: {

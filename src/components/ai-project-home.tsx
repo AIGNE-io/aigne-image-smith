@@ -39,7 +39,6 @@ import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 're
 
 import { useSessionContext } from '../contexts/session';
 import api from '../libs/api';
-import { buildPromptVariables, replacePromptVariables } from '../libs/prompt-utils';
 import { formatBalance, getCreditPage, getImageUrl } from '../libs/utils';
 import { useSubscription } from '../libs/ws';
 import { MultiImageUploader } from './multi-image-uploader';
@@ -173,7 +172,6 @@ interface HistoryPagination {
 
 interface AIProjectConfig {
   clientId: string;
-  prompt: string;
   title: string;
   subtitle: string;
   description: string;
@@ -497,15 +495,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       startFakeProgress();
 
       try {
-        // 构建动态 prompt
-        const promptVariables = buildPromptVariables(controlValues, images);
-        const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
-
         const { data } = await api.post('/api/ai/generate', {
-          prompt: finalPrompt,
           textInput: text || '',
           originalImages: images,
           clientId: config.clientId,
+          controlValues,
           metadata: {
             controlValues,
             inputType,
@@ -589,7 +583,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       t,
       startFakeProgress,
       controlValues,
-      config.prompt,
       config.clientId,
       stopFakeProgress,
       fetchHistoryData,

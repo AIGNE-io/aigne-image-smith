@@ -59,8 +59,6 @@ const model = new AIGNEHubChatModel({
 // Validation schemas
 const generateImageSchema = Joi.object({
   // Support both old single prompt and new dynamic prompt building
-  prompt: Joi.string().min(1).max(1000).optional(),
-  promptTemplate: Joi.string().min(1).max(1000).optional(),
   controlValues: Joi.object().optional(),
 
   // Support both single image (legacy) and multiple images (new)
@@ -72,7 +70,7 @@ const generateImageSchema = Joi.object({
 
   clientId: Joi.string().required(),
   metadata: Joi.object().optional(),
-}).or('prompt', 'promptTemplate'); // At least one prompt method must be provided
+}); // At least one prompt method must be provided
 
 const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
@@ -98,33 +96,26 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
     }
 
-    const { prompt, promptTemplate, controlValues, originalImages, textInput, clientId, metadata } = value;
+    const { controlValues, originalImages, textInput, clientId, metadata } = value;
+
+    const aiProject = await AIProject.findByPk(clientId);
+
+    if (!aiProject) {
+      return res.status(400).json({
+        error: 'Invalid request data',
+        message: 'Invalid request data',
+      });
+    }
 
     // Build final prompt - support both old and new systems
     let finalPrompt: string;
-    let imageUrls: string[] = [];
+    const imageUrls = originalImages;
 
-    if (prompt) {
-      // Legacy mode: use provided prompt directly
-      finalPrompt = prompt;
-      imageUrls = originalImages;
-    } else if (promptTemplate) {
-      // New mode: build prompt from template and control values
-      imageUrls = originalImages || [];
-      try {
-        const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, imageUrls);
-        finalPrompt = promptUtils.replacePromptVariables(promptTemplate, promptVariables);
-      } catch (promptError) {
-        return res.status(400).json({
-          error: 'Invalid prompt template or variables',
-          message: promptError instanceof Error ? promptError.message : 'Prompt building failed',
-        });
-      }
-    } else {
-      return res.status(400).json({
-        error: 'Missing prompt data',
-        message: 'Either prompt or promptTemplate must be provided',
-      });
+    try {
+      const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, imageUrls);
+      finalPrompt = promptUtils.replacePromptVariables(aiProject.promptTemplate, promptVariables);
+    } catch (promptError) {
+      finalPrompt = aiProject.promptTemplate;
     }
 
     // Check credit balance first
@@ -154,7 +145,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         prompt: finalPrompt,
         originalImages: imageUrls, // Store all original images
         textInput: textInput || undefined, // Store text input for text-based projects
-        promptTemplate: promptTemplate || undefined,
+        promptTemplate: aiProject.promptTemplate || undefined,
         controlValues: controlValues || undefined,
         ...metadata,
       },
@@ -251,7 +242,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         generationId: generation.id,
         prompt: finalPrompt,
         imageCount: imageUrls.length,
-        originalImages: imageUrls.map((url) => getImageUrl(url)),
+        originalImages: imageUrls.map((url: string) => getImageUrl(url)),
         messages: [
           {
             role: 'user',
@@ -373,15 +364,12 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     // Increment usage count for the AI project
     try {
-      const aiProject = await AIProject.findByPk(clientId);
-      if (aiProject) {
-        await aiProject.incrementUsage();
-        logger.info('AI project usage count incremented', {
-          projectSlug: clientId,
-          newUsageCount: aiProject.usageCount,
-          generationId: generation.id,
-        });
-      }
+      await aiProject.incrementUsage();
+      logger.info('AI project usage count incremented', {
+        projectSlug: clientId,
+        newUsageCount: aiProject.usageCount,
+        generationId: generation.id,
+      });
     } catch (usageError) {
       // Log error but don't fail the request
       logger.error('Failed to increment AI project usage count', {
