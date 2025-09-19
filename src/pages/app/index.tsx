@@ -3,9 +3,9 @@ import { Alert, Box, CircularProgress, Container } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import AIProjectHome from '../../components/ai-project-home';
 import type { ProjectControlsConfig } from '../../components/project-controls/types';
 import api from '../../libs/api';
-import AIProjectHome from '../ai-project-home';
 
 interface AIProject {
   id: string;
@@ -13,7 +13,6 @@ interface AIProject {
   name: Record<string, string>;
   subtitle: Record<string, string>;
   description: Record<string, string>;
-  promptTemplate: string;
   uiConfig?: Record<string, any>;
   controlsConfig?: ProjectControlsConfig;
   status: 'active' | 'draft' | 'archived';
@@ -97,7 +96,6 @@ export default function DynamicApp() {
     title: getLocalizedText(project.name, '') || '',
     subtitle: getLocalizedText(project.subtitle, '') || '',
     description: getLocalizedText(project.description, '') || '',
-    prompt: project.promptTemplate || '',
     uiConfig: project.uiConfig || {
       layout: 'card',
       features: {

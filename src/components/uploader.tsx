@@ -11,7 +11,7 @@ const UploaderComponent = lazy(() => import('@blocklet/uploader/react').then((re
 // 样式化的上传按钮，与 home.tsx 中的 GoldenButton 保持一致
 const GoldenButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
+  color: theme.palette.common.white,
   fontWeight: 'bold',
   fontSize: '1.1rem',
   padding: '12px 32px',
@@ -55,6 +55,7 @@ export function UploaderButton({
   compact = false,
   customTrigger,
   disabled = false,
+  hasControlsConfig = false,
 }: {
   openLoginDialog: Function;
   onChange?: Function;
@@ -65,6 +66,7 @@ export function UploaderButton({
   compact?: boolean;
   customTrigger?: (onClick: () => void) => ReactNode;
   disabled?: boolean;
+  hasControlsConfig?: boolean;
 }) {
   const { t } = useLocaleContext();
   const uploaderRef = useUploader();
@@ -114,7 +116,7 @@ export function UploaderButton({
           textTransform: 'none',
           opacity: disabled ? 0.6 : 1,
         }}>
-        {buttonText || t('home.uploader.selectButton')}
+        {buttonText || (hasControlsConfig ? t('home.uploader.selectButtonOnly') : t('home.uploader.selectButton'))}
       </Button>
     );
   }
@@ -162,7 +164,7 @@ export function UploaderButton({
           opacity: disabled ? 0.6 : 1,
           cursor: disabled ? 'not-allowed' : 'pointer',
         }}>
-        {buttonText || t('home.uploader.selectButton')}
+        {buttonText || (hasControlsConfig ? t('home.uploader.selectButtonOnly') : t('home.uploader.selectButton'))}
       </GoldenButton>
     </Stack>
   );

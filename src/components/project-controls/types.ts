@@ -1,15 +1,15 @@
 export interface ControlOption {
   value: string;
-  label: string;
+  label: string | Record<string, string>;
   color?: string;
-  description?: string;
+  description?: string | Record<string, string>;
 }
 
 export interface BaseControlConfig {
   type: string;
   key: string;
-  label: string;
-  description?: string;
+  label: string | Record<string, string>;
+  description?: string | Record<string, string>;
   required?: boolean;
   defaultValue?: any;
 }
@@ -38,7 +38,7 @@ export interface NumberInputControlConfig extends BaseControlConfig {
 
 export interface TextInputControlConfig extends BaseControlConfig {
   type: 'text';
-  placeholder?: string;
+  placeholder?: string | Record<string, string>;
   maxLength?: number;
 }
 
@@ -51,7 +51,7 @@ export interface BackgroundSelectorControlConfig extends BaseControlConfig {
   type: 'backgroundSelector';
   backgrounds: Array<{
     value: string;
-    label: string;
+    label: string | Record<string, string>;
     color: string;
   }>;
 }

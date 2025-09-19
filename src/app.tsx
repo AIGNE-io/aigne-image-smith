@@ -2,7 +2,7 @@ import { ConfigProvider } from '@arcblock/ux/lib/Config';
 import { ErrorFallback } from '@arcblock/ux/lib/ErrorBoundary';
 import withTracker from '@arcblock/ux/lib/withTracker';
 import { Box, CircularProgress, CssBaseline } from '@mui/material';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import LayoutFullFooterWidth from './components/layout/layout-full-footer-width'
 import PrivateRoute from './components/private-route';
 import { SessionProvider } from './contexts/session';
 import { appThemeOptions } from './libs/theme';
+import getWsClient from './libs/ws';
 import { translations } from './locales';
 import AdminDashboard from './pages/admin';
 import ProjectsManagement from './pages/admin/projects';
@@ -39,6 +40,15 @@ const fallback = (
 );
 
 function App() {
+  useEffect(() => {
+    const wsClient = getWsClient();
+    wsClient.connect();
+    return () => {
+      if (wsClient.isConnected()) {
+        wsClient.disconnect();
+      }
+    };
+  }, []);
   return (
     <Suspense fallback={fallback}>
       <ErrorBoundary FallbackComponent={ErrorFallback} onReset={window.location.reload}>

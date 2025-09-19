@@ -45,6 +45,7 @@ interface AIProjectInput {
   uiConfig?: ProjectUIConfig; // UI配置
   controlsConfig?: ProjectControlsConfig; // 控制组件配置
   status: 'active' | 'draft' | 'archived';
+  usageCount?: number; // 使用次数统计
   metadata?: Record<string, any>;
 }
 
@@ -95,6 +96,7 @@ export const AIProjectSchema = Joi.object<AIProjectInput>({
       .optional(),
   }).optional(),
   status: Joi.string().valid('active', 'draft', 'archived').default('active'),
+  usageCount: Joi.number().integer().min(0).default(0).optional(),
   metadata: Joi.object().optional(),
 });
 
@@ -116,6 +118,8 @@ export default class AIProject extends Model<InferAttributes<AIProject>, InferCr
   declare controlsConfig: CreationOptional<ProjectControlsConfig>;
 
   declare status: 'active' | 'draft' | 'archived';
+
+  declare usageCount: CreationOptional<number>;
 
   declare metadata: CreationOptional<Record<string, any>>;
 
@@ -195,6 +199,15 @@ export default class AIProject extends Model<InferAttributes<AIProject>, InferCr
   async updateStatus(status: 'active' | 'draft' | 'archived') {
     return this.update({ status });
   }
+
+  /**
+   * Increment usage count
+   */
+  async incrementUsage() {
+    await this.increment('usageCount');
+    await this.reload();
+    return this;
+  }
 }
 
 export function initAIProject(sequelize: Sequelize) {
@@ -249,6 +262,12 @@ export function initAIProject(sequelize: Sequelize) {
         allowNull: false,
         defaultValue: 'active',
         comment: 'Project status',
+      },
+      usageCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Number of times this project has been used for AI generation',
       },
       metadata: {
         type: DataTypes.JSON,

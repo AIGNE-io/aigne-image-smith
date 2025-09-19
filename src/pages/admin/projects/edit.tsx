@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import {
   Alert,
@@ -93,6 +94,7 @@ const defaultFormData: ProjectFormData = {
 };
 
 function EditProjectContent() {
+  const { t } = useLocaleContext();
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<AIProject | null>(null);
@@ -103,7 +105,7 @@ function EditProjectContent() {
 
   useEffect(() => {
     if (!projectId) {
-      setError('项目ID不能为空');
+      setError(t('admin.edit.error.projectIdRequired'));
       setInitialLoading(false);
       return;
     }
@@ -184,11 +186,11 @@ function EditProjectContent() {
             })(),
           });
         } else {
-          setError('项目不存在或已被禁用');
+          setError(t('admin.edit.error.projectNotFound'));
         }
       } catch (err) {
         console.error('Load project error:', err);
-        setError(err instanceof Error ? err.message : '加载项目失败');
+        setError(err instanceof Error ? err.message : t('admin.edit.error.loadFailed'));
       } finally {
         setInitialLoading(false);
       }
@@ -210,9 +212,7 @@ function EditProjectContent() {
     });
 
     if (!projectId || !formData.slug.trim() || !hasCompleteLanguage || !formData.promptTemplate.trim()) {
-      setError(
-        '请填写项目slug、至少完整填写一种语言的所有信息（项目名称、副标题、描述、OpenGraph图片URL）和AI提示词模板',
-      );
+      setError(t('admin.edit.validation.missingRequired'));
       return;
     }
 
@@ -234,11 +234,11 @@ function EditProjectContent() {
       if (response.data.success) {
         navigate('/admin/projects');
       } else {
-        setError('更新项目失败');
+        setError(t('admin.edit.validation.updateFailed'));
       }
     } catch (err) {
       console.error('Update project error:', err);
-      setError(err instanceof Error ? err.message : '更新项目失败');
+      setError(err instanceof Error ? err.message : t('admin.edit.validation.updateFailed'));
     } finally {
       setLoading(false);
     }
@@ -247,7 +247,7 @@ function EditProjectContent() {
   if (initialLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography>加载中...</Typography>
+        <Typography>{t('admin.edit.loading')}</Typography>
       </Container>
     );
   }
@@ -260,7 +260,7 @@ function EditProjectContent() {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4" component="h1">
-            编辑项目
+            {t('admin.edit.title')}
           </Typography>
         </Box>
         <Alert severity="error">{error}</Alert>
@@ -276,7 +276,7 @@ function EditProjectContent() {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
-          编辑项目:{' '}
+          {t('admin.edit.title')}:{' '}
           {project?.name.zh ||
             project?.name.zh ||
             project?.name.en ||
@@ -291,12 +291,12 @@ function EditProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                项目URL路径 <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
+                {t('admin.create.sections.urlPath.title')} <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
               </Typography>
               <TextField
                 fullWidth
                 required
-                placeholder="my-awesome-project"
+                placeholder={t('admin.create.sections.urlPath.placeholder')}
                 value={formData.slug}
                 onChange={(e) =>
                   setFormData({
@@ -305,7 +305,7 @@ function EditProjectContent() {
                   })
                 }
                 disabled={loading}
-                helperText="项目的URL路径标识符，只能包含小写字母、数字和短横线"
+                helperText={t('admin.create.sections.urlPath.helperText')}
                 error={!formData.slug.trim()}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -336,14 +336,15 @@ function EditProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                AI 提示词模板 <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
+                {t('admin.create.sections.promptTemplate.title')}{' '}
+                <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>
               </Typography>
               <TextField
                 fullWidth
                 multiline
                 rows={6}
                 required
-                placeholder="请输入用于AI图片处理的提示词模板，支持变量替换..."
+                placeholder={t('admin.create.sections.promptTemplate.placeholder')}
                 value={formData.promptTemplate}
                 onChange={(e) =>
                   setFormData({
@@ -352,7 +353,7 @@ function EditProjectContent() {
                   })
                 }
                 disabled={loading}
-                helperText="这将作为AI处理图片时的基础提示词，至少需要10个字符"
+                helperText={t('admin.create.sections.promptTemplate.helperText')}
                 error={formData.promptTemplate.length > 0 && formData.promptTemplate.length < 10}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -372,16 +373,16 @@ function EditProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                输入与控制配置
+                {t('admin.create.sections.controlsConfig.title')}
               </Typography>
 
               {/* 输入类型选择 */}
               <Box sx={{ mb: 3 }}>
                 <FormControl fullWidth>
-                  <InputLabel>输入类型</InputLabel>
+                  <InputLabel>{t('admin.create.sections.controlsConfig.inputType.label')}</InputLabel>
                   <Select
                     value={formData.controlsConfig.inputConfig.inputType || 'image'}
-                    label="输入类型"
+                    label={t('admin.create.sections.controlsConfig.inputType.label')}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -400,8 +401,8 @@ function EditProjectContent() {
                         fontSize: '0.95rem',
                       },
                     }}>
-                    <MenuItem value="image">图片输入</MenuItem>
-                    <MenuItem value="text">文本输入</MenuItem>
+                    <MenuItem value="image">{t('admin.create.sections.controlsConfig.inputType.image')}</MenuItem>
+                    <MenuItem value="text">{t('admin.create.sections.controlsConfig.inputType.text')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -419,7 +420,7 @@ function EditProjectContent() {
           <Card elevation={1}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 500, mb: 3 }}>
-                UI 功能配置
+                {t('admin.create.sections.uiConfig.title')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
@@ -445,10 +446,10 @@ function EditProjectContent() {
                     label={
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                          显示对比滑块
+                          {t('admin.create.sections.uiConfig.showComparisonSlider.title')}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          在处理结果页面显示前后对比滑块
+                          {t('admin.create.sections.uiConfig.showComparisonSlider.description')}
                         </Typography>
                       </Box>
                     }
@@ -475,7 +476,7 @@ function EditProjectContent() {
                   variant="outlined"
                   size="large"
                   sx={{ px: 4, py: 1.5, fontSize: '1rem' }}>
-                  取消
+                  {t('admin.edit.actions.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -483,7 +484,7 @@ function EditProjectContent() {
                   disabled={loading}
                   size="large"
                   sx={{ px: 4, py: 1.5, fontSize: '1rem' }}>
-                  {loading ? '保存中...' : '保存更改'}
+                  {loading ? t('admin.edit.actions.saving') : t('admin.edit.actions.save')}
                 </Button>
               </Box>
             </CardContent>

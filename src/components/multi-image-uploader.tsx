@@ -87,7 +87,7 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
   position: 'absolute',
   top: 6,
   right: 6,
-  backgroundColor: `${theme.palette.error.main}CC`,
+  backgroundColor: `${theme.palette.primary.main}`,
   color: theme.palette.common.white,
   width: 32,
   height: 32,
@@ -96,7 +96,7 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
   backdropFilter: 'blur(4px)',
   boxShadow: theme.shadows[3],
   '&:hover': {
-    backgroundColor: theme.palette.error.main,
+    backgroundColor: theme.palette.primary.main,
     transform: 'scale(1.05)',
     boxShadow: theme.shadows[6],
   },
@@ -168,6 +168,7 @@ interface MultiImageUploaderProps {
   currentLanguage?: string; // 当前语言，默认为 'zh'
   onGenerate?: () => void; // 手动触发生成的回调函数
   showGenerateButton?: boolean; // 是否显示生成按钮
+  hasControlsConfig?: boolean; // 是否有动态控制组件
 }
 
 export function MultiImageUploader({
@@ -182,6 +183,7 @@ export function MultiImageUploader({
   currentLanguage = 'zh',
   onGenerate,
   showGenerateButton = false,
+  hasControlsConfig = false,
 }: MultiImageUploaderProps) {
   const { t } = useLocaleContext();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -250,6 +252,8 @@ export function MultiImageUploader({
           openLoginDialog={openLoginDialog}
           disabled={disabled}
           imageDescription={currentDescriptions[0]}
+          currentImage={images[0] || null}
+          hasControlsConfig={hasControlsConfig}
         />
       </SingleUploadArea>
     );
@@ -363,6 +367,7 @@ export function MultiImageUploader({
                     onChange={(res: any) => handleImageUpload(res, index)}
                     openLoginDialog={openLoginDialog}
                     disabled={disabled || isUploading}
+                    hasControlsConfig={hasControlsConfig}
                     // eslint-disable-next-line react/no-unstable-nested-components
                     customTrigger={(onClick) => (
                       <UploadTrigger

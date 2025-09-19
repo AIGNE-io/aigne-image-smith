@@ -1,16 +1,19 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { Launch as LaunchIcon } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Container, Grid, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
+  const { t } = useLocaleContext();
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box mb={4}>
         <Typography variant="h4" component="h1" gutterBottom>
-          ImageSmith 管理后台
+          {t('admin.dashboard.title')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          管理您的 AI 图片应用项目
+          {t('admin.dashboard.subtitle')}
         </Typography>
       </Box>
 
@@ -29,13 +32,13 @@ export default function AdminDashboard() {
             }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom>
-                项目管理
+                {t('admin.dashboard.projectManagement.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                创建、编辑和管理您的 AI 图片应用项目
+                {t('admin.dashboard.projectManagement.description')}
               </Typography>
               <Button variant="contained" endIcon={<LaunchIcon />} component={Link} to="/admin/projects" fullWidth>
-                进入管理
+                {t('admin.dashboard.projectManagement.action')}
               </Button>
             </CardContent>
           </Card>
@@ -54,10 +57,10 @@ export default function AdminDashboard() {
             }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom>
-                快速创建
+                {t('admin.dashboard.quickCreate.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                快速创建一个新的 AI 图片应用项目
+                {t('admin.dashboard.quickCreate.description')}
               </Typography>
               <Button
                 variant="outlined"
@@ -65,7 +68,7 @@ export default function AdminDashboard() {
                 component={Link}
                 to="/admin/projects/create"
                 fullWidth>
-                创建项目
+                {t('admin.dashboard.quickCreate.action')}
               </Button>
             </CardContent>
           </Card>
@@ -84,13 +87,13 @@ export default function AdminDashboard() {
             }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom>
-                预览应用
+                {t('admin.dashboard.previewApp.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" paragraph>
-                查看用户看到的应用列表页面
+                {t('admin.dashboard.previewApp.description')}
               </Typography>
               <Button variant="outlined" endIcon={<LaunchIcon />} component={Link} to="/" target="_blank" fullWidth>
-                查看应用
+                {t('admin.dashboard.previewApp.action')}
               </Button>
             </CardContent>
           </Card>

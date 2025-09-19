@@ -2,6 +2,7 @@
 import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { Box, Card, CardContent, CardMedia, Container, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 
 import api from '../../libs/api';
@@ -70,6 +71,9 @@ export default function Projects() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Helmet>
+        <title>AIGNE ImageSmith</title>
+      </Helmet>
       {/* Simple Header */}
       <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', py: 6 }}>
         <Container maxWidth="lg">

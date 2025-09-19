@@ -33,23 +33,23 @@ import {
   styled,
   useTheme,
 } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 'react-share';
 
-import { MultiImageUploader } from '../components/multi-image-uploader';
+import { useSessionContext } from '../contexts/session';
+import api from '../libs/api';
+import { formatBalance, getCreditPage, getImageUrl } from '../libs/utils';
+import { useSubscription } from '../libs/ws';
+import { MultiImageUploader } from './multi-image-uploader';
 import {
   BackgroundSelectorControlConfig,
   ControlValues,
   ProjectControls,
   ProjectControlsConfig,
-} from '../components/project-controls';
-import { TextInput } from '../components/text-input';
-import UploaderProvider from '../components/uploader';
-import { useSessionContext } from '../contexts/session';
-import api from '../libs/api';
-import { buildPromptVariables, replacePromptVariables } from '../libs/prompt-utils';
-import { formatBalance, getCreditPage, getImageUrl } from '../libs/utils';
-import { useSubscription } from '../libs/ws';
+} from './project-controls';
+import { TextInput } from './text-input';
+import UploaderProvider from './uploader';
 
 // 动画效果
 const sparkleAnimation = keyframes`
@@ -70,15 +70,6 @@ const VintageCard = styled(Paper)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   position: 'relative',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: `linear-gradient(90deg, transparent, ${theme.palette.divider}, transparent)`,
-  },
 }));
 
 const ImageCompareContainer = styled(Box)(({ theme }) => ({
@@ -124,7 +115,7 @@ const ImageWrapper = styled(Box)(() => ({
 
 const GoldenButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
+  color: theme.palette.common.white,
   fontWeight: 'bold',
   fontSize: '1.1rem',
   padding: '12px 32px',
@@ -172,7 +163,6 @@ interface HistoryPagination {
 
 interface AIProjectConfig {
   clientId: string;
-  prompt: string;
   title: string;
   subtitle: string;
   description: string;
@@ -189,6 +179,13 @@ interface AIProjectConfig {
 interface AIProjectHomeProps {
   config: AIProjectConfig;
 }
+
+// Helper function to get localized text
+const getLocalizedText = (text: string | Record<string, string> | undefined, locale: string): string => {
+  if (!text) return '';
+  if (typeof text === 'string') return text;
+  return text[locale] || text['zh-CN'] || text.en || Object.values(text)[0] || '';
+};
 
 function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const { t, locale } = useLocaleContext();
@@ -417,7 +414,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         // 跳转到支付页面
         const url = new URL(data.data.url);
         url.host = window.location.host;
-        window.open(url.toString(), '_blank');
+        url.searchParams.set('redirect', window.location.href);
+        window.location.href = url.toString();
         return { success: true, url: url.toString() };
       }
       const errorMsg = data.error || t('home.error.createOrderFailed');
@@ -495,15 +493,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       startFakeProgress();
 
       try {
-        // 构建动态 prompt
-        const promptVariables = buildPromptVariables(controlValues, images);
-        const finalPrompt = replacePromptVariables(config.prompt, promptVariables);
-
         const { data } = await api.post('/api/ai/generate', {
-          prompt: finalPrompt,
           textInput: text || '',
           originalImages: images,
           clientId: config.clientId,
+          controlValues,
           metadata: {
             controlValues,
             inputType,
@@ -569,11 +563,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         }
 
         // 停止假进度条
-        if (inputType === 'text') {
-          setTextInput('');
-        } else {
-          setOriginalImages([]);
-        }
         stopFakeProgress();
         setError(errorMessage);
         setProcessing({
@@ -592,7 +581,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       t,
       startFakeProgress,
       controlValues,
-      config.prompt,
       config.clientId,
       stopFakeProgress,
       fetchHistoryData,
@@ -612,9 +600,13 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
       const isMultiImage = imageSize > 1;
 
-      // 对于单图场景，自动开始处理
-      // 对于多图场景，需要用户手动确认
-      if (!isMultiImage && images.length >= imageSize) {
+      // 如果有动态控制组件，总是需要用户手动确认
+      const hasControlsConfig =
+        config.controlsConfig?.controlsConfig && config.controlsConfig.controlsConfig.length > 0;
+
+      // 对于单图场景且没有动态控制组件，自动开始处理
+      // 对于多图场景或有动态控制组件，需要用户手动确认
+      if (!isMultiImage && !hasControlsConfig && images.length >= imageSize) {
         await generate({ images });
       }
     },
@@ -631,6 +623,90 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       await generate({ images: originalImages });
     }
   }, [originalImages, textInput, inputType, generate]);
+
+  // 重置控制值
+  const handleResetControls = useCallback(() => {
+    if (config.controlsConfig?.controlsConfig) {
+      const resetValues: Record<string, any> = {};
+      config.controlsConfig.controlsConfig.forEach((control) => {
+        resetValues[control.key] = control.defaultValue;
+      });
+      setControlValues(resetValues);
+    }
+  }, [config.controlsConfig]);
+
+  // 检查必填控制项是否都已填写
+  const isRequiredControlsValid = useMemo(() => {
+    if (!config.controlsConfig?.controlsConfig) return true;
+
+    return config.controlsConfig.controlsConfig.every((control) => {
+      if (!control.required) return true;
+
+      const value = controlValues[control.key];
+
+      // 检查值是否为空
+      if (value === undefined || value === null || value === '') return false;
+
+      // 对于数组类型（如多选），检查是否为空数组
+      if (Array.isArray(value) && value.length === 0) return false;
+
+      return true;
+    });
+  }, [config.controlsConfig, controlValues]);
+
+  // 获取缺失的必填字段名称
+  const getMissingRequiredFields = useMemo(() => {
+    if (!config.controlsConfig?.controlsConfig) return [];
+
+    const missingFields: string[] = [];
+
+    config.controlsConfig.controlsConfig.forEach((control) => {
+      if (!control.required) return;
+
+      const value = controlValues[control.key];
+
+      // 检查值是否为空
+      const isEmpty =
+        value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
+
+      if (isEmpty) {
+        missingFields.push(getLocalizedText(control.label, locale));
+      }
+    });
+
+    return missingFields;
+  }, [config.controlsConfig, controlValues]);
+
+  // 处理禁用状态下的生成按钮点击
+  const handleDisabledGenerateClick = useCallback(() => {
+    const missingFields = getMissingRequiredFields;
+    const hasContent = inputType === 'text' ? textInput.trim() : originalImages.length > 0;
+
+    if (!isLoggedIn) {
+      setError(t('home.error.loginRequired'));
+      return;
+    }
+
+    if (!hasContent) {
+      if (inputType === 'text') {
+        setError(t('home.error.textInputRequired'));
+      } else {
+        setError(t('home.error.noImage'));
+      }
+      return;
+    }
+
+    if (missingFields.length > 0) {
+      const fieldsText = missingFields.join('、');
+      const errorMessage = t('home.error.missingRequiredFields', { fields: fieldsText });
+      setError(errorMessage);
+      return;
+    }
+
+    if (!isRequiredControlsValid) {
+      setError(t('home.error.invalidRequiredFields'));
+    }
+  }, [getMissingRequiredFields, inputType, textInput, originalImages, isLoggedIn, isRequiredControlsValid, t]);
 
   // 下载生成后的图片
   const handleDownload = async () => {
@@ -847,6 +923,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           zIndex: 0,
         },
       })}>
+      <Helmet>
+        <title>{config.title || t('home.title')}</title>
+      </Helmet>
       {/* 顶部标题栏 - 响应式精致设计 */}
       <Box
         sx={(theme) => ({
@@ -994,7 +1073,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           )}
         </Stack>
       </Box>
-
       {/* 主要内容区容器 - 确保第一屏占满 */}
       <Box
         sx={{
@@ -1191,7 +1269,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
             )}
 
             {/* 上传区域 - 根据输入类型选择 */}
-            <VintageCard elevation={4} style={{ flex: 1 }}>
+            <VintageCard
+              elevation={4}
+              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {processing.isProcessing ? (
                 <Box sx={{ py: { xs: 3, sm: 4 } }}>
                   <Stack spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
@@ -1224,9 +1304,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   value={textInput}
                   onChange={setTextInput}
                   requirements={
-                    config.controlsConfig?.inputConfig.requirements?.zh ||
+                    config.controlsConfig?.inputConfig.requirements?.[locale] ||
                     config.controlsConfig?.inputConfig.requirements?.en ||
-                    '请输入您的内容...'
+                    t('textInput.placeholder')
                   }
                   disabled={processing.isProcessing}
                   isLoggedIn={isLoggedIn}
@@ -1251,6 +1331,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   currentLanguage={locale}
                   onGenerate={handleManualGenerate}
                   showGenerateButton={(config.controlsConfig?.inputConfig.imageSize || 1) > 1}
+                  hasControlsConfig={
+                    config.controlsConfig?.controlsConfig && config.controlsConfig.controlsConfig.length > 0
+                  }
                 />
               )}
             </VintageCard>
@@ -1264,6 +1347,76 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   onChange={setControlValues}
                   disabled={processing.isProcessing}
                 />
+
+                {/* 控制按钮 */}
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={{ xs: 1.5, sm: 2 }}
+                  justifyContent="center"
+                  sx={{ p: 1.5, pt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleResetControls}
+                    disabled={processing.isProcessing}
+                    size="medium"
+                    sx={(theme) => ({
+                      borderColor: `${theme.palette.primary.main}80`,
+                      color: theme.palette.text.primary,
+                      fontWeight: 500,
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 0.75, sm: 1 },
+                      borderRadius: '50px',
+                      textTransform: 'none',
+                      fontSize: { xs: '0.75rem', sm: '1rem' },
+                      width: { xs: '100%', sm: 'auto' },
+                      '&:hover': {
+                        borderColor: theme.palette.primary.main,
+                        backgroundColor: `${theme.palette.primary.main}20`,
+                      },
+                      '&:disabled': {
+                        borderColor: `${theme.palette.primary.main}30`,
+                        color: theme.palette.text.secondary,
+                      },
+                    })}>
+                    {t('textInput.clear')}
+                  </Button>
+                  <Box
+                    sx={{
+                      display: 'inline-block',
+                      width: { xs: '100%', sm: 'auto' },
+                    }}
+                    onClick={(e) => {
+                      const isDisabled =
+                        processing.isProcessing ||
+                        (inputType === 'image' && originalImages.length === 0) ||
+                        (inputType === 'text' && !textInput.trim()) ||
+                        !isRequiredControlsValid;
+
+                      if (isDisabled) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDisabledGenerateClick();
+                      }
+                    }}>
+                    <GoldenButton
+                      onClick={handleManualGenerate}
+                      disabled={
+                        processing.isProcessing ||
+                        (inputType === 'image' && originalImages.length === 0) ||
+                        (inputType === 'text' && !textInput.trim()) ||
+                        !isRequiredControlsValid
+                      }
+                      size="medium"
+                      sx={{
+                        fontSize: { xs: '0.75rem', sm: '1rem' },
+                        px: { xs: 2, sm: 3 },
+                        py: { xs: 0.75, sm: 1 },
+                        width: { xs: '100%', sm: 'auto' },
+                      }}>
+                      {processing.isProcessing ? t('home.generating') : t('textInput.startGenerate')}
+                    </GoldenButton>
+                  </Box>
+                </Stack>
               </VintageCard>
             )}
 
@@ -1581,7 +1734,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </Box>
 
               {/* 操作按钮区域 - 生成后才显示 */}
-              {(inputType === 'text' ? textInput.trim() : originalImages.length > 0) && generatedImage && (
+              {generatedImage && (
                 <>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
@@ -1600,33 +1753,35 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       }}>
                       {t('home.actions.download')}
                     </GoldenButton>
-                    <Button
-                      variant="outlined"
-                      startIcon={<RefreshIcon />}
-                      onClick={handleRetry}
-                      disabled={processing.isProcessing}
-                      size="medium"
-                      sx={(theme) => ({
-                        borderColor: `${theme.palette.primary.main}80`,
-                        color: theme.palette.text.primary,
-                        fontWeight: 500,
-                        px: { xs: 2, sm: 3 },
-                        py: { xs: 0.75, sm: 1 },
-                        borderRadius: '50px',
-                        textTransform: 'none',
-                        fontSize: { xs: '0.75rem', sm: '1rem' },
-                        width: { xs: '100%', sm: 'auto' },
-                        '&:hover': {
-                          borderColor: theme.palette.primary.main,
-                          backgroundColor: `${theme.palette.primary.main}20`,
-                        },
-                        '&:disabled': {
-                          borderColor: `${theme.palette.primary.main}30`,
-                          color: theme.palette.text.secondary,
-                        },
-                      })}>
-                      {t('home.actions.retry')}
-                    </Button>
+                    {(inputType === 'text' ? textInput.trim() : originalImages.length > 0) && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={handleRetry}
+                        disabled={processing.isProcessing}
+                        size="medium"
+                        sx={(theme) => ({
+                          borderColor: `${theme.palette.primary.main}80`,
+                          color: theme.palette.text.primary,
+                          fontWeight: 500,
+                          px: { xs: 2, sm: 3 },
+                          py: { xs: 0.75, sm: 1 },
+                          borderRadius: '50px',
+                          textTransform: 'none',
+                          fontSize: { xs: '0.75rem', sm: '1rem' },
+                          width: { xs: '100%', sm: 'auto' },
+                          '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: `${theme.palette.primary.main}20`,
+                          },
+                          '&:disabled': {
+                            borderColor: `${theme.palette.primary.main}30`,
+                            color: theme.palette.text.secondary,
+                          },
+                        })}>
+                        {t('home.actions.retry')}
+                      </Button>
+                    )}
                   </Stack>
 
                   {/* Powered by AIGNE */}
@@ -1671,7 +1826,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         }`}
                         alt="AIGNE"
                         style={{
-                          height: '18px',
+                          height: '24px',
                           width: 'auto',
                           opacity: 0.8,
                         }}
@@ -1684,7 +1839,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </Box>
         </Box>
       </Box>
-
       {/* 历史记录区域 - 页面底部 */}
       {generatedHistory.length > 0 && (
         <Box
@@ -1958,7 +2112,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </VintageCard>
         </Box>
       )}
-
       {/* 查看大图对话框 */}
       <Dialog
         open={viewImageDialog.open}
@@ -2038,7 +2191,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           )}
         </DialogContent>
       </Dialog>
-
       {/* 删除确认对话框 */}
       <Dialog
         open={deleteDialog.open}
@@ -2105,7 +2257,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* 分享菜单 */}
       <Menu
         anchorEl={shareAnchorEl}

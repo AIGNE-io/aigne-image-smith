@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -42,12 +43,15 @@ interface ControlsConfigEditorProps {
   showOnlyRequirements?: boolean;
 }
 
-const CONTROL_TYPES = [
-  { value: 'select', label: 'Select Dropdown' },
-  { value: 'slider', label: 'Slider' },
-  { value: 'number', label: 'Number Input' },
-  { value: 'text', label: 'Text Input' },
-  { value: 'backgroundSelector', label: 'Background Selector' },
+const getControlTypes = (t: (key: string) => string) => [
+  { value: 'select', label: t('components.controlsConfigEditor.controlComponents.types.select') },
+  { value: 'slider', label: t('components.controlsConfigEditor.controlComponents.types.slider') },
+  { value: 'number', label: t('components.controlsConfigEditor.controlComponents.types.number') },
+  { value: 'text', label: t('components.controlsConfigEditor.controlComponents.types.text') },
+  {
+    value: 'backgroundSelector',
+    label: t('components.controlsConfigEditor.controlComponents.types.backgroundSelector'),
+  },
 ];
 
 // Initialize empty values for all supported languages
@@ -70,7 +74,7 @@ const createEmptyImageDescriptionsObject = () => {
 const DEFAULT_CONTROLS: { [key: string]: Partial<ControlConfig> } = {
   select: {
     type: 'select',
-    options: [{ value: 'option1', label: 'Option 1' }],
+    options: [{ value: 'option1', label: createEmptyLanguageObject() }],
   },
   slider: {
     type: 'slider',
@@ -87,13 +91,13 @@ const DEFAULT_CONTROLS: { [key: string]: Partial<ControlConfig> } = {
   },
   text: {
     type: 'text',
-    placeholder: 'Enter text...',
+    placeholder: createEmptyLanguageObject(),
   },
   backgroundSelector: {
     type: 'backgroundSelector',
     backgrounds: [
-      { value: 'white', label: 'White', color: '#FFFFFF' },
-      { value: 'blue', label: 'Blue', color: '#1565C0' },
+      { value: 'white', label: createEmptyLanguageObject(), color: '#FFFFFF' },
+      { value: 'blue', label: createEmptyLanguageObject(), color: '#1565C0' },
     ],
   },
 };
@@ -107,6 +111,7 @@ function ControlConfigEditor({
   onChange: (config: ControlConfig) => void;
   onDelete: () => void;
 }) {
+  const { t } = useLocaleContext();
   const updateConfig = (updates: Partial<ControlConfig>) => {
     onChange({ ...controlConfig, ...updates } as ControlConfig);
   };
@@ -124,66 +129,76 @@ function ControlConfigEditor({
                   onChange={(e) => updateConfig({ multiple: e.target.checked })}
                 />
               }
-              label="Allow multiple selection"
+              label={t('components.controlsConfigEditor.controlConfig.select.allowMultiple')}
             />
             <Box>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                <Typography variant="subtitle2">Options:</Typography>
+                <Typography variant="subtitle2">
+                  {t('components.controlsConfigEditor.controlConfig.select.options')}
+                </Typography>
                 <Button
                   size="small"
                   startIcon={<AddIcon />}
                   onClick={() => {
                     const newOptions = [
                       ...(selectConfig.options || []),
-                      { value: `option${(selectConfig.options?.length || 0) + 1}`, label: 'New Option' },
+                      { value: `option${(selectConfig.options?.length || 0) + 1}`, label: createEmptyLanguageObject() },
                     ];
                     updateConfig({ options: newOptions });
                   }}>
-                  Add Option
+                  {t('components.controlsConfigEditor.controlConfig.select.addOption')}
                 </Button>
               </Stack>
               <Stack spacing={1}>
                 {(selectConfig.options || []).map((option, index) => (
-                  <Stack key={`option-${index}`} direction="row" spacing={1} alignItems="center">
-                    <TextField
-                      size="small"
-                      label="Value"
-                      value={option.value}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, value: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <TextField
-                      size="small"
-                      label="Label"
-                      value={option.label}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, label: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <TextField
-                      size="small"
-                      label="Color (optional)"
-                      value={option.color || ''}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, color: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        const newOptions = selectConfig.options.filter((_, i) => i !== index);
-                        updateConfig({ options: newOptions });
-                      }}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
+                  <Box key={`option-${index}`} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 1 }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField
+                          size="small"
+                          label={t('components.controlsConfigEditor.controlConfig.select.optionValue')}
+                          value={option.value}
+                          onChange={(e) => {
+                            const newOptions = [...selectConfig.options];
+                            newOptions[index] = { ...option, value: e.target.value };
+                            updateConfig({ options: newOptions });
+                          }}
+                        />
+                        <TextField
+                          size="small"
+                          label={t('components.controlsConfigEditor.controlConfig.select.optionColor')}
+                          value={option.color || ''}
+                          onChange={(e) => {
+                            const newOptions = [...selectConfig.options];
+                            newOptions[index] = { ...option, color: e.target.value };
+                            updateConfig({ options: newOptions });
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            const newOptions = selectConfig.options.filter((_, i) => i !== index);
+                            updateConfig({ options: newOptions });
+                          }}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Stack>
+                      <MultiLanguageEditor
+                        label={t('components.controlsConfigEditor.controlConfig.select.optionLabel')}
+                        values={
+                          typeof option.label === 'string'
+                            ? { en: option.label }
+                            : option.label || createEmptyLanguageObject()
+                        }
+                        onChange={(values) => {
+                          const newOptions = [...selectConfig.options];
+                          const hasContent = Object.values(values).some((v) => v?.trim());
+                          newOptions[index] = { ...option, label: hasContent ? values : createEmptyLanguageObject() };
+                          updateConfig({ options: newOptions });
+                        }}
+                      />
+                    </Stack>
+                  </Box>
                 ))}
               </Stack>
             </Box>
@@ -196,19 +211,19 @@ function ControlConfigEditor({
         return (
           <Stack direction="row" spacing={2}>
             <TextField
-              label="Min Value"
+              label={t('components.controlsConfigEditor.controlConfig.slider.minValue')}
               type="number"
               value={sliderConfig.min || 0}
               onChange={(e) => updateConfig({ min: Number(e.target.value) })}
             />
             <TextField
-              label="Max Value"
+              label={t('components.controlsConfigEditor.controlConfig.slider.maxValue')}
               type="number"
               value={sliderConfig.max || 100}
               onChange={(e) => updateConfig({ max: Number(e.target.value) })}
             />
             <TextField
-              label="Step"
+              label={t('components.controlsConfigEditor.controlConfig.slider.step')}
               type="number"
               value={sliderConfig.step || 1}
               onChange={(e) => updateConfig({ step: Number(e.target.value) })}
@@ -222,19 +237,19 @@ function ControlConfigEditor({
         return (
           <Stack direction="row" spacing={2}>
             <TextField
-              label="Min Value (optional)"
+              label={t('components.controlsConfigEditor.controlConfig.number.minValue')}
               type="number"
               value={numberConfig.min || ''}
               onChange={(e) => updateConfig({ min: e.target.value ? Number(e.target.value) : undefined })}
             />
             <TextField
-              label="Max Value (optional)"
+              label={t('components.controlsConfigEditor.controlConfig.number.maxValue')}
               type="number"
               value={numberConfig.max || ''}
               onChange={(e) => updateConfig({ max: e.target.value ? Number(e.target.value) : undefined })}
             />
             <TextField
-              label="Unit (optional)"
+              label={t('components.controlsConfigEditor.controlConfig.number.unit')}
               value={numberConfig.unit || ''}
               onChange={(e) => updateConfig({ unit: e.target.value })}
             />
@@ -246,14 +261,20 @@ function ControlConfigEditor({
         const textConfig = controlConfig as TextInputControlConfig;
         return (
           <>
-            <TextField
-              label="Placeholder"
-              value={textConfig.placeholder || ''}
-              onChange={(e) => updateConfig({ placeholder: e.target.value })}
-              fullWidth
+            <MultiLanguageEditor
+              label={t('components.controlsConfigEditor.controlConfig.text.placeholder')}
+              values={
+                typeof textConfig.placeholder === 'string'
+                  ? { en: textConfig.placeholder }
+                  : textConfig.placeholder || createEmptyLanguageObject()
+              }
+              onChange={(values) => {
+                const hasContent = Object.values(values).some((v) => v?.trim());
+                updateConfig({ placeholder: hasContent ? values : undefined });
+              }}
             />
             <TextField
-              label="Max Length (optional)"
+              label={t('components.controlsConfigEditor.controlConfig.text.maxLength')}
               type="number"
               value={textConfig.maxLength || ''}
               onChange={(e) => updateConfig({ maxLength: e.target.value ? Number(e.target.value) : undefined })}
@@ -267,7 +288,9 @@ function ControlConfigEditor({
         return (
           <Box>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-              <Typography variant="subtitle2">Background Options:</Typography>
+              <Typography variant="subtitle2">
+                {t('components.controlsConfigEditor.controlConfig.backgroundSelector.options')}
+              </Typography>
               <Button
                 size="small"
                 startIcon={<AddIcon />}
@@ -276,66 +299,70 @@ function ControlConfigEditor({
                     ...(bgConfig.backgrounds || []),
                     {
                       value: `bg${(bgConfig.backgrounds?.length || 0) + 1}`,
-                      label: 'New Background',
+                      label: createEmptyLanguageObject(),
                       color: '#FFFFFF',
                     },
                   ];
                   updateConfig({ backgrounds: newBackgrounds });
                 }}>
-                Add Background
+                {t('components.controlsConfigEditor.controlConfig.backgroundSelector.addBackground')}
               </Button>
             </Stack>
             <Stack spacing={1}>
               {(bgConfig.backgrounds || []).map((bg, index) => (
-                <Stack key={`bg-${index}`} direction="row" spacing={1} alignItems="center">
-                  <TextField
-                    size="small"
-                    label="Value"
-                    value={bg.value}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, value: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <TextField
-                    size="small"
-                    label="Label"
-                    value={bg.label}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, label: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <TextField
-                    size="small"
-                    label="Color"
-                    value={bg.color}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, color: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      backgroundColor: bg.color,
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      const newBackgrounds = bgConfig.backgrounds.filter((_, i) => i !== index);
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Stack>
+                <Box key={`bg-${index}`} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 1 }}>
+                  <Stack spacing={2}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TextField
+                        size="small"
+                        label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.value')}
+                        value={bg.value}
+                        onChange={(e) => {
+                          const newBackgrounds = [...bgConfig.backgrounds];
+                          newBackgrounds[index] = { ...bg, value: e.target.value };
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}
+                      />
+                      <TextField
+                        size="small"
+                        label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.color')}
+                        value={bg.color}
+                        onChange={(e) => {
+                          const newBackgrounds = [...bgConfig.backgrounds];
+                          newBackgrounds[index] = { ...bg, color: e.target.value };
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          backgroundColor: bg.color,
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const newBackgrounds = bgConfig.backgrounds.filter((_, i) => i !== index);
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Stack>
+                    <MultiLanguageEditor
+                      label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.label')}
+                      values={typeof bg.label === 'string' ? { en: bg.label } : bg.label || createEmptyLanguageObject()}
+                      onChange={(values) => {
+                        const newBackgrounds = [...bgConfig.backgrounds];
+                        const hasContent = Object.values(values).some((v) => v?.trim());
+                        newBackgrounds[index] = { ...bg, label: hasContent ? values : createEmptyLanguageObject() };
+                        updateConfig({ backgrounds: newBackgrounds });
+                      }}
+                    />
+                  </Stack>
+                </Box>
               ))}
             </Stack>
           </Box>
@@ -352,7 +379,14 @@ function ControlConfigEditor({
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" alignItems="center" spacing={2}>
           <Chip label={controlConfig.type} size="small" />
-          <Typography>{controlConfig.label || 'Untitled Control'}</Typography>
+          <Typography>
+            {typeof controlConfig.label === 'string'
+              ? controlConfig.label
+              : controlConfig.label?.['zh-CN'] ||
+                controlConfig.label?.en ||
+                Object.values(controlConfig.label || {})[0] ||
+                t('components.controlsConfigEditor.controlConfig.untitled')}
+          </Typography>
           <Typography variant="caption" color="text.secondary">
             Key: {controlConfig.key}
           </Typography>
@@ -362,27 +396,41 @@ function ControlConfigEditor({
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>
             <TextField
-              label="Control Key"
+              label={t('components.controlsConfigEditor.controlConfig.key.label')}
               value={controlConfig.key}
               onChange={(e) => updateConfig({ key: e.target.value })}
-              helperText="Used in prompt template as {{key}}"
-              required
-            />
-            <TextField
-              label="Label"
-              value={controlConfig.label}
-              onChange={(e) => updateConfig({ label: e.target.value })}
+              helperText={t('components.controlsConfigEditor.controlConfig.key.helperText')}
               required
             />
           </Stack>
 
-          <TextField
-            label="Description (optional)"
-            value={controlConfig.description || ''}
-            onChange={(e) => updateConfig({ description: e.target.value })}
+          <MultiLanguageEditor
+            label={t('components.controlsConfigEditor.controlConfig.label.label')}
+            values={
+              typeof controlConfig.label === 'string'
+                ? { en: controlConfig.label }
+                : controlConfig.label || createEmptyLanguageObject()
+            }
+            onChange={(values) => {
+              const hasContent = Object.values(values).some((v) => v?.trim());
+              updateConfig({ label: hasContent ? values : createEmptyLanguageObject() });
+            }}
+            required
+          />
+
+          <MultiLanguageEditor
+            label={t('components.controlsConfigEditor.controlConfig.description.label')}
+            values={
+              typeof controlConfig.description === 'string'
+                ? { en: controlConfig.description }
+                : controlConfig.description || createEmptyLanguageObject()
+            }
+            onChange={(values) => {
+              const hasContent = Object.values(values).some((v) => v?.trim());
+              updateConfig({ description: hasContent ? values : undefined });
+            }}
             multiline
             rows={2}
-            fullWidth
           />
 
           <FormControlLabel
@@ -392,14 +440,14 @@ function ControlConfigEditor({
                 onChange={(e) => updateConfig({ required: e.target.checked })}
               />
             }
-            label="Required field"
+            label={t('components.controlsConfigEditor.controlConfig.required')}
           />
 
           {renderTypeSpecificFields()}
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button color="error" startIcon={<DeleteIcon />} onClick={onDelete}>
-              Remove Control
+              {t('components.controlsConfigEditor.controlConfig.removeControl')}
             </Button>
           </Box>
         </Stack>
@@ -414,6 +462,7 @@ export function ControlsConfigEditor({
   disabled = false,
   showOnlyRequirements = false,
 }: ControlsConfigEditorProps) {
+  const { t } = useLocaleContext();
   const [newControlType, setNewControlType] = useState('select');
 
   const updateInputConfig = (updates: Partial<typeof config.inputConfig>) => {
@@ -426,7 +475,7 @@ export function ControlsConfigEditor({
   const addControl = () => {
     const baseConfig = {
       key: `control_${Date.now()}`,
-      label: 'New Control',
+      label: createEmptyLanguageObject(),
       ...DEFAULT_CONTROLS[newControlType],
     };
 
@@ -458,25 +507,25 @@ export function ControlsConfigEditor({
       <Card>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            Input Configuration
+            {t('components.controlsConfigEditor.inputConfiguration.title')}
           </Typography>
           <Stack spacing={2}>
             {!showOnlyRequirements && (
               <TextField
-                label="Image Size"
+                label={t('components.controlsConfigEditor.inputConfiguration.imageSize.label')}
                 type="number"
                 value={config.inputConfig.imageSize}
                 onChange={(e) => updateInputConfig({ imageSize: Number(e.target.value) })}
                 disabled={disabled}
                 inputProps={{ min: 1, max: 10 }}
-                helperText="Number of images required for this AI application"
+                helperText={t('components.controlsConfigEditor.inputConfiguration.imageSize.helperText')}
                 sx={{ maxWidth: 300 }}
               />
             )}
 
             {/* Requirements Description - Multi-language */}
             <MultiLanguageEditor
-              label="Requirements Description"
+              label={t('components.controlsConfigEditor.inputConfiguration.requirements.label')}
               values={config.inputConfig.requirements || createEmptyLanguageObject()}
               onChange={(values) => {
                 // Check if any value has content, if not set to undefined
@@ -488,13 +537,13 @@ export function ControlsConfigEditor({
               rows={2}
               placeholder={
                 showOnlyRequirements
-                  ? 'Describe text input requirements to users...'
-                  : 'Describe image requirements to users...'
+                  ? t('components.controlsConfigEditor.inputConfiguration.requirements.placeholderText')
+                  : t('components.controlsConfigEditor.inputConfiguration.requirements.placeholderImage')
               }
               helperText={
                 showOnlyRequirements
-                  ? 'Describe text input requirements to users in different languages'
-                  : 'Describe image requirements to users in different languages'
+                  ? t('components.controlsConfigEditor.inputConfiguration.requirements.helperTextText')
+                  : t('components.controlsConfigEditor.inputConfiguration.requirements.helperTextImage')
               }
             />
 
@@ -520,14 +569,14 @@ export function ControlsConfigEditor({
         <Card>
           <CardContent>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-              <Typography variant="h6">Control Components</Typography>
+              <Typography variant="h6">{t('components.controlsConfigEditor.controlComponents.title')}</Typography>
               <Stack direction="row" spacing={1} alignItems="center">
                 <FormControl size="small" sx={{ minWidth: 150 }}>
                   <Select
                     value={newControlType}
                     onChange={(e) => setNewControlType(e.target.value)}
                     disabled={disabled}>
-                    {CONTROL_TYPES.map((type) => (
+                    {getControlTypes(t).map((type) => (
                       <MenuItem key={type.value} value={type.value}>
                         {type.label}
                       </MenuItem>
@@ -535,14 +584,14 @@ export function ControlsConfigEditor({
                   </Select>
                 </FormControl>
                 <Button variant="outlined" startIcon={<AddIcon />} onClick={addControl} disabled={disabled}>
-                  Add Control
+                  {t('components.controlsConfigEditor.controlComponents.addControl')}
                 </Button>
               </Stack>
             </Stack>
 
             {config.controlsConfig.length === 0 ? (
               <Typography color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                No control components configured. Add some to provide users with customization options.
+                {t('components.controlsConfigEditor.controlComponents.noControls')}
               </Typography>
             ) : (
               <Stack spacing={1}>
