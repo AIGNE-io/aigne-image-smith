@@ -37,6 +37,9 @@ export default flat({
       claimFailed: '領取失敗，請重試',
       createOrderFailed: '創建充值訂單失敗',
       createOrderError: '創建充值訂單時發生錯誤',
+      missingRequiredFields: '請填寫以下必填項：{fields}',
+      invalidRequiredFields: '請檢查並填寫所有必填項',
+      textInputRequired: '請輸入文字內容',
     },
 
     // 處理狀態
@@ -116,6 +119,9 @@ export default flat({
       success: '刪除成功',
       failed: '刪除失敗，請重試',
     },
+
+    // 生成狀態
+    generating: '生成中...',
   },
 
   // 專案列表頁面

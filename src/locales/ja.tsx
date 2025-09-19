@@ -37,6 +37,9 @@ export default flat({
       claimFailed: '受け取りに失敗しました。再度お試しください',
       createOrderFailed: 'チャージ注文の作成に失敗しました',
       createOrderError: 'チャージ注文作成中にエラーが発生しました',
+      missingRequiredFields: '以下の必須項目を入力してください：{fields}',
+      invalidRequiredFields: 'すべての必須項目を確認して入力してください',
+      textInputRequired: 'テキスト内容を入力してください',
     },
 
     // 処理状況
@@ -116,6 +119,9 @@ export default flat({
       success: '削除成功',
       failed: '削除に失敗しました。再度お試しください',
     },
+
+    // 生成状態
+    generating: '生成中...',
   },
 
   // プロジェクト一覧ページ

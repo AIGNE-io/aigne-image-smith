@@ -37,6 +37,9 @@ export default flat({
       claimFailed: '领取失败，请重试',
       createOrderFailed: '创建充值订单失败',
       createOrderError: '创建充值订单时发生错误',
+      missingRequiredFields: '请填写以下必填项：{fields}',
+      invalidRequiredFields: '请检查并填写所有必填项',
+      textInputRequired: '请输入文本内容',
     },
 
     // 处理状态
@@ -116,6 +119,9 @@ export default flat({
       success: '删除成功',
       failed: '删除失败，请重试',
     },
+
+    // 生成状态
+    generating: '生成中...',
   },
 
   // 项目列表页面

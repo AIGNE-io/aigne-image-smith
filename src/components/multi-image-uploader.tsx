@@ -168,6 +168,7 @@ interface MultiImageUploaderProps {
   currentLanguage?: string; // 当前语言，默认为 'zh'
   onGenerate?: () => void; // 手动触发生成的回调函数
   showGenerateButton?: boolean; // 是否显示生成按钮
+  hasControlsConfig?: boolean; // 是否有动态控制组件
 }
 
 export function MultiImageUploader({
@@ -182,6 +183,7 @@ export function MultiImageUploader({
   currentLanguage = 'zh',
   onGenerate,
   showGenerateButton = false,
+  hasControlsConfig = false,
 }: MultiImageUploaderProps) {
   const { t } = useLocaleContext();
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -250,6 +252,8 @@ export function MultiImageUploader({
           openLoginDialog={openLoginDialog}
           disabled={disabled}
           imageDescription={currentDescriptions[0]}
+          currentImage={images[0] || null}
+          hasControlsConfig={hasControlsConfig}
         />
       </SingleUploadArea>
     );

@@ -28,7 +28,7 @@ import type {
 const ControlCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: '12px',
-  // border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${theme.palette.divider}`,
   backgroundColor: theme.palette.background.paper,
 }));
 

@@ -37,6 +37,9 @@ export default flat({
       claimFailed: 'Claim failed, please try again',
       createOrderFailed: 'Failed to create recharge order',
       createOrderError: 'Error occurred while creating recharge order',
+      missingRequiredFields: 'Please fill in the following required fields: {fields}',
+      invalidRequiredFields: 'Please check and fill in all required fields',
+      textInputRequired: 'Please input text content',
     },
 
     // Processing status
@@ -116,6 +119,9 @@ export default flat({
       success: 'Deleted successfully',
       failed: 'Delete failed, please try again',
     },
+
+    // Generation status
+    generating: 'Generating...',
   },
 
   // Projects list page

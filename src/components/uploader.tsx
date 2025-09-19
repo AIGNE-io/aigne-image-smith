@@ -11,7 +11,7 @@ const UploaderComponent = lazy(() => import('@blocklet/uploader/react').then((re
 // 样式化的上传按钮，与 home.tsx 中的 GoldenButton 保持一致
 const GoldenButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
+  color: theme.palette.common.white,
   fontWeight: 'bold',
   fontSize: '1.1rem',
   padding: '12px 32px',
