@@ -367,6 +367,7 @@ export function MultiImageUploader({
                     onChange={(res: any) => handleImageUpload(res, index)}
                     openLoginDialog={openLoginDialog}
                     disabled={disabled || isUploading}
+                    hasControlsConfig={hasControlsConfig}
                     // eslint-disable-next-line react/no-unstable-nested-components
                     customTrigger={(onClick) => (
                       <UploadTrigger

@@ -99,6 +99,7 @@ export default flat({
       clickToSelect: '下のボタンをクリックして画像を選択',
       description: 'AI画像生成・創作',
       selectButton: '画像を選んで生成開始',
+      selectButtonOnly: '画像を選択',
       imageCount: '{current} / {total} 枚の画像',
       startGenerate: '生成開始',
     },

@@ -7,7 +7,7 @@ const SelectorCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   // border: `1px solid ${theme.palette.divider}`,
   // boxShadow: theme.shadows[2],
-  minHeight: '120px',
+  // minHeight: '120px',
 }));
 
 const BackgroundOptionBox = styled(Box)<{ selected: boolean; bgColor: string }>(({ theme, selected, bgColor }) => ({

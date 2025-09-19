@@ -97,6 +97,7 @@ export function SingleImageUploader({
       openLoginDialog={openLoginDialog}
       disabled={disabled}
       title={imageDescription || undefined}
+      hasControlsConfig={hasControlsConfig}
     />
   );
 }
