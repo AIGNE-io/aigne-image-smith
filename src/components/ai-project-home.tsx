@@ -34,6 +34,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { FacebookIcon, FacebookShareButton, TwitterShareButton, XIcon } from 'react-share';
 
 import { useSessionContext } from '../contexts/session';
@@ -848,6 +849,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           zIndex: 0,
         },
       })}>
+      <Helmet>
+        <title>{config.title || t('home.title')}</title>
+      </Helmet>
       {/* 顶部标题栏 - 响应式精致设计 */}
       <Box
         sx={(theme) => ({
@@ -995,7 +999,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           )}
         </Stack>
       </Box>
-
       {/* 主要内容区容器 - 确保第一屏占满 */}
       <Box
         sx={{
@@ -1685,7 +1688,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </Box>
         </Box>
       </Box>
-
       {/* 历史记录区域 - 页面底部 */}
       {generatedHistory.length > 0 && (
         <Box
@@ -1959,7 +1961,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </VintageCard>
         </Box>
       )}
-
       {/* 查看大图对话框 */}
       <Dialog
         open={viewImageDialog.open}
@@ -2039,7 +2040,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           )}
         </DialogContent>
       </Dialog>
-
       {/* 删除确认对话框 */}
       <Dialog
         open={deleteDialog.open}
@@ -2106,7 +2106,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* 分享菜单 */}
       <Menu
         anchorEl={shareAnchorEl}
