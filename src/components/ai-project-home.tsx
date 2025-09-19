@@ -70,15 +70,6 @@ const VintageCard = styled(Paper)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   position: 'relative',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: `linear-gradient(90deg, transparent, ${theme.palette.divider}, transparent)`,
-  },
 }));
 
 const ImageCompareContainer = styled(Box)(({ theme }) => ({
@@ -188,6 +179,13 @@ interface AIProjectConfig {
 interface AIProjectHomeProps {
   config: AIProjectConfig;
 }
+
+// Helper function to get localized text
+const getLocalizedText = (text: string | Record<string, string> | undefined, locale: string): string => {
+  if (!text) return '';
+  if (typeof text === 'string') return text;
+  return text[locale] || text['zh-CN'] || text.en || Object.values(text)[0] || '';
+};
 
 function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const { t, locale } = useLocaleContext();
@@ -672,7 +670,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
 
       if (isEmpty) {
-        missingFields.push(control.label);
+        missingFields.push(getLocalizedText(control.label, locale));
       }
     });
 
@@ -1271,7 +1269,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
             )}
 
             {/* 上传区域 - 根据输入类型选择 */}
-            <VintageCard elevation={4} style={{ flex: 1 }}>
+            <VintageCard
+              elevation={4}
+              style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {processing.isProcessing ? (
                 <Box sx={{ py: { xs: 3, sm: 4 } }}>
                   <Stack spacing={{ xs: 1.5, sm: 2 }} alignItems="center">

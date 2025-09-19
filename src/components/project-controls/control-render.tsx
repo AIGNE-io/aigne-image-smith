@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import {
   Box,
   Chip,
@@ -25,6 +26,13 @@ import type {
   TextInputControlConfig,
 } from './types';
 
+// Helper function to get localized text
+const getLocalizedText = (text: string | Record<string, string> | undefined, locale: string): string => {
+  if (!text) return '';
+  if (typeof text === 'string') return text;
+  return text[locale] || text['zh-CN'] || text.en || Object.values(text)[0] || '';
+};
+
 const ControlCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: '12px',
@@ -40,6 +48,8 @@ interface ControlRendererProps {
 }
 
 export function ControlRenderer({ config, value, onChange, disabled = false }: ControlRendererProps) {
+  const { locale } = useLocaleContext();
+
   const handleChange = (newValue: any) => {
     onChange(config.key, newValue);
   };
@@ -61,7 +71,7 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {(selected as string[]).map((val) => {
                           const option = selectConfig.options.find((opt) => opt.value === val);
-                          return <Chip key={val} label={option?.label || val} size="small" />;
+                          return <Chip key={val} label={getLocalizedText(option?.label, locale) || val} size="small" />;
                         })}
                       </Box>
                     )
@@ -81,11 +91,11 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
                         }}
                       />
                     )}
-                    <Typography>{option.label}</Typography>
+                    <Typography>{getLocalizedText(option.label, locale)}</Typography>
                   </Stack>
                   {option.description && (
                     <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                      {option.description}
+                      {getLocalizedText(option.description, locale)}
                     </Typography>
                   )}
                 </MenuItem>
@@ -145,7 +155,7 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
           <TextField
             value={value || textConfig.defaultValue || ''}
             onChange={(e) => handleChange(e.target.value)}
-            placeholder={textConfig.placeholder}
+            placeholder={getLocalizedText(textConfig.placeholder, locale)}
             inputProps={{
               maxLength: textConfig.maxLength,
             }}
@@ -157,12 +167,19 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
 
       case 'backgroundSelector': {
         const bgConfig = config as BackgroundSelectorControlConfig;
+        // Convert multi-language labels to localized strings for BackgroundSelector
+        const localizedBackgrounds = bgConfig.backgrounds.map((bg) => ({
+          value: bg.value,
+          label: getLocalizedText(bg.label, locale),
+          color: bg.color,
+        }));
+
         return (
           <BackgroundSelector
             selectedBackground={value || bgConfig.defaultValue || bgConfig.backgrounds[0]?.value || ''}
             showTitle={false}
             onBackgroundChange={handleChange}
-            backgrounds={bgConfig.backgrounds}
+            backgrounds={localizedBackgrounds}
           />
         );
       }
@@ -176,12 +193,12 @@ export function ControlRenderer({ config, value, onChange, disabled = false }: C
     <ControlCard elevation={1}>
       <FormControl fullWidth>
         <FormLabel sx={{ mb: 1.5, fontWeight: 500, fontSize: '0.95rem' }}>
-          {config.label}
+          {getLocalizedText(config.label, locale)}
           {config.required && <span style={{ color: '#f44336', marginLeft: 4 }}>*</span>}
         </FormLabel>
         {config.description && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>
-            {config.description}
+            {getLocalizedText(config.description, locale)}
           </Typography>
         )}
         {renderControl()}

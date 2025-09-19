@@ -87,7 +87,7 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
   position: 'absolute',
   top: 6,
   right: 6,
-  backgroundColor: `${theme.palette.error.main}CC`,
+  backgroundColor: `${theme.palette.primary.main}`,
   color: theme.palette.common.white,
   width: 32,
   height: 32,
@@ -96,7 +96,7 @@ const DeleteButton = styled(IconButton)(({ theme }) => ({
   backdropFilter: 'blur(4px)',
   boxShadow: theme.shadows[3],
   '&:hover': {
-    backgroundColor: theme.palette.error.main,
+    backgroundColor: theme.palette.primary.main,
     transform: 'scale(1.05)',
     boxShadow: theme.shadows[6],
   },

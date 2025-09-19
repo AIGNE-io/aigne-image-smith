@@ -11,16 +11,18 @@ const router = Router();
 // Control component validation schemas
 const controlOptionSchema = Joi.object({
   value: Joi.string().required(),
-  label: Joi.string().required(),
+  label: Joi.alternatives().try(Joi.string(), Joi.object().pattern(Joi.string(), Joi.string())).required(),
   color: Joi.string().optional(),
-  description: Joi.string().optional(),
+  description: Joi.alternatives().try(Joi.string(), Joi.object().pattern(Joi.string(), Joi.string())).optional(),
 });
 
 const baseControlConfigSchema = Joi.object({
   type: Joi.string().required(),
   key: Joi.string().required(),
-  label: Joi.string().required(),
-  description: Joi.string().allow('').optional(),
+  label: Joi.alternatives().try(Joi.string(), Joi.object().pattern(Joi.string(), Joi.string())).required(),
+  description: Joi.alternatives()
+    .try(Joi.string().allow(''), Joi.object().pattern(Joi.string(), Joi.string()))
+    .optional(),
   required: Joi.boolean().optional(),
   defaultValue: Joi.any().optional(),
 });
@@ -56,7 +58,7 @@ const numberControlSchema = baseControlConfigSchema.keys({
 
 const textControlSchema = baseControlConfigSchema.keys({
   type: Joi.string().valid('text').required(),
-  placeholder: Joi.string().optional(),
+  placeholder: Joi.alternatives().try(Joi.string(), Joi.object().pattern(Joi.string(), Joi.string())).optional(),
   maxLength: Joi.number().optional(),
 });
 
@@ -66,7 +68,7 @@ const backgroundSelectorSchema = baseControlConfigSchema.keys({
     .items(
       Joi.object({
         value: Joi.string().required(),
-        label: Joi.string().required(),
+        label: Joi.alternatives().try(Joi.string(), Joi.object().pattern(Joi.string(), Joi.string())).required(),
         color: Joi.string().required(),
       }),
     )

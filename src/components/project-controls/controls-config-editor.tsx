@@ -74,7 +74,7 @@ const createEmptyImageDescriptionsObject = () => {
 const DEFAULT_CONTROLS: { [key: string]: Partial<ControlConfig> } = {
   select: {
     type: 'select',
-    options: [{ value: 'option1', label: 'Option 1' }],
+    options: [{ value: 'option1', label: createEmptyLanguageObject() }],
   },
   slider: {
     type: 'slider',
@@ -91,13 +91,13 @@ const DEFAULT_CONTROLS: { [key: string]: Partial<ControlConfig> } = {
   },
   text: {
     type: 'text',
-    placeholder: 'Enter text...',
+    placeholder: createEmptyLanguageObject(),
   },
   backgroundSelector: {
     type: 'backgroundSelector',
     backgrounds: [
-      { value: 'white', label: 'White', color: '#FFFFFF' },
-      { value: 'blue', label: 'Blue', color: '#1565C0' },
+      { value: 'white', label: createEmptyLanguageObject(), color: '#FFFFFF' },
+      { value: 'blue', label: createEmptyLanguageObject(), color: '#1565C0' },
     ],
   },
 };
@@ -142,7 +142,7 @@ function ControlConfigEditor({
                   onClick={() => {
                     const newOptions = [
                       ...(selectConfig.options || []),
-                      { value: `option${(selectConfig.options?.length || 0) + 1}`, label: 'New Option' },
+                      { value: `option${(selectConfig.options?.length || 0) + 1}`, label: createEmptyLanguageObject() },
                     ];
                     updateConfig({ options: newOptions });
                   }}>
@@ -151,46 +151,54 @@ function ControlConfigEditor({
               </Stack>
               <Stack spacing={1}>
                 {(selectConfig.options || []).map((option, index) => (
-                  <Stack key={`option-${index}`} direction="row" spacing={1} alignItems="center">
-                    <TextField
-                      size="small"
-                      label={t('components.controlsConfigEditor.controlConfig.select.optionValue')}
-                      value={option.value}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, value: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <TextField
-                      size="small"
-                      label={t('components.controlsConfigEditor.controlConfig.select.optionLabel')}
-                      value={option.label}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, label: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <TextField
-                      size="small"
-                      label={t('components.controlsConfigEditor.controlConfig.select.optionColor')}
-                      value={option.color || ''}
-                      onChange={(e) => {
-                        const newOptions = [...selectConfig.options];
-                        newOptions[index] = { ...option, color: e.target.value };
-                        updateConfig({ options: newOptions });
-                      }}
-                    />
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        const newOptions = selectConfig.options.filter((_, i) => i !== index);
-                        updateConfig({ options: newOptions });
-                      }}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Stack>
+                  <Box key={`option-${index}`} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 1 }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField
+                          size="small"
+                          label={t('components.controlsConfigEditor.controlConfig.select.optionValue')}
+                          value={option.value}
+                          onChange={(e) => {
+                            const newOptions = [...selectConfig.options];
+                            newOptions[index] = { ...option, value: e.target.value };
+                            updateConfig({ options: newOptions });
+                          }}
+                        />
+                        <TextField
+                          size="small"
+                          label={t('components.controlsConfigEditor.controlConfig.select.optionColor')}
+                          value={option.color || ''}
+                          onChange={(e) => {
+                            const newOptions = [...selectConfig.options];
+                            newOptions[index] = { ...option, color: e.target.value };
+                            updateConfig({ options: newOptions });
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            const newOptions = selectConfig.options.filter((_, i) => i !== index);
+                            updateConfig({ options: newOptions });
+                          }}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Stack>
+                      <MultiLanguageEditor
+                        label={t('components.controlsConfigEditor.controlConfig.select.optionLabel')}
+                        values={
+                          typeof option.label === 'string'
+                            ? { en: option.label }
+                            : option.label || createEmptyLanguageObject()
+                        }
+                        onChange={(values) => {
+                          const newOptions = [...selectConfig.options];
+                          const hasContent = Object.values(values).some((v) => v?.trim());
+                          newOptions[index] = { ...option, label: hasContent ? values : createEmptyLanguageObject() };
+                          updateConfig({ options: newOptions });
+                        }}
+                      />
+                    </Stack>
+                  </Box>
                 ))}
               </Stack>
             </Box>
@@ -253,11 +261,17 @@ function ControlConfigEditor({
         const textConfig = controlConfig as TextInputControlConfig;
         return (
           <>
-            <TextField
+            <MultiLanguageEditor
               label={t('components.controlsConfigEditor.controlConfig.text.placeholder')}
-              value={textConfig.placeholder || ''}
-              onChange={(e) => updateConfig({ placeholder: e.target.value })}
-              fullWidth
+              values={
+                typeof textConfig.placeholder === 'string'
+                  ? { en: textConfig.placeholder }
+                  : textConfig.placeholder || createEmptyLanguageObject()
+              }
+              onChange={(values) => {
+                const hasContent = Object.values(values).some((v) => v?.trim());
+                updateConfig({ placeholder: hasContent ? values : undefined });
+              }}
             />
             <TextField
               label={t('components.controlsConfigEditor.controlConfig.text.maxLength')}
@@ -285,7 +299,7 @@ function ControlConfigEditor({
                     ...(bgConfig.backgrounds || []),
                     {
                       value: `bg${(bgConfig.backgrounds?.length || 0) + 1}`,
-                      label: 'New Background',
+                      label: createEmptyLanguageObject(),
                       color: '#FFFFFF',
                     },
                   ];
@@ -296,55 +310,59 @@ function ControlConfigEditor({
             </Stack>
             <Stack spacing={1}>
               {(bgConfig.backgrounds || []).map((bg, index) => (
-                <Stack key={`bg-${index}`} direction="row" spacing={1} alignItems="center">
-                  <TextField
-                    size="small"
-                    label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.value')}
-                    value={bg.value}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, value: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <TextField
-                    size="small"
-                    label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.label')}
-                    value={bg.label}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, label: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <TextField
-                    size="small"
-                    label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.color')}
-                    value={bg.color}
-                    onChange={(e) => {
-                      const newBackgrounds = [...bgConfig.backgrounds];
-                      newBackgrounds[index] = { ...bg, color: e.target.value };
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      backgroundColor: bg.color,
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      const newBackgrounds = bgConfig.backgrounds.filter((_, i) => i !== index);
-                      updateConfig({ backgrounds: newBackgrounds });
-                    }}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Stack>
+                <Box key={`bg-${index}`} sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2, mb: 1 }}>
+                  <Stack spacing={2}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TextField
+                        size="small"
+                        label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.value')}
+                        value={bg.value}
+                        onChange={(e) => {
+                          const newBackgrounds = [...bgConfig.backgrounds];
+                          newBackgrounds[index] = { ...bg, value: e.target.value };
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}
+                      />
+                      <TextField
+                        size="small"
+                        label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.color')}
+                        value={bg.color}
+                        onChange={(e) => {
+                          const newBackgrounds = [...bgConfig.backgrounds];
+                          newBackgrounds[index] = { ...bg, color: e.target.value };
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          backgroundColor: bg.color,
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const newBackgrounds = bgConfig.backgrounds.filter((_, i) => i !== index);
+                          updateConfig({ backgrounds: newBackgrounds });
+                        }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Stack>
+                    <MultiLanguageEditor
+                      label={t('components.controlsConfigEditor.controlConfig.backgroundSelector.label')}
+                      values={typeof bg.label === 'string' ? { en: bg.label } : bg.label || createEmptyLanguageObject()}
+                      onChange={(values) => {
+                        const newBackgrounds = [...bgConfig.backgrounds];
+                        const hasContent = Object.values(values).some((v) => v?.trim());
+                        newBackgrounds[index] = { ...bg, label: hasContent ? values : createEmptyLanguageObject() };
+                        updateConfig({ backgrounds: newBackgrounds });
+                      }}
+                    />
+                  </Stack>
+                </Box>
               ))}
             </Stack>
           </Box>
@@ -361,7 +379,14 @@ function ControlConfigEditor({
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" alignItems="center" spacing={2}>
           <Chip label={controlConfig.type} size="small" />
-          <Typography>{controlConfig.label || t('components.controlsConfigEditor.controlConfig.untitled')}</Typography>
+          <Typography>
+            {typeof controlConfig.label === 'string'
+              ? controlConfig.label
+              : controlConfig.label?.['zh-CN'] ||
+                controlConfig.label?.en ||
+                Object.values(controlConfig.label || {})[0] ||
+                t('components.controlsConfigEditor.controlConfig.untitled')}
+          </Typography>
           <Typography variant="caption" color="text.secondary">
             Key: {controlConfig.key}
           </Typography>
@@ -377,21 +402,35 @@ function ControlConfigEditor({
               helperText={t('components.controlsConfigEditor.controlConfig.key.helperText')}
               required
             />
-            <TextField
-              label={t('components.controlsConfigEditor.controlConfig.label.label')}
-              value={controlConfig.label}
-              onChange={(e) => updateConfig({ label: e.target.value })}
-              required
-            />
           </Stack>
 
-          <TextField
+          <MultiLanguageEditor
+            label={t('components.controlsConfigEditor.controlConfig.label.label')}
+            values={
+              typeof controlConfig.label === 'string'
+                ? { en: controlConfig.label }
+                : controlConfig.label || createEmptyLanguageObject()
+            }
+            onChange={(values) => {
+              const hasContent = Object.values(values).some((v) => v?.trim());
+              updateConfig({ label: hasContent ? values : createEmptyLanguageObject() });
+            }}
+            required
+          />
+
+          <MultiLanguageEditor
             label={t('components.controlsConfigEditor.controlConfig.description.label')}
-            value={controlConfig.description || ''}
-            onChange={(e) => updateConfig({ description: e.target.value })}
+            values={
+              typeof controlConfig.description === 'string'
+                ? { en: controlConfig.description }
+                : controlConfig.description || createEmptyLanguageObject()
+            }
+            onChange={(values) => {
+              const hasContent = Object.values(values).some((v) => v?.trim());
+              updateConfig({ description: hasContent ? values : undefined });
+            }}
             multiline
             rows={2}
-            fullWidth
           />
 
           <FormControlLabel
@@ -436,7 +475,7 @@ export function ControlsConfigEditor({
   const addControl = () => {
     const baseConfig = {
       key: `control_${Date.now()}`,
-      label: 'New Control',
+      label: createEmptyLanguageObject(),
       ...DEFAULT_CONTROLS[newControlType],
     };
 
