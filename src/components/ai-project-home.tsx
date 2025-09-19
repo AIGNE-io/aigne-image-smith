@@ -1580,7 +1580,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
               </Box>
 
               {/* 操作按钮区域 - 生成后才显示 */}
-              {(inputType === 'text' ? textInput.trim() : originalImages.length > 0) && generatedImage && (
+              {generatedImage && (
                 <>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
@@ -1599,33 +1599,35 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       }}>
                       {t('home.actions.download')}
                     </GoldenButton>
-                    <Button
-                      variant="outlined"
-                      startIcon={<RefreshIcon />}
-                      onClick={handleRetry}
-                      disabled={processing.isProcessing}
-                      size="medium"
-                      sx={(theme) => ({
-                        borderColor: `${theme.palette.primary.main}80`,
-                        color: theme.palette.text.primary,
-                        fontWeight: 500,
-                        px: { xs: 2, sm: 3 },
-                        py: { xs: 0.75, sm: 1 },
-                        borderRadius: '50px',
-                        textTransform: 'none',
-                        fontSize: { xs: '0.75rem', sm: '1rem' },
-                        width: { xs: '100%', sm: 'auto' },
-                        '&:hover': {
-                          borderColor: theme.palette.primary.main,
-                          backgroundColor: `${theme.palette.primary.main}20`,
-                        },
-                        '&:disabled': {
-                          borderColor: `${theme.palette.primary.main}30`,
-                          color: theme.palette.text.secondary,
-                        },
-                      })}>
-                      {t('home.actions.retry')}
-                    </Button>
+                    {(inputType === 'text' ? textInput.trim() : originalImages.length > 0) && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<RefreshIcon />}
+                        onClick={handleRetry}
+                        disabled={processing.isProcessing}
+                        size="medium"
+                        sx={(theme) => ({
+                          borderColor: `${theme.palette.primary.main}80`,
+                          color: theme.palette.text.primary,
+                          fontWeight: 500,
+                          px: { xs: 2, sm: 3 },
+                          py: { xs: 0.75, sm: 1 },
+                          borderRadius: '50px',
+                          textTransform: 'none',
+                          fontSize: { xs: '0.75rem', sm: '1rem' },
+                          width: { xs: '100%', sm: 'auto' },
+                          '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: `${theme.palette.primary.main}20`,
+                          },
+                          '&:disabled': {
+                            borderColor: `${theme.palette.primary.main}30`,
+                            color: theme.palette.text.secondary,
+                          },
+                        })}>
+                        {t('home.actions.retry')}
+                      </Button>
+                    )}
                   </Stack>
 
                   {/* Powered by AIGNE */}
@@ -1670,7 +1672,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         }`}
                         alt="AIGNE"
                         style={{
-                          height: '18px',
+                          height: '24px',
                           width: 'auto',
                           opacity: 0.8,
                         }}
