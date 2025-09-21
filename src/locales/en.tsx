@@ -123,6 +123,15 @@ export default flat({
 
     // Generation status
     generating: 'Generating...',
+
+    // AI Model Selection
+    aiModel: {
+      title: 'Select AI Model',
+      description: {
+        doubao: 'ByteDance Doubao large model with strong Chinese understanding',
+        gemini: 'Google Gemini model with excellent multimodal capabilities',
+      },
+    },
   },
 
   // Projects list page

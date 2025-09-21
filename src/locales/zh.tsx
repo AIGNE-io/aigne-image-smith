@@ -123,6 +123,15 @@ export default flat({
 
     // 生成状态
     generating: '生成中...',
+
+    // AI模型选择
+    aiModel: {
+      title: '选择AI模型',
+      description: {
+        doubao: '字节跳动豆包大模型，中文理解能力强',
+        gemini: 'Google Gemini 模型，多模态能力出色',
+      },
+    },
   },
 
   // 项目列表页面

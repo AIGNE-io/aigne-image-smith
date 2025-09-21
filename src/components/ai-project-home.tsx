@@ -21,11 +21,14 @@ import {
   DialogContent,
   DialogTitle,
   Fade,
+  FormControl,
   IconButton,
+  InputLabel,
   LinearProgress,
   Menu,
   MenuItem,
   Paper,
+  Select,
   Slider,
   Stack,
   Typography,
@@ -231,6 +234,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const shareMenuOpen = Boolean(shareAnchorEl);
+  const [modelType, setModelType] = useState<string>('doubao');
   const isLoggedIn = session?.user;
 
   // 获取输入类型
@@ -498,7 +502,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           originalImages: images,
           clientId: config.clientId,
           controlValues,
-          modelType: 'gemini',
+          modelType,
           metadata: {
             controlValues,
             inputType,
@@ -1337,6 +1341,53 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   }
                 />
               )}
+            </VintageCard>
+
+            {/* AI模型选择 */}
+            <VintageCard elevation={2} sx={{ py: 2, px: 3 }}>
+              <FormControl fullWidth size="medium">
+                <InputLabel
+                  sx={(theme) => ({
+                    color: theme.palette.text.secondary,
+                    '&.Mui-focused': {
+                      color: theme.palette.primary.main,
+                    },
+                  })}>
+                  {t('home.aiModel.title')}
+                </InputLabel>
+                <Select
+                  value={modelType}
+                  label={t('home.aiModel.title')}
+                  onChange={(e) => setModelType(e.target.value)}
+                  disabled={processing.isProcessing}
+                  sx={(theme) => ({
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: `${theme.palette.primary.main}40`,
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: `${theme.palette.primary.main}60`,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme.palette.primary.main,
+                    },
+                  })}>
+                  <MenuItem value="doubao">Seedream 4.0</MenuItem>
+                  <MenuItem value="gemini">Gemini 2.5</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography
+                variant="body2"
+                sx={(theme) => ({
+                  color: theme.palette.text.secondary,
+                  mt: 1,
+                  fontSize: '0.75rem',
+                  lineHeight: 1.4,
+                })}>
+                {modelType === 'doubao' ? t('home.aiModel.description.doubao') : t('home.aiModel.description.gemini')}
+              </Typography>
             </VintageCard>
 
             {/* 动态控制组件 */}

@@ -195,6 +195,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     try {
       // Initialize AI model
       if (modelType === 'gemini') {
+        logger.info('Start AIGNE Hub API call with gemini');
         const model = new AIGNEHubChatModel({
           model: 'google/gemini-2.5-flash-image-preview',
           // model: 'doubao/doubao-seedream-4-0-250828',
@@ -303,12 +304,13 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
           }
         })();
       } else if (modelType === 'doubao') {
+        logger.info('Start AIGNE Hub API call with doubao');
         const model = new AIGNEHubImageModel({
           model: 'doubao/doubao-seedream-4-0-250828',
         });
 
         const params: any = {
-          prompt: finalPrompt,
+          prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
           stream: false,
           watermark: false,
           responseFormat: 'url',
@@ -317,6 +319,15 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
         if (imageUrls && imageUrls.length > 0) {
           params.image = imageUrls.map((url: string) => getImageUrl(url));
         }
+
+        // Call AIGNE Hub API
+        logger.info('Starting AIGNE Hub API call', {
+          generationId: generation.id,
+          prompt: finalPrompt,
+          imageCount: imageUrls.length,
+          originalImages: imageUrls.map((url: string) => getImageUrl(url)),
+          params,
+        });
 
         const result = await model.invoke(params);
 
