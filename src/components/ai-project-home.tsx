@@ -498,6 +498,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           originalImages: images,
           clientId: config.clientId,
           controlValues,
+          modelType: 'gemini',
           metadata: {
             controlValues,
             inputType,
