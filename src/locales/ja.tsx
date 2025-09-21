@@ -123,6 +123,15 @@ export default flat({
 
     // 生成状態
     generating: '生成中...',
+
+    // AIモデル選択
+    aiModel: {
+      title: 'AIモデルを選択',
+      description: {
+        doubao: 'ByteDance豆包大型モデル、中国語理解能力が優秀',
+        gemini: 'Google Geminiモデル、マルチモーダル能力が優秀',
+      },
+    },
   },
 
   // プロジェクト一覧ページ

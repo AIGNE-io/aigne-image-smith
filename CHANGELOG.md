@@ -1,3 +1,8 @@
+## 0.0.8 (2025-9-21)
+
+- support select image model by user
+- support doubao seedream 4.0
+
 ## 0.0.7 (2025-9-19)
 
 - optimize single uploader button text

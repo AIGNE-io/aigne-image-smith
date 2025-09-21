@@ -1,60 +1,46 @@
-import { AIGNEHubChatModel } from '@aigne/aigne-hub';
+import { AIGNEHubChatModel, AIGNEHubImageModel } from '@aigne/aigne-hub';
+import { ImageModelOutputImageUrl } from '@aigne/core/agents/image-model';
 import { LocalContent } from '@aigne/core/lib/cjs/agents/chat-model';
 import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { uploadToMediaKit } from '@blocklet/uploader-server';
 import axios from 'axios';
 import { Router } from 'express';
+import fs from 'fs';
 import Joi from 'joi';
-// Import prompt processing utilities for dynamic prompt building
-// Note: These utilities are in the frontend src directory, so we need proper path resolution
 import path from 'path';
 import { Op } from 'sequelize';
+import { promisify } from 'util';
 
+import { env } from '../libs/env';
 import logger from '../libs/logger';
 import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import { getImageUrl } from '../libs/utils';
 import AIProject from '../store/models/ai-project';
 import ImageGeneration from '../store/models/image-generation';
 
-const promptUtilsPath = path.resolve(__dirname, '../../../src/libs/promptUtils.ts');
+const unlinkAsync = promisify(fs.unlink);
 
 // Dynamic import for prompt utilities since they're TypeScript modules
-let promptUtils: any = null;
-try {
-  // eslint-disable-next-line import/no-dynamic-require, global-require
-  promptUtils = require(promptUtilsPath);
-} catch (error) {
-  // Fallback: implement basic prompt processing inline
-  promptUtils = {
-    replacePromptVariables: (template: string, variables: Record<string, any>) => {
-      let result = template;
-      Object.entries(variables).forEach(([key, value]) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        result = result.replace(regex, String(value));
-      });
-      return result;
-    },
-    buildPromptVariables: (controlValues: Record<string, any>, images: string[]) => {
-      const variables = { ...controlValues };
-      images.forEach((image, index) => {
-        variables[`image${index + 1}`] = image;
-      });
-      return variables;
-    },
-  };
-}
+const promptUtils = {
+  replacePromptVariables: (template: string, variables: Record<string, any>) => {
+    let result = template;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      result = result.replace(regex, String(value));
+    });
+    return result;
+  },
+  buildPromptVariables: (controlValues: Record<string, any>, images: string[]) => {
+    const variables = { ...controlValues };
+    images.forEach((image, index) => {
+      variables[`image${index + 1}`] = image;
+    });
+    return variables;
+  },
+};
 
 const router = Router();
-
-// Initialize AI model
-const model = new AIGNEHubChatModel({
-  model: 'google/gemini-2.5-flash-image-preview',
-  // model: 'doubao/doubao-seedream-4-0-250828',
-  modelOptions: {
-    modalities: ['text', 'image'],
-  },
-});
 
 // Validation schemas
 const generateImageSchema = Joi.object({
@@ -69,6 +55,7 @@ const generateImageSchema = Joi.object({
   textInput: Joi.string().min(0).max(5000).allow('').optional(),
 
   clientId: Joi.string().required(),
+  modelType: Joi.string().required(),
   metadata: Joi.object().optional(),
 }); // At least one prompt method must be provided
 
@@ -87,6 +74,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
   try {
     const userDid = req.user?.did!!;
+    const { modelType } = req.body;
     // Validate request body
     const { error, value } = generateImageSchema.validate(req.body);
     if (error) {
@@ -201,106 +189,223 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     let generatedImg = '';
     let processingTime = 0;
     let fileName = '';
+    let filePath = '';
     const processingStartTime = Date.now();
 
     try {
-      // Prepare message content with the final prompt
-      const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
-
-      if (textInput) {
-        messageContent.push({
-          type: 'text',
-          text: textInput,
+      // Initialize AI model
+      if (modelType === 'gemini') {
+        logger.info('Start AIGNE Hub API call with gemini');
+        const model = new AIGNEHubChatModel({
+          model: 'google/gemini-2.5-flash-image-preview',
+          // model: 'doubao/doubao-seedream-4-0-250828',
+          modelOptions: {
+            modalities: ['text', 'image'],
+          },
         });
-      }
 
-      // Add all original images if provided
-      if (imageUrls.length > 0) {
-        const getMimeType = async (imgUrl: string) => {
-          try {
-            const { data } = await axios.get(`${imgUrl}.json`);
-            return data.metadata.type;
-          } catch (error) {
-            return 'image/jpeg';
-          }
-        };
+        // Prepare message content with the final prompt
+        const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
 
-        // Process each image and add to message content
-        for (const imageUrl of imageUrls) {
-          const imgUrl = getImageUrl(imageUrl);
-          const mimeType = await getMimeType(imgUrl);
+        if (textInput) {
           messageContent.push({
-            type: 'url',
-            url: imgUrl,
-            mimeType,
+            type: 'text',
+            text: textInput,
           });
         }
-      }
 
-      // Call AIGNE Hub API
-      logger.info('Starting AIGNE Hub API call', {
-        generationId: generation.id,
-        prompt: finalPrompt,
-        imageCount: imageUrls.length,
-        originalImages: imageUrls.map((url: string) => getImageUrl(url)),
-        messages: [
-          {
-            role: 'user',
-            content: messageContent,
-          },
-        ],
-      });
+        // Add all original images if provided
+        if (imageUrls.length > 0) {
+          const getMimeType = async (imgUrl: string) => {
+            try {
+              const { data } = await axios.get(`${imgUrl}.json`);
+              return data.metadata.type;
+            } catch (error) {
+              return 'image/jpeg';
+            }
+          };
 
-      const result = await model.invoke({
-        messages: [
-          {
-            role: 'user',
-            content: messageContent,
-          },
-        ],
-      });
-
-      logger.info('Finish AIGNE Hub API call', {
-        result,
-      });
-
-      if (!result.files || result.files.length === 0) {
-        throw new Error('Image generation failed');
-      }
-
-      const { path: filePath, mimeType } = result.files[0]! as LocalContent;
-
-      const getFileExtension = (mimeType: string | undefined): string => {
-        if (!mimeType) return '.jpeg';
-        const mimeToExtension: Record<string, string> = {
-          'image/jpeg': '.jpeg',
-          'image/jpg': '.jpg',
-          'image/png': '.png',
-          'image/gif': '.gif',
-          'image/webp': '.webp',
-          'image/bmp': '.bmp',
-          'image/tiff': '.tiff',
-          'image/svg+xml': '.svg',
-        };
-        return mimeToExtension[mimeType] || '.jpeg';
-      };
-
-      const fileExtension = getFileExtension(mimeType);
-      fileName = `${userDid}_${sessionId}_${Date.now()}${fileExtension}`;
-      generatedImg = await (async () => {
-        try {
-          const res = (
-            await uploadToMediaKit({
-              filePath,
-              fileName,
-            })
-          )?.data;
-          return (res as any).filename;
-        } catch (error) {
-          logger.error(`Failed to upload asset ${filePath}:`, error);
-          return '';
+          // Process each image and add to message content
+          for (const imageUrl of imageUrls) {
+            const imgUrl = getImageUrl(imageUrl);
+            const mimeType = await getMimeType(imgUrl);
+            messageContent.push({
+              type: 'url',
+              url: imgUrl,
+              mimeType,
+            });
+          }
         }
-      })();
+
+        // Call AIGNE Hub API
+        logger.info('Starting AIGNE Hub API call', {
+          generationId: generation.id,
+          prompt: finalPrompt,
+          imageCount: imageUrls.length,
+          originalImages: imageUrls.map((url: string) => getImageUrl(url)),
+          messages: [
+            {
+              role: 'user',
+              content: messageContent,
+            },
+          ],
+        });
+
+        const result = await model.invoke({
+          messages: [
+            {
+              role: 'user',
+              content: messageContent,
+            },
+          ],
+        });
+
+        logger.info('Finish AIGNE Hub API call', {
+          result,
+        });
+
+        if (!result.files || result.files.length === 0) {
+          throw new Error('Image generation failed');
+        }
+
+        const { path, mimeType } = result.files[0]! as LocalContent;
+        filePath = path;
+
+        const getFileExtension = (mimeType: string | undefined): string => {
+          if (!mimeType) return '.jpeg';
+          const mimeToExtension: Record<string, string> = {
+            'image/jpeg': '.jpeg',
+            'image/jpg': '.jpg',
+            'image/png': '.png',
+            'image/gif': '.gif',
+            'image/webp': '.webp',
+            'image/bmp': '.bmp',
+            'image/tiff': '.tiff',
+            'image/svg+xml': '.svg',
+          };
+          return mimeToExtension[mimeType] || '.jpeg';
+        };
+
+        const fileExtension = getFileExtension(mimeType);
+        fileName = `${userDid}_${sessionId}_${Date.now()}${fileExtension}`;
+
+        generatedImg = await (async () => {
+          try {
+            const res = (
+              await uploadToMediaKit({
+                filePath,
+                fileName,
+              })
+            )?.data;
+            return (res as any).filename;
+          } catch (error) {
+            logger.error(`Failed to upload asset ${filePath}:`, error);
+            return '';
+          }
+        })();
+      } else if (modelType === 'doubao') {
+        logger.info('Start AIGNE Hub API call with doubao');
+        const model = new AIGNEHubImageModel({
+          model: 'doubao/doubao-seedream-4-0-250828',
+        });
+
+        const params: any = {
+          prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
+          stream: false,
+          watermark: false,
+          responseFormat: 'url',
+        };
+
+        if (imageUrls && imageUrls.length > 0) {
+          params.image = imageUrls.map((url: string) => getImageUrl(url));
+        }
+
+        // Call AIGNE Hub API
+        logger.info('Starting AIGNE Hub API call', {
+          generationId: generation.id,
+          prompt: finalPrompt,
+          imageCount: imageUrls.length,
+          originalImages: imageUrls.map((url: string) => getImageUrl(url)),
+          params,
+        });
+
+        const result = await model.invoke(params);
+
+        logger.info('Finish AIGNE Hub API call', {
+          result,
+        });
+
+        if (
+          !result ||
+          !result.images ||
+          result.images.length === 0 ||
+          !result.images[0] ||
+          !(result.images[0] as ImageModelOutputImageUrl).url
+        ) {
+          throw new Error('Image generation failed');
+        }
+
+        const douBaoUrl = (result.images[0] as ImageModelOutputImageUrl).url;
+
+        // Download image from douBaoUrl to local temp file
+        const downloadImageFromUrl = async (url: string): Promise<{ filePath: string; fileName: string }> => {
+          const response = await axios({
+            method: 'GET',
+            url,
+            responseType: 'stream',
+          });
+
+          // Generate temp file name using env.dataDir
+          const tempFileName = `doubao_${userDid}_${sessionId}_${Date.now()}.jpeg`;
+          const tempFilePath = path.join(env.dataDir, 'temp', tempFileName);
+
+          // Ensure temp directory exists
+          const tempDir = path.dirname(tempFilePath);
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+
+          // Write stream to file
+          const writer = fs.createWriteStream(tempFilePath);
+          response.data.pipe(writer);
+
+          return new Promise((resolve, reject) => {
+            writer.on('finish', () => {
+              resolve({ filePath: tempFilePath, fileName: tempFileName });
+            });
+            writer.on('error', reject);
+          });
+        };
+
+        const downloadedFile = await downloadImageFromUrl(douBaoUrl);
+        filePath = downloadedFile.filePath;
+        fileName = downloadedFile.fileName;
+
+        generatedImg = await (async () => {
+          try {
+            const res = (
+              await uploadToMediaKit({
+                filePath,
+                fileName,
+              })
+            )?.data;
+            return (res as any).filename;
+          } catch (error) {
+            logger.error(`Failed to upload asset ${filePath}:`, error);
+            return '';
+          } finally {
+            // Clean up downloaded temp file
+            if (filePath && fs.existsSync(filePath)) {
+              try {
+                await unlinkAsync(filePath);
+                logger.info(`Cleaned up temp file: ${filePath}`);
+              } catch (cleanupError) {
+                logger.error(`Failed to clean up temp file ${filePath}:`, cleanupError);
+              }
+            }
+          }
+        })();
+      }
 
       processingTime = Date.now() - processingStartTime;
 
@@ -311,9 +416,18 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       logger.info('AIGNE Hub API call successful', {
         generationId: generation.id,
         processingTime,
-        resultLength: typeof result.content === 'string' ? result.content.length : 'structured',
       });
     } catch (aiError) {
+      // Clean up any temp files if they exist
+      if (modelType === 'doubao' && filePath && fs.existsSync(filePath)) {
+        try {
+          await unlinkAsync(filePath);
+          logger.info(`Cleaned up temp file after error: ${filePath}`);
+        } catch (cleanupError) {
+          logger.error(`Failed to clean up temp file after error ${filePath}:`, cleanupError);
+        }
+      }
+
       // Create credit grant
       const meter = await payment.meters.retrieve(METER_NAME);
       if (meter && customer) {
