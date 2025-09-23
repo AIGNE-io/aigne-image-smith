@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import { Badge, Box, IconButton, Menu, MenuItem, Tab, Tabs, TextField, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
@@ -27,6 +28,7 @@ export default function MultiLanguageEditor({
   placeholder,
   helperText,
 }: MultiLanguageEditorProps) {
+  const { t } = useLocaleContext();
   const [activeTab, setActiveTab] = useState(0);
   const [copyMenuAnchor, setCopyMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -78,7 +80,10 @@ export default function MultiLanguageEditor({
         </Typography>
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-            {getCompletionCount()}/{SUPPORTED_LANGUAGES.length} 语言
+            {t('components.multiLanguageEditor.languageProgress', {
+              completed: getCompletionCount(),
+              total: SUPPORTED_LANGUAGES.length,
+            })}
           </Typography>
         </Box>
       </Box>
@@ -102,11 +107,8 @@ export default function MultiLanguageEditor({
               key={lang.code}
               label={
                 <Box display="flex" alignItems="center" gap={0.5}>
-                  <Box component="span" sx={{ fontSize: '0.9rem' }}>
-                    {lang.flag}
-                  </Box>
                   <Box component="span" sx={{ fontSize: '0.8rem' }}>
-                    {lang.code.toUpperCase()}
+                    {lang.name}
                   </Box>
                   {isLanguageComplete(lang.code) && (
                     <Badge
@@ -139,7 +141,7 @@ export default function MultiLanguageEditor({
           value={values[currentLanguage.code] || ''}
           onChange={(e) => handleFieldChange(e.target.value)}
           disabled={disabled}
-          placeholder={placeholder || `输入${label}...`}
+          placeholder={placeholder || t('components.multiLanguageEditor.inputPlaceholder', { label })}
           helperText={helperText}
           error={required && !values[currentLanguage.code]?.trim()}
           sx={{
@@ -154,7 +156,7 @@ export default function MultiLanguageEditor({
           }}
         />
         {getAvailableCopyLanguages().length > 0 && (
-          <Tooltip title="从其他语言复制">
+          <Tooltip title={t('components.multiLanguageEditor.copyFromOther')}>
             <IconButton size="small" onClick={openCopyMenu} disabled={disabled} sx={{ mt: 0.5, padding: '4px' }}>
               <ContentCopyIcon sx={{ fontSize: 16 }} />
             </IconButton>
@@ -173,14 +175,11 @@ export default function MultiLanguageEditor({
           sx: { mt: 1, minWidth: 180 },
         }}>
         <MenuItem disabled sx={{ fontSize: '0.8rem', color: 'text.secondary', py: 0.5 }}>
-          从以下语言复制:
+          {t('components.multiLanguageEditor.copyMenuTitle')}
         </MenuItem>
         {getAvailableCopyLanguages().map((lang) => (
           <MenuItem key={lang.code} onClick={() => handleCopyFrom(lang.code)} sx={{ py: 0.5 }}>
             <Box display="flex" alignItems="center" gap={1} width="100%">
-              <Box component="span" sx={{ fontSize: '0.9rem' }}>
-                {lang.flag}
-              </Box>
               <Box component="span" sx={{ fontSize: '0.85rem' }}>
                 {lang.name}
               </Box>

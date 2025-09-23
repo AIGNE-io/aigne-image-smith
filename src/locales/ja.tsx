@@ -45,7 +45,7 @@ export default flat({
     // 処理状況
     processing: {
       magic: 'AIが魔法をかけています...',
-      wait: '生成完了まで少々お待ちください',
+      wait: '生成完了まで少々お待ちください...',
       uploading: 'AIサーバーにアップロード中...',
       analyzing: '画像の内容を分析中...',
       preparing: '生成アルゴリズムを準備中...',
@@ -392,6 +392,29 @@ export default flat({
           color: '色',
         },
       },
+    },
+
+    // 多言語エディター
+    multiLanguageEditor: {
+      languageProgress: '{completed}/{total} 言語',
+      inputPlaceholder: '{label}を入力...',
+      copyFromOther: '他の言語からコピー',
+      copyMenuTitle: '以下の言語からコピー:',
+    },
+
+    // 多言語画像説明エディター
+    multiLanguageImageDescriptions: {
+      title: 'Image Descriptions (optional):',
+      addDescription: 'Add Description',
+      languageProgress: '{completed}/{total} 言語',
+      description:
+        'Describe what each image slot is for. This helps users understand what kind of image to upload for each position.',
+      imageLabel: 'Image {index}:',
+      placeholder: "e.g., 'Upload your main photo here' or 'Background reference image'",
+      copyFromOther: '他の言語からコピー',
+      copyMenuTitle: '以下の言語からコピー:',
+      noDescriptions:
+        'No image descriptions configured for {language}. Add descriptions to help users understand what each image upload is for.',
     },
   },
 });
