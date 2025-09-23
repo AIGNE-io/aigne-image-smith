@@ -147,29 +147,32 @@ export default function Projects() {
                     border: 'none',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflow: 'hidden',
                     backgroundColor: 'background.paper',
                     position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-4px) scale(1.02)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                    },
-                    '&:before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '3px',
-                      background: (theme) =>
-                        `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      opacity: 0,
-                      transition: 'opacity 0.3s ease',
-                    },
-                    '&:hover:before': {
-                      opacity: 1,
-                    },
+                    // Only apply hover effects when NOT in ArcSphere
+                    ...(!browser.arcSphere && {
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: 'translateY(-4px) scale(1.02)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                      },
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: (theme) =>
+                          `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover:before': {
+                        opacity: 1,
+                      },
+                    }),
                   }}>
                   {/* Image */}
                   <Box
