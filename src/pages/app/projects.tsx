@@ -1,4 +1,5 @@
 // @ts-nocheck
+import useBrowser from '@arcblock/react-hooks/lib/useBrowser';
 import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { Box, Card, CardContent, CardMedia, Container, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -28,6 +29,7 @@ export default function Projects() {
   const { t, locale } = useLocaleContext();
   const [projects, setProjects] = useState<AIProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const browser = useBrowser();
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -75,7 +77,7 @@ export default function Projects() {
         <title>AIGNE ImageSmith</title>
       </Helmet>
       {/* Simple Header */}
-      <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', py: 6 }}>
+      <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', py: { xs: 3, md: 6 } }}>
         <Container maxWidth="lg">
           <Box textAlign="center">
             <Typography
@@ -84,15 +86,21 @@ export default function Projects() {
               sx={{
                 fontWeight: 600,
                 color: 'text.primary',
-                mb: 3,
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                mb: { xs: 2, md: 3 },
+                fontSize: { xs: '1.75rem', md: '3.5rem' },
               }}>
               {t('projects.title')}
             </Typography>
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ maxWidth: '600px', mx: 'auto', lineHeight: 1.6, fontSize: '1.25rem' }}>
+              sx={{
+                maxWidth: '600px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', md: '1.25rem' },
+                px: { xs: 2, md: 0 },
+              }}>
               {t('projects.subtitle')}
             </Typography>
           </Box>
@@ -119,14 +127,17 @@ export default function Projects() {
                 sm: 'repeat(2, 1fr)',
                 md: 'repeat(3, 1fr)',
                 lg: 'repeat(4, 1fr)',
-                xl: 'repeat(5, 1fr)',
               },
               gap: { xs: 2, sm: 2.5, md: 3 },
               maxWidth: '1280px',
               mx: 'auto',
             }}>
             {projects.map((project) => (
-              <Link key={project.id} to={`/${project.slug}`} style={{ textDecoration: 'none' }}>
+              <Link
+                key={project.id}
+                to={`/${project.slug}`}
+                style={{ textDecoration: 'none' }}
+                target={browser.arcSphere ? '_blank' : '_self'}>
                 <Card
                   sx={{
                     height: 'auto',
@@ -136,29 +147,32 @@ export default function Projects() {
                     border: 'none',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                     cursor: 'pointer',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     overflow: 'hidden',
                     backgroundColor: 'background.paper',
                     position: 'relative',
-                    '&:hover': {
-                      transform: 'translateY(-4px) scale(1.02)',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                    },
-                    '&:before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '3px',
-                      background: (theme) =>
-                        `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      opacity: 0,
-                      transition: 'opacity 0.3s ease',
-                    },
-                    '&:hover:before': {
-                      opacity: 1,
-                    },
+                    // Only apply hover effects when NOT in ArcSphere
+                    ...(!browser.arcSphere && {
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        transform: 'translateY(-4px) scale(1.02)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                      },
+                      '&:before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: (theme) =>
+                          `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover:before': {
+                        opacity: 1,
+                      },
+                    }),
                   }}>
                   {/* Image */}
                   <Box
