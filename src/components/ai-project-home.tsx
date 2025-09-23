@@ -237,15 +237,19 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const shareMenuOpen = Boolean(shareAnchorEl);
-  const [modelType, setModelType] = useState<string>('');
+  const [model, setModel] = useState<string>('');
 
   const [models, setModels] = useState<Awaited<ReturnType<typeof AIGNEHubImageModel.models>>>([]);
 
   useEffect(() => {
     api.get<typeof models>('/api/ai/models').then(({ data }) => {
       setModels(data);
-      const first = data[0];
-      if (first) setModelType(`${first.provider}/${first.model}`);
+      const defaultModel = data.find((i) => `${i.provider}/${i.model}` === blocklet?.preferences?.defaultModel);
+      if (defaultModel) setModel(`${defaultModel.provider}/${defaultModel.model}`);
+      else {
+        const first = data[0];
+        if (first) setModel(`${first.provider}/${first.model}`);
+      }
     });
   }, []);
 
@@ -557,7 +561,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           originalImages: images,
           clientId: config.clientId,
           controlValues,
-          modelType,
+          model,
           metadata: {
             controlValues,
             inputType,
@@ -1485,9 +1489,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   {t('home.aiModel.title')}
                 </InputLabel>
                 <Select
-                  value={modelType}
+                  value={model}
                   label={t('home.aiModel.title')}
-                  onChange={(e) => setModelType(e.target.value)}
+                  onChange={(e) => setModel(e.target.value)}
                   disabled={processing.isProcessing}
                   sx={(theme) => ({
                     '& .MuiOutlinedInput-root': {
@@ -1504,7 +1508,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     },
                   })}>
                   {models.map((model) => (
-                    <MenuItem value={`${model.provider}/${model.model}`}>{formatModelName(model.model)}</MenuItem>
+                    <MenuItem value={`${model.provider}/${model.model}`}>{formatModelName(model)}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -1516,7 +1520,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   fontSize: '0.75rem',
                   lineHeight: 1.4,
                 })}>
-                {modelType === 'doubao' ? t('home.aiModel.description.doubao') : t('home.aiModel.description.gemini')}
+                {model === 'doubao' ? t('home.aiModel.description.doubao') : t('home.aiModel.description.gemini')}
               </Typography>
             </VintageCard>
 
@@ -2522,6 +2526,20 @@ export default function AIProjectHome({ config }: AIProjectHomeProps) {
   );
 }
 
-function formatModelName(model: string) {
+const modelNamesMap: { [key: string]: string } = {};
+
+try {
+  const raw = blocklet?.preferences?.modelTitleMap;
+  if (raw) Object.assign(modelNamesMap, JSON.parse(raw));
+} catch (error) {
+  console.error('Failed to parse modelTitleMap from blocklet preferences:', error);
+}
+
+function formatModelName({ provider, model }: { provider: string; model: string }) {
+  const m = `${provider}/${model}`;
+  if (modelNamesMap[m]) {
+    return modelNamesMap[m];
+  }
+
   return model.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }

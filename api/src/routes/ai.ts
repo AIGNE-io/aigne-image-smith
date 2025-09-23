@@ -52,7 +52,7 @@ const generateImageSchema = Joi.object({
   textInput: Joi.string().min(0).max(5000).allow('').optional(),
 
   clientId: Joi.string().required(),
-  modelType: Joi.string().required(),
+  model: Joi.string().required(),
   metadata: Joi.object().optional(),
 }); // At least one prompt method must be provided
 
@@ -76,7 +76,6 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
   try {
     const userDid = req.user?.did!!;
-    const { modelType } = req.body;
     // Validate request body
     const { error, value } = generateImageSchema.validate(req.body);
     if (error) {
@@ -195,18 +194,10 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const processingStartTime = Date.now();
 
     try {
-      const m =
-        (
-          {
-            gemini: 'google/gemini-2.5-flash-image-preview',
-            doubao: 'doubao/doubao-seedream-4-0-250828',
-          } as { [key: string]: string }
-        )[modelType] || 'google/gemini-2.5-flash-image-preview';
-
-      logger.info(`Start AIGNE Hub API call with ${modelType} ${m}`);
+      logger.info(`Start AIGNE Hub API call with ${value.model}`);
 
       const model = new AIGNEHubImageModel({
-        model: m,
+        model: value.model,
       });
 
       const params: ImageModelInput = {
@@ -273,7 +264,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
       });
     } catch (aiError) {
       // Clean up any temp files if they exist
-      if (modelType === 'doubao' && filePath && fs.existsSync(filePath)) {
+      if (filePath && fs.existsSync(filePath)) {
         try {
           await unlinkAsync(filePath);
           logger.info(`Cleaned up temp file after error: ${filePath}`);
