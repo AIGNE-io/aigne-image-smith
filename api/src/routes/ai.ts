@@ -202,7 +202,10 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
       const params: ImageModelInput = {
         prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
-        outputType: 'local',
+        outputFileType: 'local',
+        modelOptions: {
+          preferInputFileType: 'file',
+        },
       };
 
       if (imageUrls && imageUrls.length > 0) {
