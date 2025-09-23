@@ -1,3 +1,7 @@
+## 0.0.12 (2025-9-23)
+
+- fix: upgrade aigne deps
+
 ## 0.0.11 (2025-9-23)
 
 - remove useless click effect when in ArcSphere
