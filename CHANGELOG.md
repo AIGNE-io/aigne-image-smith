@@ -1,3 +1,9 @@
+## 0.0.11 (2025-9-23)
+
+- remove useless click effect when in ArcSphere
+- open new tab in ArcSphere
+- change home grid size
+
 ## 0.0.10 (2025-9-23)
 
 - feat: support latest image model of AIGNE Framework
