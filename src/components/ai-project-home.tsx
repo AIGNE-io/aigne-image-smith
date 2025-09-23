@@ -2263,22 +2263,24 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           {/* 关闭按钮 */}
           <IconButton
             onClick={handleCloseImageDialog}
+            color="primary"
             sx={(theme) => ({
               position: 'absolute',
-              top: 8,
-              right: 8,
+              background: `${theme.palette.common.white}`,
+              border: '1px solid',
+              borderColor: `${theme.palette.primary.main}`,
+              top: 16,
+              right: 16,
               zIndex: 10,
-              background: `${theme.palette.background.paper}E6`,
-              color: theme.palette.primary.main,
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               '&:hover': {
-                background: theme.palette.common.white,
                 transform: 'scale(1.1)',
               },
               transition: 'all 0.2s ease',
+              backdropFilter: 'blur(8px)',
             })}>
-            <CloseIcon sx={{ fontSize: 18 }} />
+            <CloseIcon sx={{ fontSize: 24 }} />
           </IconButton>
 
           {/* 大图展示 */}
