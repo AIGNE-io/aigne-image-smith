@@ -41,8 +41,8 @@
   "dependencies": {
     "@abtnode/cron": "^1.16.51",
     "@abtnode/util": "^1.16.51",
-    "@aigne/aigne-hub": "^0.9.6",
-    "@aigne/core": "^1.60.3",
+    "@aigne/aigne-hub": "0.10.0-beta",
+    "@aigne/core": "1.61.0-beta",
     "@arcblock/did": "^1.25.2",
     "@arcblock/did-connect-js": "^1.25.2",
     "@arcblock/did-connect-react": "^3.1.41",

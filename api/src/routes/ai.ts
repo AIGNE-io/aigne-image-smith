@@ -1,18 +1,15 @@
-import { AIGNEHubChatModel, AIGNEHubImageModel } from '@aigne/aigne-hub';
-import { ImageModelOutputImageUrl } from '@aigne/core/agents/image-model';
-import { LocalContent } from '@aigne/core/lib/cjs/agents/chat-model';
+import { AIGNEHubImageModel } from '@aigne/aigne-hub';
+import { FileOutputType, ImageModelInput } from '@aigne/core';
 import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { uploadToMediaKit } from '@blocklet/uploader-server';
-import axios from 'axios';
 import { Router } from 'express';
 import fs from 'fs';
 import Joi from 'joi';
-import path from 'path';
+import { basename } from 'path';
 import { Op } from 'sequelize';
 import { promisify } from 'util';
 
-import { env } from '../libs/env';
 import logger from '../libs/logger';
 import { METER_NAME, ensureCustomer, getUserCreditBalance } from '../libs/payment';
 import { getImageUrl } from '../libs/utils';
@@ -97,7 +94,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
     // Build final prompt - support both old and new systems
     let finalPrompt: string;
-    const imageUrls = originalImages;
+    const imageUrls: string[] = originalImages;
 
     try {
       const promptVariables = promptUtils.buildPromptVariables(controlValues || {}, imageUrls);
@@ -193,219 +190,71 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
     const processingStartTime = Date.now();
 
     try {
-      // Initialize AI model
-      if (modelType === 'gemini') {
-        logger.info('Start AIGNE Hub API call with gemini');
-        const model = new AIGNEHubChatModel({
-          model: 'google/gemini-2.5-flash-image-preview',
-          // model: 'doubao/doubao-seedream-4-0-250828',
-          modelOptions: {
-            modalities: ['text', 'image'],
-          },
-        });
+      const m =
+        (
+          {
+            gemini: 'google/gemini-2.5-flash-image-preview',
+            doubao: 'doubao/doubao-seedream-4-0-250828',
+          } as { [key: string]: string }
+        )[modelType] || 'google/gemini-2.5-flash-image-preview';
 
-        // Prepare message content with the final prompt
-        const messageContent: any[] = [{ type: 'text', text: finalPrompt }];
+      logger.info(`Start AIGNE Hub API call with ${modelType} ${m}`);
 
-        if (textInput) {
-          messageContent.push({
-            type: 'text',
-            text: textInput,
-          });
-        }
+      const model = new AIGNEHubImageModel({
+        model: m,
+      });
 
-        // Add all original images if provided
-        if (imageUrls.length > 0) {
-          const getMimeType = async (imgUrl: string) => {
-            try {
-              const { data } = await axios.get(`${imgUrl}.json`);
-              return data.metadata.type;
-            } catch (error) {
-              return 'image/jpeg';
-            }
-          };
+      const params: ImageModelInput = {
+        prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
+        outputType: FileOutputType.local,
+      };
 
-          // Process each image and add to message content
-          for (const imageUrl of imageUrls) {
-            const imgUrl = getImageUrl(imageUrl);
-            const mimeType = await getMimeType(imgUrl);
-            messageContent.push({
-              type: 'url',
-              url: imgUrl,
-              mimeType,
-            });
-          }
-        }
-
-        // Call AIGNE Hub API
-        logger.info('Starting AIGNE Hub API call', {
-          generationId: generation.id,
-          prompt: finalPrompt,
-          imageCount: imageUrls.length,
-          originalImages: imageUrls.map((url: string) => getImageUrl(url)),
-          messages: [
-            {
-              role: 'user',
-              content: messageContent,
-            },
-          ],
-        });
-
-        const result = await model.invoke({
-          messages: [
-            {
-              role: 'user',
-              content: messageContent,
-            },
-          ],
-        });
-
-        logger.info('Finish AIGNE Hub API call', {
-          result,
-        });
-
-        if (!result.files || result.files.length === 0) {
-          throw new Error('Image generation failed');
-        }
-
-        const { path, mimeType } = result.files[0]! as LocalContent;
-        filePath = path;
-
-        const getFileExtension = (mimeType: string | undefined): string => {
-          if (!mimeType) return '.jpeg';
-          const mimeToExtension: Record<string, string> = {
-            'image/jpeg': '.jpeg',
-            'image/jpg': '.jpg',
-            'image/png': '.png',
-            'image/gif': '.gif',
-            'image/webp': '.webp',
-            'image/bmp': '.bmp',
-            'image/tiff': '.tiff',
-            'image/svg+xml': '.svg',
-          };
-          return mimeToExtension[mimeType] || '.jpeg';
-        };
-
-        const fileExtension = getFileExtension(mimeType);
-        fileName = `${userDid}_${sessionId}_${Date.now()}${fileExtension}`;
-
-        generatedImg = await (async () => {
-          try {
-            const res = (
-              await uploadToMediaKit({
-                filePath,
-                fileName,
-              })
-            )?.data;
-            return (res as any).filename;
-          } catch (error) {
-            logger.error(`Failed to upload asset ${filePath}:`, error);
-            return '';
-          }
-        })();
-      } else if (modelType === 'doubao') {
-        logger.info('Start AIGNE Hub API call with doubao');
-        const model = new AIGNEHubImageModel({
-          model: 'doubao/doubao-seedream-4-0-250828',
-        });
-
-        const params: any = {
-          prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
-          stream: false,
-          watermark: false,
-          responseFormat: 'url',
-        };
-
-        if (imageUrls && imageUrls.length > 0) {
-          params.image = imageUrls.map((url: string) => getImageUrl(url));
-        }
-
-        // Call AIGNE Hub API
-        logger.info('Starting AIGNE Hub API call', {
-          generationId: generation.id,
-          prompt: finalPrompt,
-          imageCount: imageUrls.length,
-          originalImages: imageUrls.map((url: string) => getImageUrl(url)),
-          params,
-        });
-
-        const result = await model.invoke(params);
-
-        logger.info('Finish AIGNE Hub API call', {
-          result,
-        });
-
-        if (
-          !result ||
-          !result.images ||
-          result.images.length === 0 ||
-          !result.images[0] ||
-          !(result.images[0] as ImageModelOutputImageUrl).url
-        ) {
-          throw new Error('Image generation failed');
-        }
-
-        const douBaoUrl = (result.images[0] as ImageModelOutputImageUrl).url;
-
-        // Download image from douBaoUrl to local temp file
-        const downloadImageFromUrl = async (url: string): Promise<{ filePath: string; fileName: string }> => {
-          const response = await axios({
-            method: 'GET',
-            url,
-            responseType: 'stream',
-          });
-
-          // Generate temp file name using env.dataDir
-          const tempFileName = `doubao_${userDid}_${sessionId}_${Date.now()}.jpeg`;
-          const tempFilePath = path.join(env.dataDir, 'temp', tempFileName);
-
-          // Ensure temp directory exists
-          const tempDir = path.dirname(tempFilePath);
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-          }
-
-          // Write stream to file
-          const writer = fs.createWriteStream(tempFilePath);
-          response.data.pipe(writer);
-
-          return new Promise((resolve, reject) => {
-            writer.on('finish', () => {
-              resolve({ filePath: tempFilePath, fileName: tempFileName });
-            });
-            writer.on('error', reject);
-          });
-        };
-
-        const downloadedFile = await downloadImageFromUrl(douBaoUrl);
-        filePath = downloadedFile.filePath;
-        fileName = downloadedFile.fileName;
-
-        generatedImg = await (async () => {
-          try {
-            const res = (
-              await uploadToMediaKit({
-                filePath,
-                fileName,
-              })
-            )?.data;
-            return (res as any).filename;
-          } catch (error) {
-            logger.error(`Failed to upload asset ${filePath}:`, error);
-            return '';
-          } finally {
-            // Clean up downloaded temp file
-            if (filePath && fs.existsSync(filePath)) {
-              try {
-                await unlinkAsync(filePath);
-                logger.info(`Cleaned up temp file: ${filePath}`);
-              } catch (cleanupError) {
-                logger.error(`Failed to clean up temp file ${filePath}:`, cleanupError);
-              }
-            }
-          }
-        })();
+      if (imageUrls && imageUrls.length > 0) {
+        params.image = imageUrls.map((url) => ({ type: 'url', url: getImageUrl(url) }));
       }
+
+      // Call AIGNE Hub API
+      logger.info('Starting AIGNE Hub API call', {
+        generationId: generation.id,
+        prompt: finalPrompt,
+        imageCount: imageUrls.length,
+        originalImages: imageUrls.map((url: string) => getImageUrl(url)),
+        params,
+      });
+
+      const result = await model.invoke(params);
+
+      logger.info('Finish AIGNE Hub API call', {
+        result,
+      });
+
+      const first = result.images[0];
+      if (!first) throw new Error('Image generation failed');
+
+      if (first.type !== 'local') throw new Error(`Unsupported image type returned from model ${first.type}`);
+
+      filePath = first.path;
+      fileName = first.filename || basename(first.path);
+
+      const res = (
+        await uploadToMediaKit({
+          filePath: first.path,
+          fileName: first.filename,
+        })
+      )?.data;
+
+      generatedImg = (res as any)?.filename as string;
+
+      processingTime = Date.now() - processingStartTime;
+
+      if (!generatedImg) {
+        throw new Error('AI model did not return valid image result');
+      }
+
+      logger.info('AIGNE Hub API call successful', {
+        generationId: generation.id,
+        processingTime,
+      });
 
       processingTime = Date.now() - processingStartTime;
 
