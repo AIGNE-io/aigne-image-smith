@@ -178,6 +178,7 @@ interface AIProjectConfig {
     };
   };
   controlsConfig?: ProjectControlsConfig;
+  models: Awaited<ReturnType<typeof AIGNEHubImageModel.models>>;
 }
 
 interface AIProjectHomeProps {
@@ -239,19 +240,21 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const shareMenuOpen = Boolean(shareAnchorEl);
   const [model, setModel] = useState<string>('');
 
-  const [models, setModels] = useState<Awaited<ReturnType<typeof AIGNEHubImageModel.models>>>([]);
+  const models = useMemo(() => {
+    const models = config.models.map((i) => ({ model: `${i.provider}/${i.model}`, title: formatModelName(i) }));
+    const modelList = Object.entries(modelNamesMap).length
+      ? Object.entries(modelNamesMap)
+          .filter(([model]) => models.some((i) => i.model === model))
+          .map(([model, title]) => ({ model, title }))
+      : models;
+
+    return modelList;
+  }, [config.models]);
 
   useEffect(() => {
-    api.get<typeof models>('/api/ai/models').then(({ data }) => {
-      setModels(data);
-      const defaultModel = data.find((i) => `${i.provider}/${i.model}` === blocklet?.preferences?.defaultModel);
-      if (defaultModel) setModel(`${defaultModel.provider}/${defaultModel.model}`);
-      else {
-        const first = data[0];
-        if (first) setModel(`${first.provider}/${first.model}`);
-      }
-    });
-  }, []);
+    const defaultModel = models.find((m) => m.model === blocklet?.preferences.defaultModel);
+    setModel(defaultModel?.model || models[0]?.model || '');
+  }, [models]);
 
   const isLoggedIn = session?.user;
 
@@ -1508,7 +1511,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     },
                   })}>
                   {models.map((model) => (
-                    <MenuItem value={`${model.provider}/${model.model}`}>{formatModelName(model)}</MenuItem>
+                    <MenuItem value={model.model}>{model.title}</MenuItem>
                   ))}
                 </Select>
               </FormControl>

@@ -62,11 +62,6 @@ const getHistorySchema = Joi.object({
   clientId: Joi.string().required(),
 });
 
-router.get('/models', async (req, res) => {
-  const models = await AIGNEHubImageModel.models();
-  res.json(models);
-});
-
 /**
  * Generate AI processed image using AIGNE Hub
  * POST /api/ai/generate
