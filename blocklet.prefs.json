@@ -83,10 +83,49 @@
                 "x-index": 4
               }
             }
+          },
+          "1e95i22tx8s": {
+            "type": "void",
+            "x-component": "FormTab.TabPane",
+            "x-component-props": {
+              "tab": "Models"
+            },
+            "x-designable-id": "1e95i22tx8s",
+            "properties": {
+              "defaultModel": {
+                "type": "string",
+                "title": "Default Model",
+                "x-decorator": "FormItem",
+                "x-component": "Input",
+                "x-validator": [],
+                "x-component-props": {},
+                "x-decorator-props": {},
+                "name": "defaultModel",
+                "description": "Default model name",
+                "x-designable-id": "u5nnb4j3yn4",
+                "x-index": 0
+              },
+              "modelTitleMap": {
+                "type": "string",
+                "title": "Model Title Map",
+                "x-decorator": "FormItem",
+                "x-component": "Input.TextArea",
+                "x-validator": [],
+                "x-component-props": {
+                  "autoSize": true
+                },
+                "x-decorator-props": {},
+                "name": "modelTitleMap",
+                "description": "A JSON string {[model: string]: string}",
+                "x-designable-id": "g2ebghr0cag",
+                "x-index": 1
+              }
+            },
+            "x-index": 1
           }
         }
       }
     },
-    "x-designable-id": "zi0d2s953uo"
+    "x-designable-id": "xn3jsuq57e1"
   }
 }

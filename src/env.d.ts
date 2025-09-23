@@ -2,7 +2,7 @@ declare var blocklet:
   | {
       prefix: string;
       languages: { code: string; name: string }[];
-      preferences: { bg_color: string; font_color: string };
+      preferences: { bg_color: string; font_color: string; modelTitleMap?: string; defaultModel?: string };
       componentMountPoints: { did: string; mountPoint: string }[];
     }
   | undefined;
