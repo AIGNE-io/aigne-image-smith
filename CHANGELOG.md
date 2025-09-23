@@ -1,3 +1,7 @@
+## 0.0.10 (2025-9-23)
+
+- feat: support latest image model of AIGNE Framework
+
 ## 0.0.9 (2025-9-23)
 
 - fix error tip in mobile
