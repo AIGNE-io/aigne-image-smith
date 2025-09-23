@@ -1,3 +1,7 @@
+## 0.0.13 (2025-9-23)
+
+- fix: filter models by preference
+
 ## 0.0.12 (2025-9-23)
 
 - fix: upgrade aigne deps
