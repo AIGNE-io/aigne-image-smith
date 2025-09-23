@@ -18,6 +18,7 @@ interface AIProject {
   status: 'active' | 'draft' | 'archived';
   metadata?: Record<string, any>;
   createdAt: string;
+  models: Awaited<ReturnType<typeof import('@aigne/aigne-hub').AIGNEHubImageModel.models>>;
 }
 
 export default function DynamicApp() {
@@ -109,6 +110,7 @@ export default function DynamicApp() {
       },
       controlsConfig: [],
     },
+    models: project.models,
   };
 
   return <AIProjectHome config={config} />;

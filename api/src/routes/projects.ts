@@ -3,6 +3,7 @@ import { Router } from 'express';
 import Joi from 'joi';
 
 import logger from '../libs/logger';
+import { getModels } from '../libs/models';
 import AIProject from '../store/models/ai-project';
 import ProjectI18n from '../store/models/project-i18n';
 
@@ -213,6 +214,7 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
   try {
     const { slug } = req.params;
     const project = await AIProject.findActiveBySlug(slug);
+    const models = await getModels();
 
     if (!project) {
       return res.status(404).json({
@@ -234,6 +236,7 @@ router.get('/by-slug/:slug', async (req, res): Promise<any> => {
         metadata: project.metadata,
         createdAt: project.createdAt,
         controlsConfig: project.controlsConfig,
+        models,
       },
     });
   } catch (error) {
