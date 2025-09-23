@@ -1,3 +1,4 @@
+import { AIGNEHubImageModel } from '@aigne/aigne-hub';
 import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AddIcon from '@mui/icons-material/Add';
@@ -201,6 +202,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const [controlValues, setControlValues] = useState<ControlValues>({});
   const [creatingCheckout, setCreatingCheckout] = useState(false);
   const [decimal, setDecimal] = useState<number>(2);
+
   const [processing, setProcessing] = useState<ProcessingStatus>({
     isProcessing: false,
     progress: 0,
@@ -235,7 +237,18 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [shareAnchorEl, setShareAnchorEl] = useState<null | HTMLElement>(null);
   const shareMenuOpen = Boolean(shareAnchorEl);
-  const [modelType, setModelType] = useState<string>('doubao');
+  const [modelType, setModelType] = useState<string>('');
+
+  const [models, setModels] = useState<Awaited<ReturnType<typeof AIGNEHubImageModel.models>>>([]);
+
+  useEffect(() => {
+    api.get<typeof models>('/api/ai/models').then(({ data }) => {
+      setModels(data);
+      const first = data[0];
+      if (first) setModelType(`${first.provider}/${first.model}`);
+    });
+  }, []);
+
   const isLoggedIn = session?.user;
 
   // 获取输入类型
@@ -1490,8 +1503,9 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       borderColor: theme.palette.primary.main,
                     },
                   })}>
-                  <MenuItem value="doubao">Seedream 4.0</MenuItem>
-                  <MenuItem value="gemini">Gemini 2.5</MenuItem>
+                  {models.map((model) => (
+                    <MenuItem value={`${model.provider}/${model.model}`}>{formatModelName(model.model)}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <Typography
@@ -2506,4 +2520,8 @@ export default function AIProjectHome({ config }: AIProjectHomeProps) {
       <AIProjectHomeComponent config={config} />
     </UploaderProvider>
   );
+}
+
+function formatModelName(model: string) {
+  return model.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }

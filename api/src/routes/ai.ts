@@ -1,5 +1,5 @@
 import { AIGNEHubImageModel } from '@aigne/aigne-hub';
-import { FileOutputType, ImageModelInput } from '@aigne/core';
+import { ImageModelInput } from '@aigne/core';
 import payment from '@blocklet/payment-js';
 import { auth, user } from '@blocklet/sdk/lib/middlewares';
 import { uploadToMediaKit } from '@blocklet/uploader-server';
@@ -60,6 +60,11 @@ const getHistorySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(20),
   offset: Joi.number().integer().min(0).default(0),
   clientId: Joi.string().required(),
+});
+
+router.get('/models', async (req, res) => {
+  const models = await AIGNEHubImageModel.models();
+  res.json(models);
 });
 
 /**
@@ -206,7 +211,7 @@ router.post('/generate', auth(), user(), async (req, res): Promise<any> => {
 
       const params: ImageModelInput = {
         prompt: finalPrompt + (textInput ? `user input: ${textInput}` : ''),
-        outputType: FileOutputType.local,
+        outputType: 'local',
       };
 
       if (imageUrls && imageUrls.length > 0) {
