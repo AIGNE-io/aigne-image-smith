@@ -119,7 +119,6 @@ export default function Projects() {
                 sm: 'repeat(2, 1fr)',
                 md: 'repeat(3, 1fr)',
                 lg: 'repeat(4, 1fr)',
-                xl: 'repeat(5, 1fr)',
               },
               gap: { xs: 2, sm: 2.5, md: 3 },
               maxWidth: '1280px',
