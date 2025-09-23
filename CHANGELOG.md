@@ -1,3 +1,11 @@
+## 0.0.9 (2025-9-23)
+
+- fix error tip in mobile
+- optimize image close icon button
+- fix copy in safari browser
+- fix uploader i18n config
+- update processing loading
+
 ## 0.0.8 (2025-9-21)
 
 - support select image model by user
