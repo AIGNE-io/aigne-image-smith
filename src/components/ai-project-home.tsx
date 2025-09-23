@@ -761,62 +761,135 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   // 复制图片到剪贴板
   const handleCopyImage = async (imageUrl: string, itemId?: string) => {
     try {
-      // 获取图片数据
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
       // 检查浏览器是否支持复制图片
-      if (navigator.clipboard && window.ClipboardItem) {
-        // 将图片转换为 PNG 格式，因为大多数浏览器只支持 image/png
+      if (!navigator.clipboard || !window.ClipboardItem) {
+        console.warn('Clipboard API not supported for images in this browser');
+        return;
+      }
+
+      // 查找页面上已存在的图片元素
+      const existingImg = document.querySelector(`img[src="${imageUrl}"]`) as HTMLImageElement;
+
+      if (existingImg && existingImg.complete) {
+        // 直接从已存在的img元素复制
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const img = new Image();
 
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
+        if (!ctx) {
+          throw new Error('Cannot get canvas context');
+        }
 
-            canvas.toBlob(async (pngBlob) => {
-              if (pngBlob) {
-                try {
-                  const clipboardItem = new ClipboardItem({
-                    'image/png': pngBlob,
-                  });
-                  await navigator.clipboard.write([clipboardItem]);
+        // 设置canvas尺寸
+        canvas.width = existingImg.naturalWidth || existingImg.width;
+        canvas.height = existingImg.naturalHeight || existingImg.height;
 
-                  // 复制成功，更新状态
-                  if (itemId) {
-                    setCopiedItems((prev) => new Set([...prev, itemId]));
-                    // 2秒后移除成功状态
-                    setTimeout(() => {
-                      setCopiedItems((prev) => {
-                        const newSet = new Set(prev);
-                        newSet.delete(itemId);
-                        return newSet;
-                      });
-                    }, 2000);
-                  }
+        // 绘制图片到canvas
+        ctx.drawImage(existingImg, 0, 0);
 
-                  resolve(undefined);
-                } catch (writeErr) {
-                  console.error('Failed to write to clipboard:', writeErr);
-                  reject(writeErr);
-                }
-              } else {
-                reject(new Error('Failed to convert image to PNG'));
-              }
-            }, 'image/png');
-          };
-          img.onerror = reject;
-          img.src = URL.createObjectURL(blob);
+        // 立即创建ClipboardItem Promise，保持用户手势上下文
+        const blobPromise = new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to convert canvas to blob'));
+            }
+          }, 'image/png');
         });
-      } else {
-        console.warn('Clipboard API not supported for images in this browser');
+
+        // 在用户手势上下文中立即创建ClipboardItem
+        const clipboardItem = new ClipboardItem({
+          'image/png': blobPromise,
+        });
+
+        // 立即调用剪贴板API
+        await navigator.clipboard.write([clipboardItem]);
+
+        // 复制成功，更新状态
+        if (itemId) {
+          setCopiedItems((prev) => new Set([...prev, itemId]));
+          setTimeout(() => {
+            setCopiedItems((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(itemId);
+              return newSet;
+            });
+          }, 2000);
+        }
+
+        return;
       }
+
+      // 如果页面上没有图片元素，使用传统方法
+      await handleImageCopyFromUrl(imageUrl, itemId);
     } catch (err) {
       console.error('Failed to copy image:', err);
+      await handleImageCopyFallback(imageUrl, itemId);
+    }
+  };
+
+  // 从URL复制图片的传统方法
+  const handleImageCopyFromUrl = async (imageUrl: string, itemId?: string) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    const clipboardItemPromise = new Promise<Blob>((resolve, reject) => {
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+
+        canvas.toBlob((pngBlob) => {
+          if (pngBlob) {
+            resolve(pngBlob);
+          } else {
+            reject(new Error('Failed to convert image to PNG'));
+          }
+        }, 'image/png');
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
+    });
+
+    const clipboardItem = new ClipboardItem({
+      'image/png': clipboardItemPromise,
+    });
+
+    await navigator.clipboard.write([clipboardItem]);
+
+    if (itemId) {
+      setCopiedItems((prev) => new Set([...prev, itemId]));
+      setTimeout(() => {
+        setCopiedItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
+      }, 2000);
+    }
+  };
+
+  // 降级处理方法
+  const handleImageCopyFallback = async (imageUrl: string, itemId?: string) => {
+    try {
+      await navigator.clipboard.writeText(imageUrl);
+
+      if (itemId) {
+        setCopiedItems((prev) => new Set([...prev, itemId]));
+        setTimeout(() => {
+          setCopiedItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(itemId);
+            return newSet;
+          });
+        }, 2000);
+      }
+    } catch (fallbackErr) {
+      console.error('Fallback copy failed:', fallbackErr);
     }
   };
 
@@ -2004,7 +2077,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleViewLargeImage(getImageUrl(item.generatedImg));
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.primary.main,
                         width: 28,
                         height: 28,
@@ -2026,12 +2099,14 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       sx={(theme) => ({
                         background: copiedItems.has(item.id)
                           ? `${theme.palette.success.main}E6`
-                          : `${theme.palette.background.paper}E6`,
+                          : `${theme.palette.common.white}`,
                         color: copiedItems.has(item.id) ? 'white' : theme.palette.primary.main,
                         width: 28,
                         height: 28,
                         '&:hover': {
-                          background: copiedItems.has(item.id) ? `${theme.palette.success.main}` : 'white',
+                          background: copiedItems.has(item.id)
+                            ? `${theme.palette.success.main}`
+                            : `${theme.palette.common.white}`,
                           transform: 'scale(1.1)',
                         },
                         transition: 'all 0.3s ease',
@@ -2050,7 +2125,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleDownloadHistoryImage(getImageUrl(item.generatedImg), `generated_${item.id}`);
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.primary.main,
                         width: 28,
                         height: 28,
@@ -2070,7 +2145,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleShowDeleteDialog(item.id);
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.error.main,
                         width: 28,
                         height: 28,
@@ -2100,7 +2175,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         opacity: 1,
                       },
                       '.hover-overlay ~ &': {
-                        opacity: 0,
+                        opacity: 1,
                       },
                     })}>
                     <Typography
@@ -2112,6 +2187,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         lineHeight: 1.2,
                       })}>
                       {new Date(item.createdAt).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
                         month: 'numeric',
                         day: 'numeric',
                       })}
