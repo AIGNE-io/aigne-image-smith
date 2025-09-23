@@ -1512,7 +1512,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   ))}
                 </Select>
               </FormControl>
-              <Typography
+              {/* <Typography
                 variant="body2"
                 sx={(theme) => ({
                   color: theme.palette.text.secondary,
@@ -1521,7 +1521,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                   lineHeight: 1.4,
                 })}>
                 {model === 'doubao' ? t('home.aiModel.description.doubao') : t('home.aiModel.description.gemini')}
-              </Typography>
+              </Typography> */}
             </VintageCard>
 
             {/* 动态控制组件 */}
