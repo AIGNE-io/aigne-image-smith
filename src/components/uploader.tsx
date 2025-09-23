@@ -173,6 +173,7 @@ export function UploaderButton({
 // Provider，需要包裹在 StyledProvider 后面
 export default function UploaderProvider({ children }: UploaderProviderProps) {
   const uploaderRef = useRef(null);
+  const { locale } = useLocaleContext();
 
   const onClose = () => {
     try {
@@ -194,6 +195,7 @@ export default function UploaderProvider({ children }: UploaderProviderProps) {
         onClose={onClose} // 关闭后触发什么
         key="uploader"
         ref={uploaderRef} // ref
+        locale={locale}
         popup
         coreProps={{
           // 上传限制，参考 https://uppy.io/docs/uppy/#restrictions
