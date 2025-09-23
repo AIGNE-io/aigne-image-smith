@@ -392,5 +392,28 @@ export default flat({
         },
       },
     },
+
+    // 多语言编辑器
+    multiLanguageEditor: {
+      languageProgress: '{completed}/{total} 语言',
+      inputPlaceholder: '输入{label}...',
+      copyFromOther: '从其他语言复制',
+      copyMenuTitle: '从以下语言复制:',
+    },
+
+    // 多语言图片描述编辑器
+    multiLanguageImageDescriptions: {
+      title: 'Image Descriptions (optional):',
+      addDescription: 'Add Description',
+      languageProgress: '{completed}/{total} 语言',
+      description:
+        'Describe what each image slot is for. This helps users understand what kind of image to upload for each position.',
+      imageLabel: 'Image {index}:',
+      placeholder: "e.g., 'Upload your main photo here' or 'Background reference image'",
+      copyFromOther: '从其他语言复制',
+      copyMenuTitle: '从以下语言复制:',
+      noDescriptions:
+        'No image descriptions configured for {language}. Add descriptions to help users understand what each image upload is for.',
+    },
   },
 });

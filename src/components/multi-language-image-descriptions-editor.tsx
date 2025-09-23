@@ -1,3 +1,4 @@
+import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { ContentCopy as ContentCopyIcon } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,6 +33,7 @@ export default function MultiLanguageImageDescriptionsEditor({
   maxImages,
   disabled = false,
 }: MultiLanguageImageDescriptionsEditorProps) {
+  const { t } = useLocaleContext();
   const [activeTab, setActiveTab] = useState(0);
   const [copyMenuAnchor, setCopyMenuAnchor] = useState<null | HTMLElement>(null);
   const [copyImageIndex, setCopyImageIndex] = useState<number>(-1);
@@ -117,23 +119,25 @@ export default function MultiLanguageImageDescriptionsEditor({
       {/* 标题和状态栏 */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-          Image Descriptions (optional):
+          {t('components.multiLanguageImageDescriptions.title')}
         </Typography>
         <Button
           size="small"
           startIcon={<AddIcon />}
           onClick={addDescription}
           disabled={disabled || currentDescriptions.length >= maxImages}>
-          Add Description
+          {t('components.multiLanguageImageDescriptions.addDescription')}
         </Button>
         <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto', fontSize: '0.75rem' }}>
-          {getCompletionCount()}/{SUPPORTED_LANGUAGES.length} 语言
+          {t('components.multiLanguageImageDescriptions.languageProgress', {
+            completed: getCompletionCount(),
+            total: SUPPORTED_LANGUAGES.length,
+          })}
         </Typography>
       </Stack>
 
       <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-        Describe what each image slot is for. This helps users understand what kind of image to upload for each
-        position.
+        {t('components.multiLanguageImageDescriptions.description')}
       </Typography>
 
       {/* 语言标签页 */}
@@ -155,11 +159,8 @@ export default function MultiLanguageImageDescriptionsEditor({
               key={lang.code}
               label={
                 <Box display="flex" alignItems="center" gap={0.5}>
-                  <Box component="span" sx={{ fontSize: '0.9rem' }}>
-                    {lang.flag}
-                  </Box>
                   <Box component="span" sx={{ fontSize: '0.8rem' }}>
-                    {lang.code.toUpperCase()}
+                    {lang.name}
                   </Box>
                   {isLanguageComplete(lang.code) && (
                     <Badge
@@ -188,11 +189,11 @@ export default function MultiLanguageImageDescriptionsEditor({
           {currentDescriptions.map((description, index) => (
             <Stack key={`${currentLanguage.code}-field-${index}`} direction="row" spacing={1} alignItems="center">
               <Typography variant="body2" sx={{ minWidth: 80 }}>
-                Image {index + 1}:
+                {t('components.multiLanguageImageDescriptions.imageLabel', { index: index + 1 })}
               </Typography>
               <TextField
                 size="small"
-                placeholder="e.g., 'Upload your main photo here' or 'Background reference image'"
+                placeholder={t('components.multiLanguageImageDescriptions.placeholder')}
                 value={description || ''}
                 onChange={(e) => updateImageDescription(index, e.target.value)}
                 disabled={disabled}
@@ -204,7 +205,7 @@ export default function MultiLanguageImageDescriptionsEditor({
                 }}
               />
               {getAvailableCopyLanguages(index).length > 0 && (
-                <Tooltip title="从其他语言复制">
+                <Tooltip title={t('components.multiLanguageImageDescriptions.copyFromOther')}>
                   <IconButton
                     size="small"
                     onClick={(e) => openCopyMenu(index, e)}
@@ -226,8 +227,7 @@ export default function MultiLanguageImageDescriptionsEditor({
         </Stack>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 1 }}>
-          No image descriptions configured for {currentLanguage.name}. Add descriptions to help users understand what
-          each image upload is for.
+          {t('components.multiLanguageImageDescriptions.noDescriptions', { language: currentLanguage.name })}
         </Typography>
       )}
 
@@ -242,15 +242,12 @@ export default function MultiLanguageImageDescriptionsEditor({
           sx: { mt: 1, minWidth: 180 },
         }}>
         <MenuItem disabled sx={{ fontSize: '0.8rem', color: 'text.secondary', py: 0.5 }}>
-          从以下语言复制:
+          {t('components.multiLanguageImageDescriptions.copyMenuTitle')}
         </MenuItem>
         {copyImageIndex >= 0 &&
           getAvailableCopyLanguages(copyImageIndex).map((lang) => (
             <MenuItem key={lang.code} onClick={() => handleCopyFrom(lang.code)} sx={{ py: 0.5 }}>
               <Box display="flex" alignItems="center" gap={1} width="100%">
-                <Box component="span" sx={{ fontSize: '0.9rem' }}>
-                  {lang.flag}
-                </Box>
                 <Box component="span" sx={{ fontSize: '0.85rem' }}>
                   {lang.name}
                 </Box>

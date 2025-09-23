@@ -392,5 +392,28 @@ export default flat({
         },
       },
     },
+
+    // Multi-Language Editor
+    multiLanguageEditor: {
+      languageProgress: '{completed}/{total} languages',
+      inputPlaceholder: 'Enter {label}...',
+      copyFromOther: 'Copy from other language',
+      copyMenuTitle: 'Copy from the following languages:',
+    },
+
+    // Multi-Language Image Descriptions Editor
+    multiLanguageImageDescriptions: {
+      title: 'Image Descriptions (optional):',
+      addDescription: 'Add Description',
+      languageProgress: '{completed}/{total} languages',
+      description:
+        'Describe what each image slot is for. This helps users understand what kind of image to upload for each position.',
+      imageLabel: 'Image {index}:',
+      placeholder: "e.g., 'Upload your main photo here' or 'Background reference image'",
+      copyFromOther: 'Copy from other language',
+      copyMenuTitle: 'Copy from the following languages:',
+      noDescriptions:
+        'No image descriptions configured for {language}. Add descriptions to help users understand what each image upload is for.',
+    },
   },
 });
