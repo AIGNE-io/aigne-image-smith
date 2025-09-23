@@ -24,14 +24,13 @@ import { UploaderButton } from './uploader';
 export interface LanguageConfig {
   code: string;
   name: string;
-  flag: string;
 }
 
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
-  { code: 'zh', name: '简体中文', flag: '🇨🇳' },
-  { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'zh', name: '简体中文' },
+  { code: 'zh-TW', name: '繁體中文' },
+  { code: 'en', name: 'English' },
+  { code: 'ja', name: '日本語' },
 ];
 
 export interface ProjectContentData {
@@ -143,9 +142,6 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
               key={lang.code}
               label={
                 <Box display="flex" alignItems="center" gap={1}>
-                  <Box component="span" sx={{ fontSize: '1.1rem' }}>
-                    {lang.flag}
-                  </Box>
                   <Box component="span">{lang.name}</Box>
                   {isLanguageComplete(lang.code) && (
                     <Badge
@@ -416,9 +412,6 @@ export default function ProjectContentEditor({ values, onChange, disabled = fals
           getAvailableCopyLanguages(copyField as keyof ProjectContentData).map((lang) => (
             <MenuItem key={lang.code} onClick={() => handleCopyFrom(lang.code)} sx={{ py: 1 }}>
               <Box display="flex" alignItems="center" gap={1.5} width="100%">
-                <Box component="span" sx={{ fontSize: '1rem' }}>
-                  {lang.flag}
-                </Box>
                 <Box component="span" sx={{ fontSize: '0.9rem' }}>
                   {lang.name}
                 </Box>

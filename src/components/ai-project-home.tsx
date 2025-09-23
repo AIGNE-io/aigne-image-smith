@@ -208,6 +208,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   });
   const [compareSlider, setCompareSlider] = useState(50);
   const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [generatedHistory, setGeneratedHistory] = useState<GeneratedImage[]>([]);
   const [historyPagination, setHistoryPagination] = useState<HistoryPagination>({
     total: 0,
@@ -242,6 +243,47 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
   // 假进度条计时器引用
   const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 设置错误并滚动到错误位置（仅移动端滚动）
+  const setErrorAndScroll = useCallback(
+    (errorMessage: string | null) => {
+      setError(errorMessage);
+      if (errorMessage) {
+        // 检测是否为移动端设备
+        const isMobile = window.innerWidth < theme.breakpoints.values.md; // md breakpoint is 900px by default
+
+        if (isMobile) {
+          // 使用多层延迟机制确保错误元素完全渲染和布局完成
+          const attemptScroll = (retryCount = 0) => {
+            if (errorRef.current) {
+              try {
+                errorRef.current.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                  inline: 'nearest',
+                });
+              } catch (error) {
+                console.warn('Error during scroll:', error);
+              }
+            } else if (retryCount < 3) {
+              // 如果元素还没找到，最多重试3次
+              setTimeout(() => attemptScroll(retryCount + 1), 50);
+            }
+          };
+
+          // 使用 setTimeout 确保状态更新完成，然后再使用 requestAnimationFrame 确保渲染完成
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                attemptScroll();
+              });
+            });
+          }, 10);
+        }
+      }
+    },
+    [theme.breakpoints.values.md],
+  );
 
   useSubscription(
     session?.user?.did,
@@ -361,11 +403,11 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         setShowWelcomeGift(false);
         setError(null);
       } else {
-        setError(data?.message || 'Failed to claim credits');
+        setErrorAndScroll(data?.message || 'Failed to claim credits');
       }
     } catch (err) {
       console.error('Failed to claim credits:', err);
-      setError(t('home.error.claimFailed'));
+      setErrorAndScroll(t('home.error.claimFailed'));
     }
   };
 
@@ -423,25 +465,25 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
         return { success: true, url: url.toString() };
       }
       const errorMsg = data.error || t('home.error.createOrderFailed');
-      setError(errorMsg);
+      setErrorAndScroll(errorMsg);
       return { success: false, error: errorMsg };
     } catch (err) {
       console.error('创建充值订单失败:', err);
       const errorMsg = t('home.error.createOrderError');
-      setError(errorMsg);
+      setErrorAndScroll(errorMsg);
       return { success: false, error: errorMsg };
     }
-  }, [session?.user, t]);
+  }, [session?.user, t, setErrorAndScroll]);
 
   const handleCreateCheckout = async () => {
     try {
       setCreatingCheckout(true);
       const result = await createCheckout();
       if (!result?.success) {
-        setError(result?.error || 'Create order fail!');
+        setErrorAndScroll(result?.error || 'Create order fail!');
       }
     } catch (err) {
-      setError('Create order fail!');
+      setErrorAndScroll('Create order fail!');
     } finally {
       setCreatingCheckout(false);
     }
@@ -454,34 +496,34 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
       // 检查用户是否已认证
       if (!isLoggedIn) {
-        setError(t('home.error.loginRequired'));
+        setErrorAndScroll(t('home.error.loginRequired'));
         return;
       }
 
       // 检查Credit余额是否充足
       const requiredCredits = 1;
       if (creditInfo.balance < requiredCredits) {
-        setError(t('home.error.insufficientCredits'));
+        setErrorAndScroll(t('home.error.insufficientCredits'));
         return;
       }
 
       // 根据输入类型验证
       if (inputType === 'text') {
         if (!text || !text.trim()) {
-          setError('请输入文本内容');
+          setErrorAndScroll('请输入文本内容');
           return;
         }
         // 保存正在处理的文本内容
         setProcessingText(text);
       } else {
         if (images.length === 0) {
-          setError(t('home.error.noImage'));
+          setErrorAndScroll(t('home.error.noImage'));
           return;
         }
         // 验证图片数量
         const imageSize = config.controlsConfig?.inputConfig.imageSize || 1;
         if (images.length < imageSize) {
-          setError(`Exactly ${imageSize} image(s) required`);
+          setErrorAndScroll(`Exactly ${imageSize} image(s) required`);
           return;
         }
       }
@@ -569,7 +611,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
 
         // 停止假进度条
         stopFakeProgress();
-        setError(errorMessage);
+        setErrorAndScroll(errorMessage);
         setProcessing({
           isProcessing: false,
           progress: 0,
@@ -591,6 +633,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       fetchHistoryData,
       decimal,
       checkUserCredits,
+      setErrorAndScroll,
     ],
   );
 
@@ -688,15 +731,15 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     const hasContent = inputType === 'text' ? textInput.trim() : originalImages.length > 0;
 
     if (!isLoggedIn) {
-      setError(t('home.error.loginRequired'));
+      setErrorAndScroll(t('home.error.loginRequired'));
       return;
     }
 
     if (!hasContent) {
       if (inputType === 'text') {
-        setError(t('home.error.textInputRequired'));
+        setErrorAndScroll(t('home.error.textInputRequired'));
       } else {
-        setError(t('home.error.noImage'));
+        setErrorAndScroll(t('home.error.noImage'));
       }
       return;
     }
@@ -704,14 +747,23 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     if (missingFields.length > 0) {
       const fieldsText = missingFields.join('、');
       const errorMessage = t('home.error.missingRequiredFields', { fields: fieldsText });
-      setError(errorMessage);
+      setErrorAndScroll(errorMessage);
       return;
     }
 
     if (!isRequiredControlsValid) {
-      setError(t('home.error.invalidRequiredFields'));
+      setErrorAndScroll(t('home.error.invalidRequiredFields'));
     }
-  }, [getMissingRequiredFields, inputType, textInput, originalImages, isLoggedIn, isRequiredControlsValid, t]);
+  }, [
+    getMissingRequiredFields,
+    inputType,
+    textInput,
+    originalImages,
+    isLoggedIn,
+    isRequiredControlsValid,
+    t,
+    setErrorAndScroll,
+  ]);
 
   // 下载生成后的图片
   const handleDownload = async () => {
@@ -729,7 +781,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download error:', err);
-      setError(t('home.error.downloadFailed'));
+      setErrorAndScroll(t('home.error.downloadFailed'));
     }
   };
 
@@ -741,7 +793,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
     // 检查Credit余额
     const requiredCredits = 1;
     if (creditInfo.balance < requiredCredits) {
-      setError(t('home.error.insufficientCreditsRetry'));
+      setErrorAndScroll(t('home.error.insufficientCreditsRetry'));
       return;
     }
 
@@ -761,62 +813,135 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
   // 复制图片到剪贴板
   const handleCopyImage = async (imageUrl: string, itemId?: string) => {
     try {
-      // 获取图片数据
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
       // 检查浏览器是否支持复制图片
-      if (navigator.clipboard && window.ClipboardItem) {
-        // 将图片转换为 PNG 格式，因为大多数浏览器只支持 image/png
+      if (!navigator.clipboard || !window.ClipboardItem) {
+        console.warn('Clipboard API not supported for images in this browser');
+        return;
+      }
+
+      // 查找页面上已存在的图片元素
+      const existingImg = document.querySelector(`img[src="${imageUrl}"]`) as HTMLImageElement;
+
+      if (existingImg && existingImg.complete) {
+        // 直接从已存在的img元素复制
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const img = new Image();
 
-        await new Promise((resolve, reject) => {
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx?.drawImage(img, 0, 0);
+        if (!ctx) {
+          throw new Error('Cannot get canvas context');
+        }
 
-            canvas.toBlob(async (pngBlob) => {
-              if (pngBlob) {
-                try {
-                  const clipboardItem = new ClipboardItem({
-                    'image/png': pngBlob,
-                  });
-                  await navigator.clipboard.write([clipboardItem]);
+        // 设置canvas尺寸
+        canvas.width = existingImg.naturalWidth || existingImg.width;
+        canvas.height = existingImg.naturalHeight || existingImg.height;
 
-                  // 复制成功，更新状态
-                  if (itemId) {
-                    setCopiedItems((prev) => new Set([...prev, itemId]));
-                    // 2秒后移除成功状态
-                    setTimeout(() => {
-                      setCopiedItems((prev) => {
-                        const newSet = new Set(prev);
-                        newSet.delete(itemId);
-                        return newSet;
-                      });
-                    }, 2000);
-                  }
+        // 绘制图片到canvas
+        ctx.drawImage(existingImg, 0, 0);
 
-                  resolve(undefined);
-                } catch (writeErr) {
-                  console.error('Failed to write to clipboard:', writeErr);
-                  reject(writeErr);
-                }
-              } else {
-                reject(new Error('Failed to convert image to PNG'));
-              }
-            }, 'image/png');
-          };
-          img.onerror = reject;
-          img.src = URL.createObjectURL(blob);
+        // 立即创建ClipboardItem Promise，保持用户手势上下文
+        const blobPromise = new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to convert canvas to blob'));
+            }
+          }, 'image/png');
         });
-      } else {
-        console.warn('Clipboard API not supported for images in this browser');
+
+        // 在用户手势上下文中立即创建ClipboardItem
+        const clipboardItem = new ClipboardItem({
+          'image/png': blobPromise,
+        });
+
+        // 立即调用剪贴板API
+        await navigator.clipboard.write([clipboardItem]);
+
+        // 复制成功，更新状态
+        if (itemId) {
+          setCopiedItems((prev) => new Set([...prev, itemId]));
+          setTimeout(() => {
+            setCopiedItems((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(itemId);
+              return newSet;
+            });
+          }, 2000);
+        }
+
+        return;
       }
+
+      // 如果页面上没有图片元素，使用传统方法
+      await handleImageCopyFromUrl(imageUrl, itemId);
     } catch (err) {
       console.error('Failed to copy image:', err);
+      await handleImageCopyFallback(imageUrl, itemId);
+    }
+  };
+
+  // 从URL复制图片的传统方法
+  const handleImageCopyFromUrl = async (imageUrl: string, itemId?: string) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    const clipboardItemPromise = new Promise<Blob>((resolve, reject) => {
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+
+        canvas.toBlob((pngBlob) => {
+          if (pngBlob) {
+            resolve(pngBlob);
+          } else {
+            reject(new Error('Failed to convert image to PNG'));
+          }
+        }, 'image/png');
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
+    });
+
+    const clipboardItem = new ClipboardItem({
+      'image/png': clipboardItemPromise,
+    });
+
+    await navigator.clipboard.write([clipboardItem]);
+
+    if (itemId) {
+      setCopiedItems((prev) => new Set([...prev, itemId]));
+      setTimeout(() => {
+        setCopiedItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
+      }, 2000);
+    }
+  };
+
+  // 降级处理方法
+  const handleImageCopyFallback = async (imageUrl: string, itemId?: string) => {
+    try {
+      await navigator.clipboard.writeText(imageUrl);
+
+      if (itemId) {
+        setCopiedItems((prev) => new Set([...prev, itemId]));
+        setTimeout(() => {
+          setCopiedItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(itemId);
+            return newSet;
+          });
+        }, 2000);
+      }
+    } catch (fallbackErr) {
+      console.error('Fallback copy failed:', fallbackErr);
     }
   };
 
@@ -1209,6 +1334,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
             {/* 错误提示 - 精致设计 */}
             {error && (
               <VintageCard
+                ref={errorRef}
                 elevation={2}
                 sx={(theme) => ({
                   background: `linear-gradient(135deg, ${theme.palette.error.main}14 0%, ${theme.palette.error.dark}0D 100%)`,
@@ -1284,18 +1410,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       sx={(theme) => ({
                         fontSize: 48,
                         color: theme.palette.primary.main,
-                        animation: `${sparkleAnimation} 2s ease-in-out infinite`,
                       })}
                     />
-                    <Typography
-                      variant="h6"
-                      textAlign="center"
-                      sx={(theme) => ({
-                        color: theme.palette.text.primary,
-                        fontStyle: 'italic',
-                      })}>
-                      {t('home.processing.magic')}
-                    </Typography>
                     <Typography
                       variant="body2"
                       textAlign="center"
@@ -1452,12 +1568,6 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                     }}>
                     <GoldenButton
                       onClick={handleManualGenerate}
-                      disabled={
-                        processing.isProcessing ||
-                        (inputType === 'image' && originalImages.length === 0) ||
-                        (inputType === 'text' && !textInput.trim()) ||
-                        !isRequiredControlsValid
-                      }
                       size="medium"
                       sx={{
                         fontSize: { xs: '0.75rem', sm: '1rem' },
@@ -2014,7 +2124,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleViewLargeImage(getImageUrl(item.generatedImg));
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.primary.main,
                         width: 28,
                         height: 28,
@@ -2036,12 +2146,14 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       sx={(theme) => ({
                         background: copiedItems.has(item.id)
                           ? `${theme.palette.success.main}E6`
-                          : `${theme.palette.background.paper}E6`,
+                          : `${theme.palette.common.white}`,
                         color: copiedItems.has(item.id) ? 'white' : theme.palette.primary.main,
                         width: 28,
                         height: 28,
                         '&:hover': {
-                          background: copiedItems.has(item.id) ? `${theme.palette.success.main}` : 'white',
+                          background: copiedItems.has(item.id)
+                            ? `${theme.palette.success.main}`
+                            : `${theme.palette.common.white}`,
                           transform: 'scale(1.1)',
                         },
                         transition: 'all 0.3s ease',
@@ -2060,7 +2172,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleDownloadHistoryImage(getImageUrl(item.generatedImg), `generated_${item.id}`);
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.primary.main,
                         width: 28,
                         height: 28,
@@ -2080,7 +2192,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         handleShowDeleteDialog(item.id);
                       }}
                       sx={(theme) => ({
-                        background: `${theme.palette.background.paper}E6`,
+                        background: theme.palette.common.white,
                         color: theme.palette.error.main,
                         width: 28,
                         height: 28,
@@ -2110,7 +2222,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         opacity: 1,
                       },
                       '.hover-overlay ~ &': {
-                        opacity: 0,
+                        opacity: 1,
                       },
                     })}>
                     <Typography
@@ -2122,6 +2234,7 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                         lineHeight: 1.2,
                       })}>
                       {new Date(item.createdAt).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
                         month: 'numeric',
                         day: 'numeric',
                       })}
@@ -2197,22 +2310,24 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
           {/* 关闭按钮 */}
           <IconButton
             onClick={handleCloseImageDialog}
+            color="primary"
             sx={(theme) => ({
               position: 'absolute',
-              top: 8,
-              right: 8,
+              background: `${theme.palette.common.white}`,
+              border: '1px solid',
+              borderColor: `${theme.palette.primary.main}`,
+              top: 16,
+              right: 16,
               zIndex: 10,
-              background: `${theme.palette.background.paper}E6`,
-              color: theme.palette.primary.main,
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               '&:hover': {
-                background: theme.palette.common.white,
                 transform: 'scale(1.1)',
               },
               transition: 'all 0.2s ease',
+              backdropFilter: 'blur(8px)',
             })}>
-            <CloseIcon sx={{ fontSize: 18 }} />
+            <CloseIcon sx={{ fontSize: 24 }} />
           </IconButton>
 
           {/* 大图展示 */}

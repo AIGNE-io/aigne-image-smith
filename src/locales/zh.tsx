@@ -45,7 +45,7 @@ export default flat({
     // 处理状态
     processing: {
       magic: 'AI正在施展魔法...',
-      wait: '请耐心等待生成完成',
+      wait: '请耐心等待生成完成...',
       uploading: '正在上传到AI服务器…',
       analyzing: '正在分析图像内容…',
       preparing: '正在准备生成算法…',
@@ -391,6 +391,29 @@ export default flat({
           color: '颜色',
         },
       },
+    },
+
+    // 多语言编辑器
+    multiLanguageEditor: {
+      languageProgress: '{completed}/{total} 语言',
+      inputPlaceholder: '输入{label}...',
+      copyFromOther: '从其他语言复制',
+      copyMenuTitle: '从以下语言复制:',
+    },
+
+    // 多语言图片描述编辑器
+    multiLanguageImageDescriptions: {
+      title: 'Image Descriptions (optional):',
+      addDescription: 'Add Description',
+      languageProgress: '{completed}/{total} 语言',
+      description:
+        'Describe what each image slot is for. This helps users understand what kind of image to upload for each position.',
+      imageLabel: 'Image {index}:',
+      placeholder: "e.g., 'Upload your main photo here' or 'Background reference image'",
+      copyFromOther: '从其他语言复制',
+      copyMenuTitle: '从以下语言复制:',
+      noDescriptions:
+        'No image descriptions configured for {language}. Add descriptions to help users understand what each image upload is for.',
     },
   },
 });
