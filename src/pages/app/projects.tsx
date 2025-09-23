@@ -1,4 +1,5 @@
 // @ts-nocheck
+import useBrowser from '@arcblock/react-hooks/lib/useBrowser';
 import { useLocaleContext } from '@arcblock/ux/lib/Locale/context';
 import { Box, Card, CardContent, CardMedia, Container, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -28,6 +29,7 @@ export default function Projects() {
   const { t, locale } = useLocaleContext();
   const [projects, setProjects] = useState<AIProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const browser = useBrowser();
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -75,7 +77,7 @@ export default function Projects() {
         <title>AIGNE ImageSmith</title>
       </Helmet>
       {/* Simple Header */}
-      <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', py: 6 }}>
+      <Box sx={{ bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', py: { xs: 3, md: 6 } }}>
         <Container maxWidth="lg">
           <Box textAlign="center">
             <Typography
@@ -84,15 +86,21 @@ export default function Projects() {
               sx={{
                 fontWeight: 600,
                 color: 'text.primary',
-                mb: 3,
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                mb: { xs: 2, md: 3 },
+                fontSize: { xs: '1.75rem', md: '3.5rem' },
               }}>
               {t('projects.title')}
             </Typography>
             <Typography
               variant="h6"
               color="text.secondary"
-              sx={{ maxWidth: '600px', mx: 'auto', lineHeight: 1.6, fontSize: '1.25rem' }}>
+              sx={{
+                maxWidth: '600px',
+                mx: 'auto',
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', md: '1.25rem' },
+                px: { xs: 2, md: 0 },
+              }}>
               {t('projects.subtitle')}
             </Typography>
           </Box>
@@ -125,7 +133,11 @@ export default function Projects() {
               mx: 'auto',
             }}>
             {projects.map((project) => (
-              <Link key={project.id} to={`/${project.slug}`} style={{ textDecoration: 'none' }}>
+              <Link
+                key={project.id}
+                to={`/${project.slug}`}
+                style={{ textDecoration: 'none' }}
+                target={browser.arcSphere ? '_blank' : '_self'}>
                 <Card
                   sx={{
                     height: 'auto',

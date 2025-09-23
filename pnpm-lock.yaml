@@ -41,6 +41,9 @@ importers:
       '@arcblock/did-connect-storage-nedb':
         specifier: ^1.8.0
         version: 1.8.0
+      '@arcblock/react-hooks':
+        specifier: ^3.1.41
+        version: 3.1.41
       '@arcblock/ux':
         specifier: ^3.1.41
         version: 3.1.41(3fe0e8eb48d220f9c69609729cde9524)

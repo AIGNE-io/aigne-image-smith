@@ -47,6 +47,7 @@
     "@arcblock/did-connect-js": "^1.25.2",
     "@arcblock/did-connect-react": "^3.1.41",
     "@arcblock/did-connect-storage-nedb": "^1.8.0",
+    "@arcblock/react-hooks": "^3.1.41",
     "@arcblock/ux": "^3.1.41",
     "@arcblock/ws": "^1.25.2",
     "@blocklet/ai-runtime": "^0.5.20",
