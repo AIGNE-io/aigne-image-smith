@@ -45,7 +45,7 @@ export default flat({
     // 処理状況
     processing: {
       magic: 'AIが魔法をかけています...',
-      wait: '生成完了まで少々お待ちください',
+      wait: '生成完了まで少々お待ちください...',
       uploading: 'AIサーバーにアップロード中...',
       analyzing: '画像の内容を分析中...',
       preparing: '生成アルゴリズムを準備中...',

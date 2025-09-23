@@ -1284,18 +1284,8 @@ function AIProjectHomeComponent({ config }: AIProjectHomeProps) {
                       sx={(theme) => ({
                         fontSize: 48,
                         color: theme.palette.primary.main,
-                        animation: `${sparkleAnimation} 2s ease-in-out infinite`,
                       })}
                     />
-                    <Typography
-                      variant="h6"
-                      textAlign="center"
-                      sx={(theme) => ({
-                        color: theme.palette.text.primary,
-                        fontStyle: 'italic',
-                      })}>
-                      {t('home.processing.magic')}
-                    </Typography>
                     <Typography
                       variant="body2"
                       textAlign="center"

@@ -45,7 +45,7 @@ export default flat({
     // Processing status
     processing: {
       magic: 'AI is casting magic...',
-      wait: 'Please wait patiently for generation to complete',
+      wait: 'Please wait patiently for generation to complete...',
       uploading: 'Uploading to AI server...',
       analyzing: 'Analyzing image content...',
       preparing: 'Preparing generation algorithms...',

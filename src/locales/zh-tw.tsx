@@ -45,7 +45,7 @@ export default flat({
     // 處理狀態
     processing: {
       magic: 'AI正在施展魔法...',
-      wait: '請耐心等待生成完成',
+      wait: '請耐心等待生成完成...',
       uploading: '正在上傳到AI伺服器…',
       analyzing: '正在分析圖像內容…',
       preparing: '正在準備生成算法…',
