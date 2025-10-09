@@ -181,6 +181,8 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "@scarf/scarf",
       "canvas",
       "core-js",
       "core-js-pure",
