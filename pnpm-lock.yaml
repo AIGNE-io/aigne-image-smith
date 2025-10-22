@@ -122,9 +122,6 @@ importers:
       '@ocap/util':
         specifier: ^1.26.2
         version: 1.26.2
-      '@ocap/wallet':
-        specifier: ^1.26.2
-        version: 1.26.2
       '@types/react-helmet':
         specifier: ^6.1.11
         version: 6.1.11

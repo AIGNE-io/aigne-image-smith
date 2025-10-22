@@ -74,7 +74,6 @@
     "@ocap/client": "^1.26.2",
     "@ocap/mcrypto": "^1.26.2",
     "@ocap/util": "^1.26.2",
-    "@ocap/wallet": "^1.26.2",
     "@types/react-helmet": "^6.1.11",
     "ahooks": "^3.7.11",
     "axios": "^1.6.2",
