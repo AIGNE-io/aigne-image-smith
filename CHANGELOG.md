@@ -1,3 +1,7 @@
+## 0.0.15 (2025-10-22)
+
+- fix: update pacakge
+
 ## 0.0.14 (2025-10-9)
 
 - chore: update deps
