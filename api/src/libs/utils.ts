@@ -1,4 +1,4 @@
-import { env } from '@blocklet/sdk';
+import { env } from '@blocklet/sdk/lib/env';
 import { joinURL } from 'ufo';
 
 export const componentMap = {

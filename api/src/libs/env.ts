@@ -1,5 +1,5 @@
 import Config from '@blocklet/sdk/lib/config';
-import env from '@blocklet/sdk/lib/env';
+import { env } from '@blocklet/sdk/lib/env';
 import Joi from 'joi';
 
 export const isDevelopment = Config.env.mode === 'development';
