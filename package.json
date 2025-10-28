@@ -1,7 +1,7 @@
 {
   "name": "image_smith",
   "private": true,
-  "version": "0.0.15",
+  "version": "0.0.16",
   "scripts": {
     "dev": "blocklet dev",
     "lint": "tsc --noEmit && eslint src api/src --ext .mjs,.js,.jsx,.ts,.tsx",
