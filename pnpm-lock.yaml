@@ -66,8 +66,8 @@ importers:
         specifier: ^1.16.54-beta-20251028-092308-569763e6
         version: 1.16.54-beta-20251028-092308-569763e6
       '@blocklet/payment-js':
-        specifier: ^1.21.17
-        version: 1.21.17(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        specifier: ^1.22.0
+        version: 1.22.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@blocklet/sdk':
         specifier: ^1.16.54-beta-20251028-092308-569763e6
         version: 1.16.54-beta-20251028-092308-569763e6(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -78,11 +78,11 @@ importers:
         specifier: ^0.3.1
         version: 0.3.1(0f51e639276664b17c3b9627ed46dfc6)
       '@blocklet/uploader-server':
-        specifier: ^0.3.0
-        version: 0.3.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@tus/file-store@1.0.0(@tus/server@1.0.0))(@tus/server@1.0.0)(@uppy/companion@4.15.1)(axios@1.11.0)
+        specifier: ^0.3.1
+        version: 0.3.1(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@tus/file-store@1.0.0(@tus/server@1.0.0))(@tus/server@1.0.0)(@uppy/companion@4.15.1)(axios@1.11.0)
       '@blocklet/xss':
-        specifier: ^0.3.0
-        version: 0.3.0
+        specifier: ^0.3.1
+        version: 0.3.1
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1195,11 +1195,11 @@ packages:
       react-dom: ^19.1.0
       react-router-dom: ^6.16.0
 
-  '@blocklet/payment-js@1.21.17':
-    resolution: {integrity: sha512-D1B8pjJxieA3/zbZnFtkORwDZuGP4rRJYRUQ27XO6qmCf5VkHi9Wl7nAd5ZunC7+dGiQVk7Z5GTswq0hpb14vA==}
+  '@blocklet/payment-js@1.22.0':
+    resolution: {integrity: sha512-lovXqBWJimwc3BM8olLs/hnpHWCbJTA7TQsv5gbgEDvlj7fb2B/J1DyQdqq+6L1Oe9EFwqceyLQkksRfPtmrEA==}
 
-  '@blocklet/payment-types@1.21.17':
-    resolution: {integrity: sha512-khxfPBgoiby13KykexIanjLPqB4OEenTfOscSEisQqsVBzVCe9vglX4GlBCRT2lkiixvCepofgy7+ePxZXCkWA==}
+  '@blocklet/payment-types@1.22.0':
+    resolution: {integrity: sha512-GFZ3XiEe49nJA9o8PL9cp7a7Bn7kv+8KqEXwqAEGEySZ1eeEak8iETAhGWp5H3SImr2H/IlBBPafxws+kfTu6w==}
 
   '@blocklet/quickjs@0.5.26':
     resolution: {integrity: sha512-g1R6nKXZS72GgQb3k9rpV8VpgDOXKjoTewSQVAqjtMP4SNtT2yK4x+pHbomDyiHRvwab5h0eVfgpwHVI0Op36A==}
@@ -1234,8 +1234,8 @@ packages:
       react: ^19.0.0
       react-router-dom: ^6.22.3
 
-  '@blocklet/uploader-server@0.3.0':
-    resolution: {integrity: sha512-jbvLB8mV1T6P0GHQIituMZ8vm4swwh5DKmBabtYvFh4cJisHIO8V9bYPZ1eXBGHQ5wBJvjrXqJE+pK/zkzt4Mw==}
+  '@blocklet/uploader-server@0.3.1':
+    resolution: {integrity: sha512-95VrSa68jRo4qNwTMuzfrX0zOQvrlD5Pej3OAOoeW5fpdH4eZHJrnwmOrpVrEWgLBZas2BGcWFMZiiYtKPDbTQ==}
     peerDependencies:
       '@tus/file-store': 1.0.0
       '@tus/server': 1.0.0
@@ -1291,8 +1291,8 @@ packages:
   '@blocklet/xss@0.2.12':
     resolution: {integrity: sha512-RPsj7Y/PogkjNogz/U23nGjmdWpnCJcr3LVqmVwjhgJ2UzCW5MqNRyCLYpZKlVJg1CDGaB9jfkMJle9Lq6RM8Q==}
 
-  '@blocklet/xss@0.3.0':
-    resolution: {integrity: sha512-0cA9xf33CcnnKkSHNjKpjy7A+tHsRrHdax022prJSX39YLN+a+rllmPig93o4wj9MmMT3RM76mG0CFzRlrpdTw==}
+  '@blocklet/xss@0.3.1':
+    resolution: {integrity: sha512-4TwFVRFRIyXxyos2Toh3LLkKqmu/ILAz8PH8SpQyoHqK8SbgSBJT60GsnsxGIvtksjYl8kYrbJIWE2VIetZzVQ==}
 
   '@braintree/sanitize-url@7.1.1':
     resolution: {integrity: sha512-i1L7noDNxtFyL5DmZafWy1wRVhGehQmzZaz1HiN5e7iylJMSZR7ekOV7NsIqa5qBldlLrsKv4HbgFUVlQrz8Mw==}
@@ -13988,7 +13988,7 @@ snapshots:
       '@arcblock/ux': 3.1.52(3fe0e8eb48d220f9c69609729cde9524)
       '@blocklet/error': 0.2.5
       '@blocklet/logger': 1.16.53
-      '@blocklet/payment-js': 1.21.17(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+      '@blocklet/payment-js': 1.22.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@blocklet/sdk': 1.16.53(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@emotion/css': 11.13.5
       '@emotion/react': 11.14.0(@types/react@19.1.12)(react@19.1.0)
@@ -14056,7 +14056,7 @@ snapshots:
       '@arcblock/ux': 3.1.52(3fe0e8eb48d220f9c69609729cde9524)
       '@blocklet/error': 0.2.5
       '@blocklet/logger': 1.16.53
-      '@blocklet/payment-js': 1.21.17(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+      '@blocklet/payment-js': 1.22.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@blocklet/sdk': 1.16.53(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@emotion/css': 11.13.5
       '@emotion/react': 11.14.0(@types/react@19.1.12)(react@19.1.0)
@@ -14864,11 +14864,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@blocklet/payment-js@1.21.17(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@blocklet/payment-js@1.22.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
-      '@blocklet/constant': 1.16.53
-      '@blocklet/payment-types': 1.21.17
-      '@blocklet/sdk': 1.16.53(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+      '@blocklet/constant': 1.16.54-beta-20251028-092308-569763e6
+      '@blocklet/payment-types': 1.22.0
+      '@blocklet/sdk': 1.16.54-beta-20251028-092308-569763e6(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
     transitivePeerDependencies:
       - '@mui/material'
       - bluebird
@@ -14876,7 +14876,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@blocklet/payment-types@1.21.17': {}
+  '@blocklet/payment-types@1.22.0': {}
 
   '@blocklet/quickjs@0.5.26(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
@@ -15135,7 +15135,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@blocklet/uploader-server@0.3.0(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@tus/file-store@1.0.0(@tus/server@1.0.0))(@tus/server@1.0.0)(@uppy/companion@4.15.1)(axios@1.11.0)':
+  '@blocklet/uploader-server@0.3.1(@mui/material@7.3.2(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react@19.1.0))(@types/react@19.1.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@tus/file-store@1.0.0(@tus/server@1.0.0))(@tus/server@1.0.0)(@uppy/companion@4.15.1)(axios@1.11.0)':
     dependencies:
       '@abtnode/cron': 1.16.54-beta-20251028-092308-569763e6
       '@blocklet/constant': 1.16.54-beta-20251028-092308-569763e6
@@ -15277,7 +15277,7 @@ snapshots:
       lodash: 4.17.21
       xss: 1.0.15
 
-  '@blocklet/xss@0.3.0':
+  '@blocklet/xss@0.3.1':
     dependencies:
       lodash: 4.17.21
       xss: 1.0.15
