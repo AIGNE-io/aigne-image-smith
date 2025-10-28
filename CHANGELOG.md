@@ -1,6 +1,10 @@
+## 0.0.16 (2025-10-28)
+
+- fix: update package
+
 ## 0.0.15 (2025-10-22)
 
-- fix: update pacakge
+- fix: update package
 
 ## 0.0.14 (2025-10-9)
 

@@ -1,7 +1,7 @@
 {
   "name": "image_smith",
   "private": true,
-  "version": "0.0.15",
+  "version": "0.0.16",
   "scripts": {
     "dev": "blocklet dev",
     "lint": "tsc --noEmit && eslint src api/src --ext .mjs,.js,.jsx,.ts,.tsx",
@@ -39,8 +39,8 @@
     ]
   },
   "dependencies": {
-    "@abtnode/cron": "^1.16.54-beta-20251027-105624-dfa978f8",
-    "@abtnode/util": "^1.16.54-beta-20251027-105624-dfa978f8",
+    "@abtnode/cron": "^1.16.54-beta-20251028-073105-3ed10cef",
+    "@abtnode/util": "^1.16.54-beta-20251028-073105-3ed10cef",
     "@aigne/aigne-hub": "^0.10.4-beta.5",
     "@aigne/core": "^1.65.0-beta.2",
     "@arcblock/did": "^1.26.3",
@@ -53,10 +53,10 @@
     "@blocklet/ai-runtime": "^0.5.26",
     "@blocklet/aigne-sdk": "^0.5.26",
     "@blocklet/embed": "^0.2.5",
-    "@blocklet/js-sdk": "^1.16.54-beta-20251027-105624-dfa978f8",
-    "@blocklet/logger": "^1.16.54-beta-20251027-105624-dfa978f8",
+    "@blocklet/js-sdk": "^1.16.54-beta-20251028-073105-3ed10cef",
+    "@blocklet/logger": "^1.16.54-beta-20251028-073105-3ed10cef",
     "@blocklet/payment-js": "^1.21.17",
-    "@blocklet/sdk": "^1.16.54-beta-20251027-105624-dfa978f8",
+    "@blocklet/sdk": "^1.16.54-beta-20251028-073105-3ed10cef",
     "@blocklet/ui-react": "^3.1.52",
     "@blocklet/uploader": "^0.3.0",
     "@blocklet/uploader-server": "^0.3.0",
