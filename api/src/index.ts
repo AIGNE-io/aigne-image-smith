@@ -1,6 +1,6 @@
 import blockletLogger from '@blocklet/logger';
 import { csrf } from '@blocklet/sdk/lib/middlewares';
-import fallback from '@blocklet/sdk/lib/middlewares/fallback';
+import { fallback } from '@blocklet/sdk/lib/middlewares/fallback';
 import { xss } from '@blocklet/xss';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';

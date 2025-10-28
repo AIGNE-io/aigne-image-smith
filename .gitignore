@@ -31,3 +31,6 @@ lerna-debug.log*
 
 # claude
 .claude
+
+# Breaking changes documentation (internal use only)
+BREAKING_CHANGE.MD
