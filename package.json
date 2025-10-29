@@ -1,7 +1,7 @@
 {
   "name": "image_smith",
   "private": true,
-  "version": "0.0.18",
+  "version": "0.1.0",
   "scripts": {
     "dev": "blocklet dev",
     "lint": "tsc --noEmit && eslint src api/src --ext .mjs,.js,.jsx,.ts,.tsx",
@@ -45,10 +45,10 @@
     "@aigne/core": "^1.65.0-beta.3",
     "@arcblock/did": "^1.26.3",
     "@arcblock/did-connect-js": "^1.26.3",
-    "@arcblock/did-connect-react": "^3.1.52",
+    "@arcblock/did-connect-react": "^3.1.53",
     "@arcblock/did-connect-storage-nedb": "^1.8.0",
-    "@arcblock/react-hooks": "^3.1.52",
-    "@arcblock/ux": "^3.1.52",
+    "@arcblock/react-hooks": "^3.1.53",
+    "@arcblock/ux": "^3.1.53",
     "@arcblock/ws": "^1.26.3",
     "@blocklet/ai-runtime": "^0.5.26",
     "@blocklet/aigne-sdk": "^0.5.26",
@@ -57,7 +57,7 @@
     "@blocklet/logger": "^1.16.54-beta-20251028-092308-569763e6",
     "@blocklet/payment-js": "^1.22.0",
     "@blocklet/sdk": "^1.16.54-beta-20251028-092308-569763e6",
-    "@blocklet/ui-react": "^3.1.52",
+    "@blocklet/ui-react": "^3.1.53",
     "@blocklet/uploader": "^0.3.1",
     "@blocklet/uploader-server": "^0.3.1",
     "@blocklet/xss": "^0.3.1",
@@ -171,9 +171,9 @@
     "pre-commit": "npx lint-staged"
   },
   "resolutions": {
-    "@arcblock/ux": "^3.1.52",
+    "@arcblock/ux": "^3.1.53",
     "@blocklet/code-editor": "^0.5.26",
-    "@blocklet/ui-react": "^3.1.52",
+    "@blocklet/ui-react": "^3.1.53",
     "@types/d3-dispatch": "3.0.6",
     "@uppy/provider-views": "3.12.0",
     "rimraf": "2.6.3"
