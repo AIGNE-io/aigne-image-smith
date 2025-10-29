@@ -1,5 +1,7 @@
 ## 0.1.0 (2025-10-29)
 
+- fix: update package
+
 ## 0.0.18 (2025-10-28)
 
 - fix: update package
