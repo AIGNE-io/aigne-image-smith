@@ -1,3 +1,7 @@
+## 0.0.14 (2025-11-4)
+
+- chore: update deps
+
 ## 0.0.13 (2025-9-23)
 
 - fix: filter models by preference
