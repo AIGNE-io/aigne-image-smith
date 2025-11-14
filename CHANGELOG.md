@@ -1,3 +1,7 @@
+## 0.1.5 (2025-11-14)
+
+- fix: bump version
+
 ## 0.1.4 (2025-11-7)
 
 - fix: update package to latest
