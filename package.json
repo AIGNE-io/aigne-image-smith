@@ -152,7 +152,7 @@
     "simple-git-hooks": "^2.11.1",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5",
-    "vite": "^7.0.0",
+    "vite": "^7.1.11",
     "vite-plugin-blocklet": "^0.12.2",
     "vite-plugin-svgr": "^4.3.0",
     "zx": "^7.2.3"
