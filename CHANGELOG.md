@@ -1,3 +1,7 @@
+## 0.1.8 (2025-12-15)
+
+- fix: update aigne-code-reviewer to latest
+
 ## 0.1.7 (2025-12-5)
 
 - chore: update deps to the latest version
