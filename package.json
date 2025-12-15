@@ -155,7 +155,7 @@
     "vite": "^7.0.0",
     "vite-plugin-blocklet": "^0.12.4",
     "vite-plugin-svgr": "^4.3.0",
-    "zx": "^7.2.3"
+    "zx": "^8.8.5"
   },
   "importSort": {
     ".js, .jsx, .mjs": {
