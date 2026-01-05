@@ -15,7 +15,8 @@
     "upload": "npm run bundle && blocklet upload .blocklet/release/blocklet.json",
     "prepare": "npx simple-git-hooks",
     "bump-version": "zx --quiet scripts/bump-version.mjs",
-    "update:deps": "npx -y taze latest -r -w -n '/@abtnode|@aigne|@arcblock|@blocklet|@did-connect|@did-pay|@did-space|@nft-store|@nft-studio|@ocap|vite-plugin-blocklet/' && pnpm install && pnpm dedupe"
+    "update:deps": "npx -y taze latest -r -w -n '/@abtnode|@aigne|@arcblock|@blocklet|@did-connect|@did-pay|@did-space|@nft-store|@nft-studio|@ocap|vite-plugin-blocklet/' && pnpm install && pnpm dedupe",
+    "verify": "npm run lint && npm run bundle"
   },
   "lint-staged": {
     "*.{mjs,js,jsx,ts,tsx}": [
