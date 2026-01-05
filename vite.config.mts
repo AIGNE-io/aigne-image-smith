@@ -7,7 +7,13 @@ import svgr from 'vite-plugin-svgr';
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
-    plugins: [react(), createBlockletPlugin(), svgr()],
+    plugins: [
+      react(),
+      createBlockletPlugin({
+        chunkSizeLimit: 4096,
+      }),
+      svgr(),
+    ],
     build: {
       // 禁止 preload 可以解决 js 的请求没有 referer 的问题
       cssCodeSplit: false,
