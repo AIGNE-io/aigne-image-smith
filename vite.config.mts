@@ -11,6 +11,9 @@ export default defineConfig(() => {
       react(),
       createBlockletPlugin({
         chunkSizeLimit: 4096,
+        nodePolyfillsOptions: {
+          include: ['crypto'],
+        },
       }),
       svgr(),
     ],
