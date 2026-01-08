@@ -1,3 +1,7 @@
+## 0.1.10 (2026-1-8)
+
+- chore: update aigne-hub models api
+
 ## 0.1.9 (2026-1-5)
 
 - chore: update deps
